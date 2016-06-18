@@ -7,4 +7,4 @@ this part of the documentation is for you.
 
 .. toctree::
 
-   modules.rst
+   aioprometheus.rst

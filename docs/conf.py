@@ -278,3 +278,24 @@ texinfo_documents = [
      author, 'aioprometheus', 'One line description of project.',
      'Miscellaneous'),
 ]
+
+# -- Custom config to work around readthedocs.org #1139 -------------------
+
+def run_apidoc(_):
+    import os
+    import subprocess
+    import sys
+
+    cur_dir = os.path.abspath(os.path.dirname(__file__))
+    output_path = os.path.join(cur_dir, 'doc', 'api')
+    cmd_path = 'sphinx-apidoc'
+    if hasattr(sys, 'real_prefix'):  # Check to see if we are in a virtualenv
+        # If we are, assemble the path manually
+        cmd_path = os.path.abspath(
+            os.path.join(sys.prefix, 'bin', 'sphinx-apidoc'))
+    subprocess.check_call(
+        [cmd_path, '--no-toc', '-o', 'api', '../aioprometheus', '--force'])
+
+def setup(app):
+    app.connect('builder-inited', run_apidoc)
+

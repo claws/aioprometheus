@@ -3,11 +3,8 @@ This module is built upon the :mod:`unittest` standard library module.
 It simplifies event loop related boilerplate code when testing code built
 upon the :mod:`asyncio` standard library module.
 
-The ``aiotesting`` imports the :mod:`unittest` package, overrides some of
+This module imports the :mod:`unittest` package, overrides some of
 its features and adds new ones.
-
-Module aiotesting.case
-----------------------
 
 Enhanced :class:`unittest.TestCase`:
 
