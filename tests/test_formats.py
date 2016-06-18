@@ -779,7 +779,7 @@ class TestProtobufFormat(unittest.TestCase):
             elif ptb1.type == pmp.SUMMARY and ptb2.type == pmp.SUMMARY:
                 mm1, mm2 = m1.summary, m2.summary
                 if ((mm1.sample_count != mm2.sample_count) or
-                    (mm1.sample_sum != mm2.sample_sum)):
+                        (mm1.sample_sum != mm2.sample_sum)):
                     return False
 
                 # order quantiles to test
@@ -794,7 +794,7 @@ class TestProtobufFormat(unittest.TestCase):
             elif ptb1.type == pmp.HISTOGRAM and ptb2.type == pmp.HISTOGRAM:
                 mm1, mm2 = m1.summary, m2.summary
                 if ((mm1.sample_count != mm2.sample_count) or
-                    (mm1.sample_sum != mm2.sample_sum)):
+                        (mm1.sample_sum != mm2.sample_sum)):
                     return False
 
                 # order buckets to test
@@ -1301,7 +1301,10 @@ class TestProtobufFormat(unittest.TestCase):
 
         registry.register(counter)
 
-        valid_result = b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00\x00\x00\x00\x00y@'
+        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
+                        b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
+                        b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00'
+                        b'\x00\x00\x00\x00y@')
         f = BinaryFormatter()
 
         # Check multiple times to ensure multiple marshalling requests
@@ -1323,7 +1326,10 @@ class TestProtobufFormat(unittest.TestCase):
 
         registry.register(gauge)
 
-        valid_result = b'U\n\ngauge_test\x12\x08A gauge.\x18\x01";\n\r\n\x08g_sample\x12\x011\n\x10\n\x0bg_subsample\x12\x01b\n\r\n\x04type\x12\x05gauge\x12\t\t\x00\x00\x00\x00\x00\x00\x89@'
+        valid_result = (b'U\n\ngauge_test\x12\x08A gauge.\x18\x01";'
+                        b'\n\r\n\x08g_sample\x12\x011\n\x10\n\x0bg_subsample'
+                        b'\x12\x01b\n\r\n\x04type\x12\x05gauge\x12\t\t\x00'
+                        b'\x00\x00\x00\x00\x00\x89@')
 
         f = BinaryFormatter()
 
@@ -1346,7 +1352,15 @@ class TestProtobufFormat(unittest.TestCase):
 
         registry.register(summary)
 
-        valid_result = b'\x99\x01\n\x0csummary_test\x12\nA summary.\x18\x02"{\n\r\n\x08s_sample\x12\x011\n\x10\n\x0bs_subsample\x12\x01b\n\x0f\n\x04type\x12\x07summary"G\x08\x16\x11\x00\x00\x00\x00\x90"\xf8@\x1a\x12\t\x00\x00\x00\x00\x00\x00\xe0?\x11\x00\x00\x00\x00\x00\x8b\xb0@\x1a\x12\t\xcd\xcc\xcc\xcc\xcc\xcc\xec?\x11\x00\x00\x00\x00\x00v\xb1@\x1a\x12\t\xaeG\xe1z\x14\xae\xef?\x11\x00\x00\x00\x00\x00\xa5\xb1@'
+        valid_result = (b'\x99\x01\n\x0csummary_test\x12\nA summary.'
+                        b'\x18\x02"{\n\r\n\x08s_sample\x12\x011\n\x10\n'
+                        b'\x0bs_subsample\x12\x01b\n\x0f\n\x04type\x12\x07'
+                        b'summary"G\x08\x16\x11\x00\x00\x00\x00\x90"\xf8@'
+                        b'\x1a\x12\t\x00\x00\x00\x00\x00\x00\xe0?\x11\x00'
+                        b'\x00\x00\x00\x00\x8b\xb0@\x1a\x12\t\xcd\xcc\xcc'
+                        b'\xcc\xcc\xcc\xec?\x11\x00\x00\x00\x00\x00v\xb1@'
+                        b'\x1a\x12\t\xaeG\xe1z\x14\xae\xef?\x11\x00\x00\x00'
+                        b'\x00\x00\xa5\xb1@')
 
         f = BinaryFormatter()
 

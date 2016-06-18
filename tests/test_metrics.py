@@ -145,9 +145,10 @@ class TestCollectorDict(unittest.TestCase):
         for i in data:
             self.c.set_value(i[0], i[1])
 
-        sort_fn = lambda x: x[0]['country']
-        sorted_data = sorted(data, key=sort_fn)
-        sorted_result = sorted(self.c.get_all(), key=sort_fn)
+        def country_fetcher(x):
+            return x[0]['country']
+        sorted_data = sorted(data, key=country_fetcher)
+        sorted_result = sorted(self.c.get_all(), key=country_fetcher)
         self.assertEqual(sorted_data, sorted_result)
 
 

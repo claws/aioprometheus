@@ -364,4 +364,3 @@ class Histogram(Collector):
         return_data[self.COUNT_KEY] = h.observations
 
         return return_data
-

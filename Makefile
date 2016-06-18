@@ -71,12 +71,12 @@ docs: coverage
 
 # help: dist                           - create a wheel based distribution package
 dist:
-	@$(PYTHON) setup.py bdist_wheel
+	@python setup.py bdist_wheel
 
 
 # help: sdist                          - create a source distribution package
 sdist:
-	@$(PYTHON) setup.py sdist
+	@python setup.py sdist
 
 
 # Keep these lines at the end of the file to retain nice help

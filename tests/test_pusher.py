@@ -122,7 +122,10 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00\x00\x00\x00\x00y@'
+        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
+                        b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
+                        b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
+                        b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.add(registry)
@@ -146,7 +149,10 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00\x00\x00\x00\x00y@'
+        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
+                        b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
+                        b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
+                        b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.replace(registry)
@@ -170,7 +176,10 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00\x00\x00\x00\x00y@'
+        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n'
+                        b'\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample'
+                        b'\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t'
+                        b'\x00\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.delete(registry)
