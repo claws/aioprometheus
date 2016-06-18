@@ -6,7 +6,7 @@ os:
   - osx
 install:
   - pip install --user -r requirements.dev.txt
-  - pip install .
+  - pip install -e .
 script:
     - make test
     - make docs
