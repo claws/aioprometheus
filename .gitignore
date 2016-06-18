@@ -87,3 +87,7 @@ ENV/
 
 # Rope project settings
 .ropeproject
+
+pyrobuf
+prometheus_metrics_proto.*
+

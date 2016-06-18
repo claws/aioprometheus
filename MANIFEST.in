@@ -1,0 +1,3 @@
+recursive-include docs *.rst
+include *.py Licence/LICENSE Licence/LICENSE-prometheus-python
+proto/metrics.proto
