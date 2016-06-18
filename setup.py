@@ -15,7 +15,7 @@ if __name__ == "__main__":
         version="0.0.1",
         author="Chris Laws",
         author_email="clawsicus@gmail.com",
-        description="Asynchronous Prometheus metrics service",
+        description="A Prometheus Python client library for asyncio-based applications",
         long_description="",
         license="MIT License",
         keywords=["prometheus", "monitoring", "metrics"],

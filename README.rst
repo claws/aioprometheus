@@ -6,14 +6,13 @@
 
 aioprometheus
 =============
-A Prometheus Python client library for asyncio-based applications
 
-`aioprometheus` is a Prometheus Python client library for asyncio-based 
-applications. It provides provides metrics collection and serving 
+`aioprometheus` is a Prometheus Python client library for asyncio-based
+applications. It provides provides metrics collection and serving
 capabilities, supports multiple data formats and pushing metrics to a
 gateway.
 
-The project documentation can be found `here <http://aioprometheus.readthedocs.org/>`_.
+The project documentation can be found on `ReadTheDocs <http://aioprometheus.readthedocs.org/>`_.
 
 
 Install

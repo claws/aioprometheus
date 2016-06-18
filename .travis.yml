@@ -3,7 +3,6 @@ python:
   - 3.5
 os:
   - linux
-  - osx
 install:
   - pip install -r requirements.dev.txt
   - pip install -e .
