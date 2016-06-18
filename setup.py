@@ -20,7 +20,7 @@ if __name__ == "__main__":
         license="MIT License",
         keywords=["prometheus", "monitoring", "metrics"],
         url="https://github.com/claws/aioprometheus",
-        packages=["aioprometheus", "prometheus_metrics_proto"],
+        packages=["aioprometheus"],
         install_requires=requires,
         pyrobuf_modules="proto",
         test_suite="tests",
