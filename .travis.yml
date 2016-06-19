@@ -6,10 +6,8 @@ os:
 git:
   depth: 1
 install:
-  - pip install -r requirements.dev.txt
   - pip install -e .
 script:
     - make test
-    - make docs
 matrix:
   fast_finish: true

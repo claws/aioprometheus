@@ -1,4 +1,4 @@
 aiohttp
 pyrobuf
-quantile
+quantile-python
 aio-etcd
