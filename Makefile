@@ -1,7 +1,7 @@
 # This makefile has been created to help developers perform common actions.
 
 .PHONY: help clean clean.scrub test test.verbose coverage style style.fix
-.PHONY: docs
+.PHONY: docs dist sdist
 
 # Do not remove this block. It is used by the 'help' rule when
 # constructing the help output.
@@ -11,7 +11,7 @@
 
 STYLE_EXCLUDE_LIST:=git status --porcelain --ignored | grep "!!" | grep ".py$$" | cut -d " " -f2 | tr "\n" ","
 STYLE_MAX_LINE_LENGTH:=160
-STYLE_PEP8_CMD:=pep8 --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402 --max-line-length=$(STYLE_MAX_LINE_LENGTH) aioprometheus tests examples
+STYLE_CMD:=pycodestyle --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402 --max-line-length=$(STYLE_MAX_LINE_LENGTH) aioprometheus tests examples
 
 
 # help: help                           - display this makefile's help information
@@ -50,7 +50,7 @@ coverage:
 
 # help: style                          - perform pep8 check
 style:
-	@$(STYLE_PEP8_CMD)
+	@$(STYLE_CMD)
 
 
 # help: style.fix                      - perform check with autopep8 fixes
@@ -58,7 +58,7 @@ style.fix:
 	@# If there are no files to fix then autopep8 typically returns an error
 	@# because it did not get passed any files to work on. Use xargs -r to
 	@# avoid this problem.
-	@$(STYLE_PEP8_CMD) -q  | xargs -r autopep8 -i --max-line-length=$(STYLE_MAX_LINE_LENGTH)
+	@$(STYLE_CMD) -q  | xargs -r autopep8 -i --max-line-length=$(STYLE_MAX_LINE_LENGTH)
 
 
 # help: docs                           - generate project documentation

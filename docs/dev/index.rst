@@ -72,7 +72,9 @@ Install the developmental dependencies using ``pip``.
 Install aioprometheus
 ---------------------
 
-Install `aioprometheus` using ``pip``.
+Use ``pip`` to perform a development install of `aioprometheus`. This installs
+the package in a way that allows you to edit the code after its installed and
+have the changes take effect immediately.
 
 .. code-block:: console
 
@@ -132,8 +134,9 @@ Internals
 ---------
 
 `Pyrobuf <https://github.com/appnexus/pyrobuf>`_ is used provide the Protobuf
-Buffers based efficient binary formatting. Pyrobuf is a Cython based implementation
-of the Protocol Buffers serialisation library.
+Buffers based efficient binary formatting. Pyrobuf is a Cython based
+implementation of the Protocol Buffers serialisation library. Pyrobuf does
+not repuire `protoc`.
 
 Extension modules created by ``pyrobuf`` are installed as separate packages.
 When `aioprometheus` is installed you actually get two packages installed;

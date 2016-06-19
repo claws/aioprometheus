@@ -5,6 +5,8 @@ os:
   - linux
 git:
   depth: 1
+before_install:
+  - pip install pip --upgrade
 install:
   - pip install -e .
 script:

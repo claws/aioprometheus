@@ -1,4 +1,4 @@
-aiohttp
-pyrobuf
-quantile-python
-aio-etcd
+aiohttp>=0.21.6
+pyrobuf>=0.5.10
+quantile-python>=1.1
+aio-etcd>=0.4.3
