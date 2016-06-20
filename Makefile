@@ -1,4 +1,6 @@
 # This makefile has been created to help developers perform common actions.
+# It assumes it is operating in an environment, such as a virtual env,
+# where the python command links to Python3.5 executable.
 
 .PHONY: help clean clean.scrub test test.verbose coverage style style.fix
 .PHONY: docs dist sdist
@@ -69,13 +71,8 @@ docs: coverage
 	@cd docs; cp -R coverage _build/html/.
 
 
-# help: dist                           - create a wheel based distribution package
-dist:
-	@python setup.py bdist_wheel
-
-
 # help: sdist                          - create a source distribution package
-sdist:
+dist:
 	@python setup.py sdist
 
 

@@ -1,2 +1,5 @@
-include *.py Licence/LICENSE Licence/LICENSE-prometheus-python
-proto/prometheus_metrics.proto
+recursive-include License *
+recursive-include aioprometheus *.py
+include proto/prometheus_metrics.proto
+include requirements.txt
+prune pyrobuf

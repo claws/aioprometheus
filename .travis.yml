@@ -10,6 +10,4 @@ before_install:
 install:
   - pip install -e .
 script:
-    - make test
-matrix:
-  fast_finish: true
+  - make test
