@@ -73,8 +73,8 @@ Install aioprometheus
 ---------------------
 
 Use ``pip`` to perform a development install of `aioprometheus`. This installs
-the package in a way that allows you to edit the code after its installed and
-have the changes take effect immediately.
+the package in a way that allows you to edit the code after its installed so
+that any changes take effect immediately.
 
 .. code-block:: console
 
@@ -107,6 +107,12 @@ package too.
     $ python -m unittest test_negotiate
 
 
+Coverage
+--------
+
+The test code coverage report can be found `here <../coverage/coverage.html>`_
+
+
 Documentation
 -------------
 
@@ -130,6 +136,72 @@ Then open a browser to the `docs <http://localhost:8000/_build/html/index.html>`
 content.
 
 
+.. _version-label:
+
+Version
+-------
+
+`aioprometheus` uses a three segment `CalVer <http://calver.org/>`_ versioning
+scheme comprising a short year, a zero padded month and then a micro version.
+The ``YY.MM`` part of the version are treated similarly to a SemVer major
+version. So when backwards incompatible or major functional changes occur the
+``YY.MM`` will be rolled up. For all other minor changes only the micro part
+will be incremented.
+
+
+Release Process
+---------------
+
+The following steps are used to make a new software release:
+
+- Update the version label in ``__init__.py``. It must comply with the
+  :ref:`version-label` scheme
+- Create the distribution
+
+  .. code-block:: console
+
+      make dist
+
+- Test distribution in ``dist/`` directory. This involves creating a virtual
+  environment, installing the source distribution in it and running the tests.
+  These steps have been captured for convenience in the ``dist/test.bash``
+  helper script. The script takes the distribution archive as its only
+  argument.
+
+  .. code-block:: console
+
+      cd dist
+      ./test.bash aioprometheus-16.06.01.tar.gz
+      cd ..
+
+- Build the docs and check for any errors.
+
+  .. code-block:: console
+
+      make docs
+
+- Upload to PyPI using
+
+  .. code-block:: console
+
+      python setup.py upload
+
+- Create and push a repo tag to Github.
+
+  .. code-block:: console
+
+      git tag YY.MM.MICRO -m "A meaningful release tag comment"
+      git tag  # check release tag is in list
+      git push --tags origin master
+
+  - Github will create a release tarball at:
+
+    ::
+
+        https://github.com/{username}/{repo}/tarball/{tag}.tar.gz
+
+
+
 Internals
 ---------
 
@@ -139,7 +211,7 @@ implementation of the Protocol Buffers serialisation library. Pyrobuf does
 not repuire `protoc`.
 
 Extension modules created by ``pyrobuf`` are installed as separate packages.
-When `aioprometheus` is installed you actually get two packages installed;
+So, when `aioprometheus` is installed you actually get two packages installed;
 ``aioprometheus`` and ``prometheus_metrics_proto``.
 
 The Protocol Buffer specification used by `aioprometheus` was obtained from the

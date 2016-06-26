@@ -72,7 +72,7 @@ docs: coverage
 
 
 # help: sdist                          - create a source distribution package
-dist:
+dist: clean
 	@python setup.py sdist
 
 

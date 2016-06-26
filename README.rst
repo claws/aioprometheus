@@ -1,8 +1,9 @@
 .. image:: https://travis-ci.org/claws/aioprometheus.svg?branch=master
     :target: https://travis-ci.org/claws/aioprometheus
 
-.. image:: https://img.shields.io/pypi/status/aioprometheus.svg?maxAge=2592000?style=plastic
+.. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
+
 
 aioprometheus
 =============
@@ -11,7 +12,8 @@ aioprometheus
 applications. It provides metrics collection and serving capabilities,
 supports multiple data formats and pushing metrics to a gateway.
 
-The project documentation can be found on `ReadTheDocs <http://aioprometheus.readthedocs.org/>`_.
+The project documentation can be found on
+`ReadTheDocs <http://aioprometheus.readthedocs.org/>`_.
 
 
 Install

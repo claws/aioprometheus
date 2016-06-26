@@ -1,13 +1,14 @@
 .. image:: https://travis-ci.org/claws/aioprometheus.svg?branch=master
     :target: https://travis-ci.org/claws/aioprometheus
 
-.. image:: https://img.shields.io/pypi/status/aioprometheus.svg?maxAge=2592000?style=plastic
+.. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
 
 aioprometheus
 =============
 
-`aioprometheus` provides asyncio based applications with a metrics
+`aioprometheus` is a Prometheus Python client library for asyncio-based
+applications. It provides asyncio based applications with a metrics
 collection and serving capability for use with the
 `Prometheus <https://prometheus.io/>`_ monitoring and alerting system.
 It supports multiple data formats and pushing metrics to a gateway.
@@ -17,8 +18,7 @@ The project source code can be found `here <https://github.com/claws/aiopromethe
 .. warning::
 
     While this project is mostly in a usable state it is still very early in
-    development. There is no backwards compatibility guarantees until the
-    1.0 release occurs.
+    development. There are no backwards compatibility guarantees yet.
 
 `aioprometheus` originates from the (now deprecated)
 `prometheus python <https://github.com/slok/prometheus-python>`_ package.
