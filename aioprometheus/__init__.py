@@ -6,4 +6,4 @@ from .pusher import Pusher
 from .registry import Registry, CollectorRegistry
 from .service import Service
 
-__version__ = "16.06.01"
+__version__ = "16.07.31"

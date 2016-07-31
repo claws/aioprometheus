@@ -8,9 +8,11 @@ import quantile
 
 from . import histogram
 from .metricdict import MetricDict
+from typing import cast, Any, Dict, List, Sequence, Tuple, Union
 
 # Used to return the value ordered (not necessary but for consistency useful)
-decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)
+# type annotations are not correct for this package yet.
+decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)  # type: ignore
 
 
 METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:][a-zA-Z0-9_:]*$')
@@ -19,6 +21,12 @@ RESTRICTED_LABELS_PREFIXES = ('__',)
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")
+
+# typing aliases
+LabelsType = Dict[str, str]
+NumericValueType = Union[int, float, histogram.Histogram, quantile.Estimator]
+ValueType = Union[str, NumericValueType]
+CollectorsType = Union['Counter', 'Gauge', 'Histogram', 'Summary']
 
 
 class MetricsTypes(enum.Enum):
@@ -77,7 +85,10 @@ class Collector(object):
 
     kind = MetricsTypes.untyped
 
-    def __init__(self, name, doc, const_labels=None):
+    def __init__(self,
+                 name: str,
+                 doc: str,
+                 const_labels: LabelsType = None) -> None:
         if not METRIC_NAME_RE.match(name):
             raise ValueError('Invalid metric name: {}'.format(name))
         self.name = name
@@ -90,21 +101,21 @@ class Collector(object):
 
         self.values = MetricDict()
 
-    def set_value(self, labels, value):
+    def set_value(self, labels: LabelsType, value: NumericValueType) -> None:
         '''  Sets a value in the container '''
         if labels:
             self._label_names_correct(labels)
         self.values[labels] = value
 
-    def get_value(self, labels):
+    def get_value(self, labels: LabelsType) -> NumericValueType:
         '''  Gets a value in the container, exception if isn't present '''
         return self.values[labels]
 
-    def get(self, labels):
+    def get(self, labels: LabelsType) -> NumericValueType:
         ''' Handy alias '''
         return self.get_value(labels)
 
-    def _label_names_correct(self, labels):
+    def _label_names_correct(self, labels: LabelsType) -> bool:
         ''' Check validity of label names.
 
         :raises: ValueError if labels are invalid
@@ -124,7 +135,7 @@ class Collector(object):
 
         return True
 
-    def get_all(self):
+    def get_all(self) -> List[Tuple[LabelsType, NumericValueType]]:
         '''
         Returns a list populated with 2-tuples. The first element is
         a dict of labels and the second element is the value of the metric
@@ -143,9 +154,9 @@ class Collector(object):
 
         return result
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (
-            isinstance(other, Collector) and
+            isinstance(other, self.__class__) and
             self.name == other.name and
             self.doc == other.doc and
             type(self) == type(other) and
@@ -168,24 +179,25 @@ class Counter(Collector):
 
     kind = MetricsTypes.counter
 
-    def get(self, labels):
+    def get(self, labels: LabelsType) -> NumericValueType:
         ''' Get gets the counter of an arbitrary group of labels '''
         return self.get_value(labels)
 
-    def set(self, labels, value):
+    def set(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Set is used to set the Counter to an arbitrary value. '''
         self.set_value(labels, value)
 
-    def inc(self, labels):
+    def inc(self, labels: LabelsType) -> None:
         ''' Inc increments the counter by 1.'''
         self.add(labels, 1)
 
-    def add(self, labels, value):
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Add will add the given value to the counter.
 
         :raises: ValueError if the value is negative. Counters can only
           increase.
         '''
+        value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if value < 0:
             raise ValueError("Counters can't decrease")
 
@@ -194,6 +206,7 @@ class Counter(Collector):
         except KeyError:
             current = 0
 
+        current = cast(Union[float, int], current)  # typing check, no runtime behaviour.
         self.set_value(labels, current + value)
 
 
@@ -214,37 +227,41 @@ class Gauge(Collector):
 
     kind = MetricsTypes.gauge
 
-    def set(self, labels, value):
+    def set(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Set sets the Gauge to an arbitrary value.'''
         self.set_value(labels, value)
 
-    def get(self, labels):
+    def get(self, labels: LabelsType) -> NumericValueType:
         ''' Get gets the Gauge of an arbitrary group of labels'''
         return self.get_value(labels)
 
-    def inc(self, labels):
+    def inc(self, labels: LabelsType) -> None:
         ''' Inc increments the Gauge by 1.'''
         self.add(labels, 1)
 
-    def dec(self, labels):
+    def dec(self, labels: LabelsType) -> None:
         ''' Dec decrements the Gauge by 1.'''
         self.add(labels, -1)
 
-    def add(self, labels, value):
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Add adds the given value to the Gauge. (The value can be
             negative, resulting in a decrease of the Gauge.)
         '''
+        value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
+
         try:
             current = self.get_value(labels)
         except KeyError:
             current = 0
+        current = cast(Union[float, int], current)  # typing check, no runtime behaviour.
 
         self.set_value(labels, current + value)
 
-    def sub(self, labels, value):
+    def sub(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Sub subtracts the given value from the Gauge. (The value can be
             negative, resulting in an increase of the Gauge.)
         '''
+        value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         self.add(labels, -value)
 
 
@@ -269,14 +286,18 @@ class Summary(Collector):
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
-    def __init__(self, name, doc, const_labels=None,
-                 invariants=DEFAULT_INVARIANTS):
+    def __init__(self,
+                 name: str,
+                 doc: str,
+                 const_labels: LabelsType = None,
+                 invariants: Sequence[Tuple[float, float]] = DEFAULT_INVARIANTS) -> None:
         super().__init__(name, doc, const_labels=const_labels)
         self.invariants = invariants
 
-    def add(self, labels, value):
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Add adds a single observation to the summary '''
 
+        value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
             raise TypeError("Summary only works with digits (int, float)")
 
@@ -286,26 +307,28 @@ class Summary(Collector):
             # Initialize quantile estimator
             e = quantile.Estimator(*self.invariants)
             self.set_value(labels, e)
-        e.observe(float(value))
 
-    def get(self, labels):
+        e.observe(float(value))  # type: ignore
+
+    def get(self,
+            labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
         Return a dict containing the sum, count and 0.5, 0.9 and 0.99
         percentiles.
         '''
-
-        return_data = {}
+        return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 
         e = self.get_value(labels)
+        e = cast(Any, e)  # typing check, no runtime behaviour.
 
         # Set invariants data (default to 0.50, 0.90 and 0.99)
-        for i in e._invariants:
+        for i in e._invariants:  # type: ignore
             q = i._quantile
-            return_data[q] = e.query(q)
+            return_data[q] = e.query(q)  # type: ignore
 
         # Set sum and count
-        return_data[self.SUM_KEY] = e._sum
-        return_data[self.COUNT_KEY] = e._observations
+        return_data[self.SUM_KEY] = e._sum  # type: ignore
+        return_data[self.COUNT_KEY] = e._observations  # type: ignore
 
         return return_data
 
@@ -329,35 +352,43 @@ class Histogram(Collector):
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
-    def __init__(self, name, doc, const_labels=None, buckets=DEFAULT_BUCKETS):
+    def __init__(self,
+                 name: str,
+                 doc: str,
+                 const_labels: LabelsType = None,
+                 buckets: Sequence[float] = DEFAULT_BUCKETS) -> None:
         super().__init__(name, doc, const_labels=const_labels)
         self.upper_bounds = buckets
 
-    def add(self, labels, value):
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
         ''' Add adds a single observation to the histogram '''
 
+        value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
             raise TypeError("Histogram only works with digits (int, float)")
 
         try:
             h = self.get_value(labels)
+            h = cast(histogram.Histogram, h)  # typing check, no runtime behaviour.
         except KeyError:
             # Initialize histogram aggregator
             h = histogram.Histogram(*self.upper_bounds)
             self.set_value(labels, h)
+
         h.observe(float(value))
 
-    def get(self, labels):
+    def get(self,
+            labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
         Return a dict containing the sum, count and buckets.
         '''
-
-        return_data = {}
+        return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 
         h = self.get_value(labels)
+        h = cast(histogram.Histogram, h)  # typing check, no runtime behaviour.
 
         for upper_bound, cumulative_count in h.buckets.items():
-            return_data[upper_bound] = cumulative_count
+            return_data[upper_bound] = cumulative_count  # keys are floats
 
         # Set sum and count
         return_data[self.SUM_KEY] = h.sum

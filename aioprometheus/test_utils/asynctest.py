@@ -31,6 +31,9 @@ import inspect
 import sys
 import unittest
 
+if False:
+    from asyncio.base_events import BaseEventLoop
+    from asyncio.events import BaseDefaultEventLoopPolicy
 
 PY34 = sys.version_info >= (3, 4)
 PY35 = sys.version_info >= (3, 5)
@@ -57,8 +60,8 @@ def isawaitable(obj):
 
 
 class AsyncioTestCase(unittest.TestCase):
-
-    ''' This class enhances :class:`unittest.TestCase` to work nicely with
+    '''
+    This class enhances :class:`unittest.TestCase` to work nicely with
     tests that use the :mod:`asyncio` module.
 
     By default a new event loop is created for each test and is set as the
@@ -112,15 +115,15 @@ class AsyncioTestCase(unittest.TestCase):
     '''
 
     # A specific event loop can be used by defining an event loop policy.
-    loop_policy = None
+    loop_policy = None  # type: BaseDefaultEventLoopPolicy
 
-    loop = None
+    loop = None  # type: BaseEventLoop
 
     # To stop poorly written tests from blocking the efficient progress
     # of running test cases, a default test timeout can be set. If you
     # need timeouts for specific tests then use the `@TestTimeout`
     # decorator..
-    timeout = None
+    timeout = None  # type: float
 
     def run(self, result=None):
         '''

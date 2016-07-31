@@ -18,7 +18,7 @@ class IDiscoveryAgent(abc.ABC):
         '''
         raise NotImplementedError
 
-    def deregister(self, metrics_server):
+    async def deregister(self, metrics_server):
         '''
         Register a Prometheus metrics server from service discovery.
 

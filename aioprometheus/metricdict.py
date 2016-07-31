@@ -10,9 +10,10 @@ regex = re.compile("\{.*:.*,?\}")
 
 # http://stackoverflow.com/questions/3387691/python-how-to-perfectly-override-a-dict
 class MetricDict(collections.MutableMapping):
-    """ MetricDict stores the data based on the labels so we need to generate
-        custom hash keys based on the labels
-    """
+    '''
+    MetricDict stores the data based on the labels so we need to generate
+    custom hash keys based on the labels
+    '''
 
     EMPTY_KEY = "__EMPTY__"
 

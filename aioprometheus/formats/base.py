@@ -3,6 +3,11 @@ import abc
 import collections
 import datetime
 
+from typing import Dict
+
+# typing aliases
+LabelsType = Dict[str, str]
+
 
 class IFormatter(abc.ABC):
 
@@ -68,7 +73,10 @@ class IFormatter(abc.ABC):
         :returns: bytes
         '''
 
-    def _unify_labels(self, labels, const_labels, ordered=False):
+    def _unify_labels(self,
+                      labels: LabelsType,
+                      const_labels: LabelsType,
+                      ordered: bool = False) -> LabelsType:
         '''
         Return a dict of all labels for a metric. This combines the explicit
         labels and any constant labels. If ordered is True then the labels

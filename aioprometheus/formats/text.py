@@ -4,6 +4,24 @@ import collections
 
 from .base import IFormatter
 from ..collectors import Counter, Gauge, Summary, Histogram
+from typing import cast, Callable, Dict, List, Tuple, Union
+
+# imports only used for type annotations
+if False:
+    from ..registry import CollectorRegistry
+
+# typing aliases
+LabelsType = Dict[str, str]
+NumericValueType = Union[int, float]
+# ValueType = Union[str, NumericValueType]
+SummaryDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
+SummaryDictType = Dict[SummaryDictKeyType, NumericValueType]
+HistogramDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
+HistogramDictType = Dict[HistogramDictKeyType, NumericValueType]
+CollectorsType = Union[Counter, Gauge, Histogram, Summary]
+MetricValueType = Union[NumericValueType, SummaryDictType, HistogramDictType]
+MetricTupleType = Tuple[LabelsType, MetricValueType]
+FormatterFuncType = Callable[[MetricTupleType, str, LabelsType], List[str]]
 
 
 HELP_FMT = "# HELP {name} {doc}"
@@ -20,28 +38,35 @@ NEG_INF = float("-inf")
 class TextFormatter(IFormatter):
     ''' This formatter encodes into the Protocol Buffers binary format '''
 
-    def __init__(self, timestamp=False):
-        """timestamp is a boolean, if you want timestamp in each metric"""
+    def __init__(self, timestamp: bool = False) -> None:
+        ''' Initialise the text formatter.
+
+        timestamp is a boolean, if you want timestamp in each metric.
+        '''
         self.timestamp = timestamp
         self._headers = {
             'Content-Type': 'text/plain; version=0.0.4; charset=utf-8'}
 
-    def get_headers(self):
+    def get_headers(self) -> Dict[str, str]:
         return self._headers
 
-    def _format_line(self, name, labels, value, const_labels=None):
-        labels_str = ""
-        ts = ""
+    def _format_line(self,
+                     name: str,
+                     labels: LabelsType,
+                     value: NumericValueType,
+                     const_labels: LabelsType = None) -> str:
 
         labels = self._unify_labels(labels, const_labels, True)
 
+        labels_str = ""  # type: str
         if labels:
-            labels_str = [
+            _labels = [
                 LABEL_FMT.format(key=k, value=v)
                 for k, v in labels.items()]
-            labels_str = LABEL_SEPARATOR_FMT.join(labels_str)
+            labels_str = LABEL_SEPARATOR_FMT.join(_labels)
             labels_str = "{{{labels}}}".format(labels=labels_str)
 
+        ts = ""  # type: Union[str, int]
         if self.timestamp:
             ts = self._get_timestamp()
 
@@ -50,7 +75,10 @@ class TextFormatter(IFormatter):
 
         return result.strip()
 
-    def _format_counter(self, counter, name, const_labels):
+    def _format_counter(self,
+                        counter: MetricTupleType,
+                        name: str,
+                        const_labels: LabelsType) -> List[str]:
         '''
         :param counter: a 2-tuple containing labels and the counter value.
         :param labels: a dict of labels for a metric.
@@ -58,9 +86,14 @@ class TextFormatter(IFormatter):
           the metric.
         '''
         labels, value = counter
-        return self._format_line(name, labels, value, const_labels)
+        value = cast(NumericValueType, value)  # typing check, no runtime behaviour.
+        line = self._format_line(name, labels, value, const_labels)
+        return [line]
 
-    def _format_gauge(self, gauge, name, const_labels):
+    def _format_gauge(self,
+                      gauge: MetricTupleType,
+                      name: str,
+                      const_labels: LabelsType) -> List[str]:
         '''
         :param gauge: a 2-tuple containing labels and the gauge value.
         :param labels: a dict of labels for a metric.
@@ -68,9 +101,14 @@ class TextFormatter(IFormatter):
           the metric.
         '''
         labels, value = gauge
-        return self._format_line(name, labels, value, const_labels)
+        value = cast(NumericValueType, value)  # typing check, no runtime behaviour.
+        line = self._format_line(name, labels, value, const_labels)
+        return [line]
 
-    def _format_summary(self, summary, name, const_labels):
+    def _format_summary(self,
+                        summary: MetricTupleType,
+                        name: str,
+                        const_labels: LabelsType) -> List[str]:
         '''
         :param summary: a 2-tuple containing labels and a dict representing
           the summary value. The dict contains keys for each quantile as
@@ -80,27 +118,31 @@ class TextFormatter(IFormatter):
           the metric.
         '''
         summary_labels, summary_value_dict = summary
-        results = []
+        # typing check, no runtime behaviour.
+        summary_value_dict = cast(SummaryDictType, summary_value_dict)
+        results = []  # type: List[str]
 
         for k, v in summary_value_dict.items():
             # Start from a fresh dict for the labels (new or with preset data)
+            labels = {}  # type: Dict[str, str]
             if summary_labels:
                 labels = summary_labels.copy()
-            else:
-                labels = {}
 
             # Quantiles need labels and not special name (like sum and count)
             if type(k) is not float:
                 name_str = "{0}_{1}".format(name, k)
             else:
-                labels['quantile'] = k
+                labels['quantile'] = str(k)
                 name_str = name
             results.append(
                 self._format_line(name_str, labels, v, const_labels))
 
         return results
 
-    def _format_histogram(self, histogram, name, const_labels):
+    def _format_histogram(self,
+                          histogram: MetricTupleType,
+                          name: str,
+                          const_labels: LabelsType) -> List[str]:
         '''
         :param histogram: a 2-tuple containing labels and a dict representing
           the histogram value. The dict contains keys for each bucket as
@@ -110,14 +152,15 @@ class TextFormatter(IFormatter):
           the metric.
         '''
         histogram_labels, histogram_value_dict = histogram
-        results = []
+        # typing check, no runtime behaviour.
+        histogram_value_dict = cast(HistogramDictType, histogram_value_dict)
+        results = []  # type: List[str]
 
         for k, v in histogram_value_dict.items():
             # Stat from a fresh dict for the labels (new or with preset data)
+            labels = {}  # type: Dict[str, str]
             if histogram_labels:
                 labels = histogram_labels.copy()
-            else:
-                labels = {}
 
             # Buckets need labels and not special name (like sum and count)
             if type(k) is not float:
@@ -129,7 +172,7 @@ class TextFormatter(IFormatter):
                 elif upper_bound == NEG_INF:
                     upper_bound = '-Inf'
                 # Add the le ("less or equal") label.
-                labels['le'] = upper_bound
+                labels['le'] = str(upper_bound)
                 # Use the special bucket label name
                 name_str = name + '_bucket'
             results.append(
@@ -137,11 +180,14 @@ class TextFormatter(IFormatter):
 
         return results
 
-    def marshall_lines(self, collector):
+    def marshall_lines(self, collector: CollectorsType) -> List[str]:
         '''
-        Marshalls a collector and returns the storage/transfer format in
-        a tuple, this tuple has reprensentation format per element.
+        Marshalls a collector into a sequence of strings representing
+        the metrics in the collector.
+
+        :return: a list of strings.
         '''
+        exec_method = None  # type: FormatterFuncType
         if isinstance(collector, Counter):
             exec_method = self._format_counter
         elif isinstance(collector, Gauge):
@@ -164,22 +210,18 @@ class TextFormatter(IFormatter):
         lines = [help_header, type_header]
 
         for i in collector.get_all():
+            i = cast(MetricTupleType, i)  # typing check, no runtime behaviour.
             r = exec_method(i, collector.name, collector.const_labels)
-
-            # Check if it returns one or multiple lines
-            if not isinstance(r, str) and isinstance(r, collections.Iterable):
-                lines.extend(r)
-            else:
-                lines.append(r)
+            lines.extend(r)
 
         return lines
 
-    def marshall_collector(self, collector):
+    def marshall_collector(self, collector: CollectorsType) -> str:
         # need sort?
         result = sorted(self.marshall_lines(collector))
         return LINE_SEPARATOR_FMT.join(result)
 
-    def marshall(self, registry):
+    def marshall(self, registry: 'CollectorRegistry') -> bytes:
         ''' Marshalls a full registry (various collectors) into a bytes
         object '''
 

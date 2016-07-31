@@ -1,5 +1,8 @@
 
-from .collectors import Collector
+from .collectors import Collector, Counter, Gauge, Histogram, Summary
+from typing import List, Union
+
+CollectorsType = Union[Counter, Gauge, Histogram, Summary]
 
 
 class CollectorRegistry(object):
@@ -11,10 +14,10 @@ class CollectorRegistry(object):
     formats.
     '''
 
-    def __init__(self):
-        self.collectors = {}
+    def __init__(self) -> None:
+        self.collectors = {}  # type: Dict[str, CollectorsType]
 
-    def register(self, collector):
+    def register(self, collector: CollectorsType) -> None:
         ''' Register a collector
 
         :raises: TypeError if collector is not an instance of
@@ -23,8 +26,7 @@ class CollectorRegistry(object):
         '''
         if not isinstance(collector, Collector):
             raise TypeError(
-                'Invalid collector type. Expected Collector. got {}'.format(
-                    type(collector)))
+                'Invalid collector type: {}'.format(collector))
 
         if collector.name in self.collectors:
             raise ValueError(
@@ -33,18 +35,23 @@ class CollectorRegistry(object):
 
         self.collectors[collector.name] = collector
 
-    def deregister(self, name):
-        ''' Deregister a collector '''
+    def deregister(self, name: str) -> None:
+        ''' Deregister a collector.
+
+        :param name: The name of the collector to deregister.
+        '''
         del self.collectors[name]
 
-    def get(self, name):
+    def get(self, name: str) -> CollectorsType:
         ''' Get a collector
+
+        :param name: The name of the collector to fetch.
 
         :raises: KeyError if collector is not found.
         '''
         return self.collectors[name]
 
-    def get_all(self):
+    def get_all(self) -> List[CollectorsType]:
         ''' Return a list of all collectors '''
         return list(self.collectors.values())
 

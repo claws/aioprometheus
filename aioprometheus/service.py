@@ -15,6 +15,12 @@ from aiohttp.hdrs import (
 
 from .negotiator import negotiate
 from .registry import Registry
+from typing import Optional, Set
+
+# imports only used for type annotations
+if False:
+    from asyncio.base_events import BaseEventLoop, Server
+    from ssl import SSLContext
 
 
 logger = logging.getLogger(__name__)
@@ -29,8 +35,11 @@ class Service(object):
     by the Prometheus.io server.
     '''
 
-    def __init__(self, registry=None, loop=None):
+    def __init__(self,
+                 registry: Registry = None,
+                 loop: 'BaseEventLoop' = None) -> None:
         '''
+        Initialise the Prometheus metrics service.
 
         :param registry: A :class:`CollectorRegistry` instance that will
           hold all the metrics for this service. If no registry if specified
@@ -41,14 +50,14 @@ class Service(object):
         '''
         self.loop = loop or asyncio.get_event_loop()
         self.registry = registry or Registry()
-        self._svr = None
-        self._svc = None
-        self._handler = None
-        self._https = None
+        self._svr = None  # type: Server
+        self._svc = None  # type: aiohttp.web.Application
+        self._handler = None  # type: aiohttp.web.RequestHandlerFactory
+        self._https = None  # type: bool
 
     @property
-    def url(self):
-        ''' Return the metrics url '''
+    def url(self) -> str:
+        ''' Return the Prometheus metrics url '''
         if self._svr is None:
             raise Exception(
                 "No URL available, Prometheus metrics server is not running")
@@ -63,26 +72,26 @@ class Service(object):
         return url
 
     async def start(self,
-                    addr='',
-                    port=0,
-                    ssl=None,
-                    metrics_url=DEFAULT_METRICS_PATH,
-                    discovery_agent=None):
+                    addr: str = '',
+                    port: int = 0,
+                    ssl: 'SSLContext' = None,
+                    metrics_url: str = DEFAULT_METRICS_PATH,
+                    discovery_agent=None) -> None:
         ''' Start the prometheus metrics HTTP(S) server.
 
         :param addr: the address to bind the server on. By default this is
           set to an empty string so that the service becomes available on
           all interfaces.
 
-        :param port: The port to bind the server on. This defaults to 0
+        :param port: The port to bind the server on. The default value is 0
           which will cause the server to bind to an ephemeral port. If you
           want the server to operate on a fixed port then you need to specifiy
           the port.
 
         :param ssl: a sslContext for use with TLS.
 
-        :param metrics_url: The name of the endpoint to expose prometheus
-          metrics on. Defaults to '/metrics'.
+        :param metrics_url: The name of the endpoint route to expose
+          prometheus metrics on. Defaults to '/metrics'.
 
         :param discovery_agent: an agent that can register the metrics
           service with a service discovery mechanism.
@@ -115,7 +124,9 @@ class Service(object):
         if discovery_agent:
             await discovery_agent.register(self)
 
-    async def stop(self, wait_duration=1.0, discovery_agent=None):
+    async def stop(self,
+                   wait_duration: float = 1.0,
+                   discovery_agent=None) -> None:
         ''' Stop the prometheus metrics HTTP(S) server.
 
         :param wait_duration: the number of seconds to wait for connections to
@@ -147,23 +158,25 @@ class Service(object):
         self._handler = None
         logger.debug('Prometheus metrics server stopped')
 
-    async def handle_metrics(self, request):
+    async def handle_metrics(self,
+                             request: aiohttp.web.Request) -> aiohttp.web.Response:
         ''' Handle a request to the metrics route.
 
         The request is inspected and the most efficient response data format
         is chosen.
         '''
         Formatter = negotiate(self.accepts(request))
-        formatter = Formatter()
+        formatter = Formatter(False)
 
         resp = aiohttp.web.Response()
         resp.headers.update(formatter.get_headers())
         resp.body = formatter.marshall(self.registry)
         return resp
 
-    def accepts(self, request):
-        ''' Return a list of accepts items in the request headers '''
-        accepts = set()
+    def accepts(self,
+                request: aiohttp.web.Request) -> Set[str]:
+        ''' Return a sequence of accepts items in the request headers '''
+        accepts = set()  # type: Set[str]
         accept_headers = request.headers.getall(ACCEPT)
         logger.debug('accept: {}'.format(accept_headers))
         for accept_items in accept_headers:

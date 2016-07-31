@@ -1,11 +1,17 @@
 
 from collections import OrderedDict
+from typing import List, Sequence, Union
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")
 
+# typing aliases
+BucketType = float
 
-def linearBuckets(start, width, count):
+
+def linearBuckets(start: Union[float, int],
+                  width: Union[int, float],
+                  count: int) -> List[BucketType]:
     '''
     Returns 'count' buckets, each 'width' wide, where the lowest bucket has an
     upper bound of 'start'. No +Inf bucket is included in the returned list.
@@ -17,7 +23,9 @@ def linearBuckets(start, width, count):
     return [start + i * width for i in range(count)]
 
 
-def exponentialBuckets(start, factor, count):
+def exponentialBuckets(start: Union[float, int],
+                       factor: Union[float, int],
+                       count: int) -> List[BucketType]:
     '''
     Returns 'count' buckets, where the lowest bucket has an upper bound of
     'start' and each following bucket's upper bound is 'factor' times the
@@ -44,29 +52,31 @@ class Histogram(object):
     observations.
     '''
 
-    def __init__(self, *buckets):
-        buckets = [float(b) for b in buckets]
+    def __init__(self, *buckets: BucketType) -> None:
+        _buckets = [float(b) for b in buckets]
 
-        if buckets != sorted(buckets):
+        if _buckets != sorted(buckets):
             raise ValueError('Buckets not in sorted order')
 
-        if buckets and buckets[-1] != POS_INF:
-            buckets.append(POS_INF)
+        if _buckets and _buckets[-1] != POS_INF:
+            _buckets.append(POS_INF)
 
-        if len(buckets) < 2:
+        if len(_buckets) < 2:
             raise ValueError('Must have at least two buckets')
 
-        self.buckets = OrderedDict([(b, 0) for b in buckets])
-        self.observations = 0
-        self.sum = 0
+        self.buckets = OrderedDict(
+            [(b, 0) for b in _buckets])  # type: Dict[float, int]
+        self.observations = 0  # type: int
+        self.sum = 0.0  # type: float
 
-    def observe(self, value):
+    def observe(self, value: Union[float, int]) -> None:
         ''' Observe the given amount.
 
         Increment the count of observations, add value to the sum and
         increment the appropriate bucket counter.
         '''
-        # The last bucket is +Inf, so we will always increment.
+        # The last bucket is +Inf, so we will always increment at least
+        # one bucket
         for upper_bound in self.buckets:
             if value <= upper_bound:
                 self.buckets[upper_bound] += 1

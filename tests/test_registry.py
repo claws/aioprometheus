@@ -72,7 +72,7 @@ class TestRegistry(unittest.TestCase):
         with self.assertRaises(TypeError) as context:
             r.register("This will fail")
         self.assertIn(
-            "Invalid collector type. Expected Collector. got",
+            "Invalid collector type: ",
             str(context.exception))
 
     def test_deregister(self):

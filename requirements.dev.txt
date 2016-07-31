@@ -3,3 +3,5 @@ autopep8>=1.2.4
 pycodestyle>=2.0.0
 sphinx>=1.4.4
 coverage>=4.1
+mypy-lang>=0.4.3
+typed_ast>=0.5.5
