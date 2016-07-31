@@ -63,6 +63,9 @@ style.fix:
 	@$(STYLE_CMD) -q  | xargs -r autopep8 -i --max-line-length=$(STYLE_MAX_LINE_LENGTH)
 
 
+check_types:
+	MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser -s
+
 # help: docs                           - generate project documentation
 docs: coverage
 	@cd docs; rm -rf api/aioprometheus*.rst api/modules.rst _build/*

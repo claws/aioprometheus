@@ -5,6 +5,12 @@ import logging
 
 from aio_etcd.client import Client as EtcdClient
 from .agent import IDiscoveryAgent
+from typing import Optional
+
+# imports only used for type annotations
+if False:
+    from asyncio.base_events import BaseEventLoop
+    from ..service import Service
 
 
 logger = logging.getLogger(__name__)
@@ -20,7 +26,11 @@ class EtcdAgent(IDiscoveryAgent):
     This mechanism stores key values as JSON objects.
     '''
 
-    def __init__(self, service_name, tags=(), loop=None, **kwargs):
+    def __init__(self,
+                 service_name: str,
+                 tags=(),
+                 loop: Optional['BaseEventLoop'] = None,
+                 **kwargs) -> None:
         '''
 
         :param service_name: a string that uniquely defines the service
@@ -36,7 +46,7 @@ class EtcdAgent(IDiscoveryAgent):
         self.loop = loop or asyncio.get_event_loop()
         self.client = EtcdClient(loop=self.loop, **kwargs)
 
-    async def register(self, metrics_server):
+    async def register(self, metrics_server: 'Service') -> None:
         '''
         Register a Prometheus metrics server with etcd.
 
@@ -50,9 +60,9 @@ class EtcdAgent(IDiscoveryAgent):
             service_name=self.service_name,
             tags=self.tags,
             url=metrics_server.url)
-        await self.write(key, json.dumps(value))
+        await self.client.write(key, json.dumps(value))
 
-    async def deregister(self, metrics_server):
+    async def deregister(self, metrics_server: 'Service') -> None:
         '''
         Register a Prometheus metrics server from etcd.
 
@@ -62,9 +72,9 @@ class EtcdAgent(IDiscoveryAgent):
           then the default event will be used.
         '''
         key = '/metrics/{}'.format(self.service_name)
-        await self.delete(key)
+        await self.client.delete(key)
 
-    async def close(self):
+    async def close(self) -> None:
         '''
         Stop the agent. This method does not deregister the service.
         '''

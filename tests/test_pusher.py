@@ -37,11 +37,7 @@ class TestPusherServer(object):
         self._svc = aiohttp.web.Application()
         self._svc.router.add_route(
             '*',
-            "/metrics/jobs/{job}",
-            self.handler)
-        self._svc.router.add_route(
-            '*',
-            "/metrics/jobs/{job}/instances/{instance}",
+            "/metrics/job/{job}",
             self.handler)
         self._handler = self._svc.make_handler()
         self._svr = await self.loop.create_server(
@@ -60,10 +56,6 @@ class TestPusherServer(object):
 
 def expected_job_path(job):
     return Pusher.PATH.format(job)
-
-
-def expected_job_instance_path(job, instance):
-    return Pusher.INSTANCE_PATH.format(job, instance)
 
 
 class TestPusher(AsyncioTestCase):
@@ -90,24 +82,6 @@ class TestPusher(AsyncioTestCase):
 
         self.assertEqual(
             expected_job_path(job_name),
-            self.server.test_results['path'])
-
-    async def test_push_instance_ping(self):
-        job_name = "my-job"
-        instance_name = "my-instance"
-        p = Pusher(job_name, TEST_URL, instance_name)
-        registry = Registry()
-        c = Counter("total_requests", "Total requests.", {})
-        registry.register(c)
-
-        c.inc({'url': "/p/user", })
-
-        # Push to the pushgateway
-        resp = await p.replace(registry)
-        self.assertEqual(resp.status, 200)
-
-        self.assertEqual(
-            expected_job_instance_path(job_name, instance_name),
             self.server.test_results['path'])
 
     async def test_push_add(self):

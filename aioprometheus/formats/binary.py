@@ -4,17 +4,33 @@ Protocol Buffers is used as the data serialisation format.
 '''
 
 import pyrobuf_util
+import prometheus_metrics_proto as pmp  # type: ignore
 
 from .base import IFormatter
 from ..collectors import Counter, Gauge, Summary, Histogram
+from typing import cast, Callable, Dict, List, Tuple, Union
 
-import prometheus_metrics_proto as pmp
+# imports only used for type annotations
+if False:
+    from ..registry import CollectorRegistry
+
+# typing aliases
+LabelsType = Dict[str, str]
+NumericValueType = Union[int, float]
+SummaryDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
+SummaryDictType = Dict[SummaryDictKeyType, NumericValueType]
+HistogramDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
+HistogramDictType = Dict[HistogramDictKeyType, NumericValueType]
+CollectorsType = Union[Counter, Gauge, Histogram, Summary]
+MetricValueType = Union[float, SummaryDictType, HistogramDictType]
+MetricTupleType = Tuple[LabelsType, MetricValueType]
+FormatterFuncType = Callable[[MetricTupleType, str, LabelsType], pmp.Metric]
 
 
 class BinaryFormatter(IFormatter):
     ''' This formatter encodes into the Protocol Buffers binary format '''
 
-    def __init__(self, timestamp=False):
+    def __init__(self, timestamp: bool = False) -> None:
         '''
         :param timestamp: a boolean flag that when True will add a timestamp
           to metric.
@@ -25,15 +41,19 @@ class BinaryFormatter(IFormatter):
                             "proto=io.prometheus.client.MetricFamily; "
                             "encoding=delimited"}
 
-    def get_headers(self):
+    def get_headers(self) -> Dict[str, str]:
         return self._headers
 
-    def _create_labels(self, labels):
+    def _create_labels(self, labels: LabelsType) -> List[pmp.LabelPair]:
         ''' Return a list of LabelPair objects for each label. '''
         return [
             pmp.LabelPair(name=k, value=str(v)) for k, v in labels.items()]
 
-    def _format_counter(self, counter, name, const_labels):
+    def _format_counter(self,
+                        # counter: Tuple[LabelsType, ValueType],
+                        counter: MetricTupleType,
+                        name: str,
+                        const_labels: LabelsType) -> pmp.Metric:
         '''
         :param counter: a 2-tuple containing labels and the counter value.
         :param labels: a dict of labels for a metric.
@@ -52,7 +72,10 @@ class BinaryFormatter(IFormatter):
 
         return pb_metric
 
-    def _format_gauge(self, gauge, name, const_labels):
+    def _format_gauge(self,
+                      gauge: MetricTupleType,
+                      name: str,
+                      const_labels: LabelsType) -> pmp.Metric:
         '''
         :param gauge: a 2-tuple containing labels and the gauge value.
         :param labels: a dict of labels for a metric.
@@ -70,7 +93,10 @@ class BinaryFormatter(IFormatter):
             pb_metric.timestamp_ms = self._get_timestamp()
         return pb_metric
 
-    def _format_summary(self, summary, name, const_labels):
+    def _format_summary(self,
+                        summary: MetricTupleType,
+                        name: str,
+                        const_labels: LabelsType) -> pmp.Metric:
         '''
         :param summary: a 2-tuple containing labels and a dict representing
           the summary value. The dict contains keys for each quantile as
@@ -79,7 +105,10 @@ class BinaryFormatter(IFormatter):
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
+
         summary_labels, summary_value_dict = summary
+        # typing check, no runtime behaviour.
+        summary_value_dict = cast(SummaryDictType, summary_value_dict)
         labels = self._unify_labels(summary_labels, const_labels, ordered=True)
         pb_labels = self._create_labels(labels)
 
@@ -100,7 +129,10 @@ class BinaryFormatter(IFormatter):
 
         return pb_metric
 
-    def _format_histogram(self, histogram, name, const_labels):
+    def _format_histogram(self,
+                          histogram: MetricTupleType,
+                          name: str,
+                          const_labels: LabelsType) -> pmp.Metric:
         '''
         :param histogram: a 2-tuple containing labels and a dict representing
           the histogram value. The dict contains keys for each bucket as
@@ -110,6 +142,8 @@ class BinaryFormatter(IFormatter):
           the metric.
         '''
         histogram_labels, histogram_value_dict = histogram
+        # typing check, no runtime behaviour.
+        histogram_value_dict = cast(HistogramDictType, histogram_value_dict)
         labels = self._unify_labels(
             histogram_labels, const_labels, ordered=True)
         pb_labels = self._create_labels(labels)
@@ -131,11 +165,15 @@ class BinaryFormatter(IFormatter):
 
         return pb_metric
 
-    def marshall_collector(self, collector):
+    def marshall_collector(self,
+                           collector: CollectorsType) -> pmp.MetricFamily:
         '''
+        Marshalls a collector into :class:`MetricFamily` object representing
+        the metrics in the collector.
+
         :return: a :class:`MetricFamily` object
         '''
-
+        exec_method = None  # type: FormatterFuncType
         if isinstance(collector, Counter):
             metric_type = pmp.COUNTER
             exec_method = self._format_counter
@@ -154,6 +192,7 @@ class BinaryFormatter(IFormatter):
         pb_metrics = []
 
         for i in collector.get_all():
+            i = cast(MetricTupleType, i)  # typing check, no runtime behaviour.
             r = exec_method(i, collector.name, collector.const_labels)
             pb_metrics.append(r)
 
@@ -163,7 +202,7 @@ class BinaryFormatter(IFormatter):
 
         return pb_metric_family
 
-    def marshall(self, registry):
+    def marshall(self, registry: 'CollectorRegistry') -> bytes:
         ''' Marshall the collectors in the registry into binary protocol
         buffer format.
 

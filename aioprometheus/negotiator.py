@@ -2,9 +2,15 @@
 import logging
 
 from .formats import BinaryFormatter, TextFormatter
-
+from typing import Callable, Set, Union
 
 logger = logging.getLogger(__name__)
+
+# type aliases
+BinaryFormatterClass = Callable[[bool], BinaryFormatter]
+TextFormatterClass = Callable[[bool], TextFormatter]
+FormatterType = Union[BinaryFormatterClass, TextFormatterClass]
+# FormatterType = Union[Type[BinaryFormatter], Type[TextFormatter]]
 
 
 ProtobufAccepts = set(
@@ -20,7 +26,7 @@ ProtobufAccepts = set(
 TextAccepts = set(['text/plain', 'version=0.0.4'])
 
 
-def negotiate(accepts):
+def negotiate(accepts: Set[str]) -> FormatterType:
     ''' Negotiate a response format by scanning through the ACCEPTS
     header and selecting the most efficient format.
 
@@ -33,11 +39,11 @@ def negotiate(accepts):
         raise TypeError(
             'Expected a set but got {}'.format(type(accepts)))
 
+    formatter = TextFormatter  # type: FormatterType
+
     if ProtobufAccepts.issubset(accepts):
         formatter = BinaryFormatter
     elif TextAccepts.issubset(accepts):
-        formatter = TextFormatter
-    else:
         formatter = TextFormatter
 
     logger.debug(
