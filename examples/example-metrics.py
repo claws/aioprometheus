@@ -1,3 +1,9 @@
+'''
+This example implements an example application that includes an aioprometheus
+based metrics collecting and exporting capability as well as a client function
+that emulates Prometheus scraping the metrics server. The fetching client
+requests metrics from the server in two different formats; text and binary.
+'''
 
 import asyncio
 import logging
@@ -24,7 +30,7 @@ UPDATE_INTERVAL = 1.0
 def on_timer_expiry(loop, ram_metric, cpu_metric,
                     requests_metric, payload_metric,
                     latency_metric):
-    ''' Update metrics '''
+    ''' Update metrics at regular interval '''
 
     # Add ram metrics
     ram = psutil.virtual_memory()
@@ -53,7 +59,11 @@ def on_timer_expiry(loop, ram_metric, cpu_metric,
 
 
 async def fetch_metrics(url, loop):
-    ''' Fetch metrics from the service endpoint using different formats '''
+    ''' Fetch metrics from the service endpoint using different formats.
+
+    This coroutine runs 'n' times, with a brief interval in between, before
+    exiting.
+    '''
 
     n = 3
     while n > 0:

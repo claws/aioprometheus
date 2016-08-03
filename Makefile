@@ -64,7 +64,7 @@ style.fix:
 
 
 check_types:
-	MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser -s
+	@MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser -s
 
 # help: docs                           - generate project documentation
 docs: coverage

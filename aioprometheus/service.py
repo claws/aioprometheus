@@ -15,7 +15,7 @@ from aiohttp.hdrs import (
 
 from .negotiator import negotiate
 from .registry import Registry
-from typing import Optional, Set
+from typing import Set
 
 # imports only used for type annotations
 if False:
@@ -47,8 +47,14 @@ class Service(object):
 
         :param loop: The event loop instance to use. If no loop is specified
           then the default event loop will be retrieved.
+
+        :raises: Exception if the registry object is not an instance of the
+          Registry type.
         '''
         self.loop = loop or asyncio.get_event_loop()
+        if registry is not None and not isinstance(registry, Registry):
+            raise Exception(
+                'registry must be a Registry, got: {}'.format(registry))
         self.registry = registry or Registry()
         self._svr = None  # type: Server
         self._svc = None  # type: aiohttp.web.Application
@@ -57,7 +63,12 @@ class Service(object):
 
     @property
     def url(self) -> str:
-        ''' Return the Prometheus metrics url '''
+        ''' Return the Prometheus metrics url
+
+        :raises: Exception if the server has not been started.
+
+        :return: the service URL as a string
+        '''
         if self._svr is None:
             raise Exception(
                 "No URL available, Prometheus metrics server is not running")
@@ -95,6 +106,8 @@ class Service(object):
 
         :param discovery_agent: an agent that can register the metrics
           service with a service discovery mechanism.
+
+        :raises: Exception if the server could not be started.
         '''
         logger.debug(
             'Prometheus metrics server starting on %s:%s%s',
