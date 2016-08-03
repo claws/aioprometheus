@@ -155,6 +155,31 @@ is the same as this one with const labels:
     ram_metric.set({'type': "swap"}, 100)
 
 
+Decorators
+++++++++++
+
+A number of different decorators are provided to help simplfy the process of
+instrumenting your code. As the ``aioprometheus`` library is targeting use in
+long running ``asyncio`` based applications, the decorators return a
+coroutine object. However, the wrapped function does not have to be a
+coroutine.
+
+The example below demonstrates how the ``@timer`` decorator can be used to
+time how long it takes to run a function.
+
+.. literalinclude:: ../../examples/decorator_timer.py
+
+The following example demonstrates how the ``@inprogress`` decorator can be
+used to track how many requests are in progress.
+
+.. literalinclude:: ../../examples/decorator_inprogress.py
+
+The next example demonstrates how the ``@count_exceptions`` decorator can be
+used to track the number of exceptions that occur in a function block.
+
+.. literalinclude:: ../../examples/decorator_count_exceptions.py
+
+
 Exporting Metrics
 -----------------
 
@@ -255,9 +280,9 @@ and can observe the metrics from the example.
 
 
 Push Gateway
-++++++++++++
+------------
 
-Another method of exposing metrics is to push them to a gateway that will 
+Another method of exposing metrics is to push them to a gateway that will
 get scraped by Prometheus.
 
 Prometheus provides a push gateway intermediary that can be used to help
@@ -289,8 +314,8 @@ Discovery
     This area is still under development.
 
 Applications need an automated approach to declaring their presence so that
-Prometheus will begin scraping their metrics. `aioprometheus` provides a 
-service discovery mechanism interface. 
+Prometheus will begin scraping their metrics. `aioprometheus` provides an
+extendable service discovery mechanism interface.
 
-An implementation based on ``etcd`` is provided as an example mechanism.
+An example implementation based on ``etcd`` is included in the code.
 

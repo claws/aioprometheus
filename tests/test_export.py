@@ -27,6 +27,16 @@ class TestTextExporter(AsyncioTestCase):
     async def tearDown(self):
         await self.server.stop()
 
+    async def test_invalid_registry(self):
+        ''' check only valid registry can be provided '''
+        for invalid_registry in ['nope', dict(), list()]:
+            with self.assertRaises(Exception) as cm:
+                Service(registry=invalid_registry, loop=self.loop)
+            self.assertIn(
+                'registry must be a Registry, got:', str(cm.exception))
+
+        Service(registry=Registry(), loop=self.loop)
+
     async def test_counter(self):
 
         # Add some metrics

@@ -107,6 +107,22 @@ package too.
     $ python -m unittest test_negotiate
 
 
+Type Annotations
+----------------
+
+The code base has been updated with type annotations. These provide helpful
+gradual typing information that can improve how easily the code is understood
+and which helps with any future enhancements.
+
+The type annotations checker ``mypy`` currently runs cleanly with no warnings.
+
+Use the Makefile convenience rule to check no issues are reported.
+
+.. code-block:: console
+
+    $ make check_types
+
+
 Coverage
 --------
 
@@ -184,7 +200,7 @@ The following steps are used to make a new software release:
 
   .. code-block:: console
 
-      python setup.py upload
+      python setup.py sdist upload
 
 - Create and push a repo tag to Github.
 

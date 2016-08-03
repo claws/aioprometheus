@@ -15,18 +15,6 @@ It supports multiple data formats and pushing metrics to a gateway.
 
 The project source code can be found `here <https://github.com/claws/aioprometheus>`_.
 
-.. warning::
-
-    While this project is mostly in a usable state it is still very early in
-    development. There are no backwards compatibility guarantees yet.
-
-`aioprometheus` originates from the (now deprecated)
-`prometheus python <https://github.com/slok/prometheus-python>`_ package.
-Many thanks to `slok <https://github.com/slok>`_ for developing
-prometheus-python. I have taken the original work and modified it to meet
-the needs of my asyncio-based applications, added the histogram metric,
-integrated the use of Pyrobuf, updated and extended tests, added docs, etc.
-
 
 Contents
 --------
@@ -39,6 +27,15 @@ Contents
    api/index
 
 
+Example
+-------
+
+The example below demonstrates how the ``@timer`` decorator can be used to
+simplify measuring how long it takes to run a function.
+
+.. literalinclude:: ../examples/decorator_timer.py
+
+
 License
 -------
 
@@ -49,4 +46,16 @@ License
 was released under the MIT license. `aioprometheus` continues to use the MIT
 license and contains a copy of the orignal MIT license from the
 `prometheus-python` project as instructed by the original license.
+
+
+Origins
+-------
+
+`aioprometheus` originates from the (now deprecated)
+`prometheus python <https://github.com/slok/prometheus-python>`_ package.
+Many thanks to `slok <https://github.com/slok>`_ for developing
+prometheus-python. I have taken the original work and modified it to meet
+the needs of my asyncio-based applications, added the histogram metric,
+integrated the use of Pyrobuf, updated and extended tests, added docs,
+decorators, etc.
 

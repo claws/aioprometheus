@@ -310,6 +310,10 @@ class Summary(Collector):
 
         e.observe(float(value))  # type: ignore
 
+    # https://prometheus.io/docs/instrumenting/writing_clientlibs/#summary
+    # A summary MUST have the ``observe`` methods
+    observe = add
+
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
@@ -376,6 +380,10 @@ class Histogram(Collector):
             self.set_value(labels, h)
 
         h.observe(float(value))
+
+    # https://prometheus.io/docs/instrumenting/writing_clientlibs/#histogram
+    # A histogram MUST have the ``observe`` methods
+    observe = add
 
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
