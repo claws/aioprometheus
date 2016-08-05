@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 '''
 This example implements an example application that includes an aioprometheus
 based metrics collecting and exporting capability as well as a client function
