@@ -168,16 +168,19 @@ The example below demonstrates how the ``@timer`` decorator can be used to
 time how long it takes to run a function.
 
 .. literalinclude:: ../../examples/decorator_timer.py
+    :language: python3
 
 The following example demonstrates how the ``@inprogress`` decorator can be
 used to track how many requests are in progress.
 
 .. literalinclude:: ../../examples/decorator_inprogress.py
+    :language: python3
 
 The next example demonstrates how the ``@count_exceptions`` decorator can be
 used to track the number of exceptions that occur in a function block.
 
 .. literalinclude:: ../../examples/decorator_count_exceptions.py
+    :language: python3
 
 
 Exporting Metrics
@@ -196,6 +199,7 @@ The server accepts various arguments such as the interface and port to bind
 to.
 
 .. literalinclude:: ../../examples/docs-example.py
+    :language: python3
 
 The service can also be passed a specific registry to use or if none is
 explicitly defined it will create a registry. A registry holds the
