@@ -7,8 +7,7 @@ from ..collectors import Counter, Gauge, Summary, Histogram
 from typing import cast, Callable, Dict, List, Tuple, Union
 
 # imports only used for type annotations
-if False:
-    from ..registry import CollectorRegistry
+from ..registry import CollectorRegistry
 
 # typing aliases
 LabelsType = Dict[str, str]
@@ -221,7 +220,7 @@ class TextFormatter(IFormatter):
         result = sorted(self.marshall_lines(collector))
         return LINE_SEPARATOR_FMT.join(result)
 
-    def marshall(self, registry: 'CollectorRegistry') -> bytes:
+    def marshall(self, registry: CollectorRegistry) -> bytes:
         ''' Marshalls a full registry (various collectors) into a bytes
         object '''
 

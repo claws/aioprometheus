@@ -1,5 +1,5 @@
 '''
-This module provides metrics decorators
+This module provides some convenience decorators for metrics
 '''
 
 import asyncio
@@ -13,7 +13,7 @@ from typing import Any, Callable, Dict
 def timer(metric: Summary,
           labels: Dict[str, str] = None) -> Callable[..., Any]:
     '''
-    This decorator provides a way for users to time code in seconds.
+    This decorator provides a convenient way to time a callable.
 
     This decorator function wraps a function with code to calculate how long
     the wrapped function takes to execute and updates the metric with the
@@ -29,12 +29,12 @@ def timer(metric: Summary,
     '''
     if not isinstance(metric, Summary):
         raise Exception(
-            'time decorator expects a Summary metric but got: {}'.format(
+            'timer decorator expects a Summary metric but got: {}'.format(
                 metric))
 
     def measure(func):
         '''
-        This function wraps a decorated function with timing and metric
+        This function wraps a decorated callable with timing and metric
         updating logic.
 
         :param func: the callable to be timed.
@@ -43,11 +43,11 @@ def timer(metric: Summary,
         '''
         @wraps(func)
         async def func_wrapper(*args, **kwds):
-            start_time = time.time()
+            start_time = time.monotonic()
             rv = func(*args, **kwds)
             if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
                 rv = await rv
-            metric.add(labels, time.time() - start_time)
+            metric.add(labels, time.monotonic() - start_time)
             return rv
 
         return func_wrapper
@@ -58,8 +58,8 @@ def timer(metric: Summary,
 def inprogress(metric: Gauge,
                labels: Dict[str, str] = None) -> Callable[..., Any]:
     '''
-    This decorator provides a way for users to track in-progress requests
-    (or other things) in some piece of code/function.
+    This decorator provides a convenient way to track in-progress requests
+    (or other things) in a callable.
 
     This decorator function wraps a function with code to track how many
     of the measured items are in progress.
@@ -81,7 +81,7 @@ def inprogress(metric: Gauge,
 
     def track(func):
         '''
-        This function wraps a decorated function with metric incremeting
+        This function wraps a decorated callable with metric incremeting
         and decrementing logic.
 
         :param func: the callable to be tracked.
@@ -105,8 +105,8 @@ def inprogress(metric: Gauge,
 def count_exceptions(metric: Counter,
                      labels: Dict[str, str] = None) -> Callable[..., Any]:
     '''
-    This decorator provides a way for users to track in-progress requests
-    (or other things) in some piece of code/function.
+    This decorator provides a convenient way to track count exceptions
+    generated in a callable.
 
     This decorator function wraps a function with code to track how many
     exceptions occur.
@@ -120,12 +120,12 @@ def count_exceptions(metric: Counter,
     '''
     if not isinstance(metric, Counter):
         raise Exception(
-            'inprogess decorator expects a Counter metric but got: {}'.format(
+            'count_exceptions decorator expects a Counter metric but got: {}'.format(
                 metric))
 
     def track(func):
         '''
-        This function wraps a decorated function with metric incremeting
+        This function wraps a decorated callable with metric incremeting
         logic.
 
         :param func: the callable to be tracked.

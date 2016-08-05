@@ -5,12 +5,10 @@ import logging
 
 from aio_etcd.client import Client as EtcdClient
 from .agent import IDiscoveryAgent
-from typing import Optional
 
 # imports only used for type annotations
-if False:
-    from asyncio.base_events import BaseEventLoop
-    from ..service import Service
+from asyncio.base_events import BaseEventLoop
+from ..service import Service
 
 
 logger = logging.getLogger(__name__)
@@ -29,7 +27,7 @@ class EtcdAgent(IDiscoveryAgent):
     def __init__(self,
                  service_name: str,
                  tags=(),
-                 loop: Optional['BaseEventLoop'] = None,
+                 loop: BaseEventLoop = None,
                  **kwargs) -> None:
         '''
 
@@ -46,7 +44,7 @@ class EtcdAgent(IDiscoveryAgent):
         self.loop = loop or asyncio.get_event_loop()
         self.client = EtcdClient(loop=self.loop, **kwargs)
 
-    async def register(self, metrics_server: 'Service') -> None:
+    async def register(self, metrics_server: Service) -> None:
         '''
         Register a Prometheus metrics server with etcd.
 
@@ -62,7 +60,7 @@ class EtcdAgent(IDiscoveryAgent):
             url=metrics_server.url)
         await self.client.write(key, json.dumps(value))
 
-    async def deregister(self, metrics_server: 'Service') -> None:
+    async def deregister(self, metrics_server: Service) -> None:
         '''
         Register a Prometheus metrics server from etcd.
 

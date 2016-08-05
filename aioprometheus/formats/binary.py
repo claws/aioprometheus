@@ -11,8 +11,7 @@ from ..collectors import Counter, Gauge, Summary, Histogram
 from typing import cast, Callable, Dict, List, Tuple, Union
 
 # imports only used for type annotations
-if False:
-    from ..registry import CollectorRegistry
+from ..registry import CollectorRegistry
 
 # typing aliases
 LabelsType = Dict[str, str]
@@ -202,7 +201,7 @@ class BinaryFormatter(IFormatter):
 
         return pb_metric_family
 
-    def marshall(self, registry: 'CollectorRegistry') -> bytes:
+    def marshall(self, registry: CollectorRegistry) -> bytes:
         ''' Marshall the collectors in the registry into binary protocol
         buffer format.
 

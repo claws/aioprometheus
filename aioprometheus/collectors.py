@@ -108,11 +108,19 @@ class Collector(object):
         self.values[labels] = value
 
     def get_value(self, labels: LabelsType) -> NumericValueType:
-        '''  Gets a value in the container, exception if isn't present '''
+        '''  Gets a value in the container.
+
+        :raises: KeyError if an item with matching labels is not present.
+        '''
         return self.values[labels]
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Handy alias '''
+        ''' Gets a value in the container.
+
+        Handy alias for `get_value`.
+
+        :raises: KeyError if an item with matching labels is not present.
+        '''
         return self.get_value(labels)
 
     def _label_names_correct(self, labels: LabelsType) -> bool:
@@ -180,7 +188,10 @@ class Counter(Collector):
     kind = MetricsTypes.counter
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get gets the counter of an arbitrary group of labels '''
+        ''' Get gets the Counter value matching an arbitrary group of labels.
+
+        :raises: KeyError if an item with matching labels is not present.
+        '''
         return self.get_value(labels)
 
     def set(self, labels: LabelsType, value: NumericValueType) -> None:
@@ -232,7 +243,10 @@ class Gauge(Collector):
         self.set_value(labels, value)
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get gets the Gauge of an arbitrary group of labels'''
+        ''' Get gets the Gauge value matching an arbitrary group of labels.
+
+        :raises: KeyError if an item with matching labels is not present.
+        '''
         return self.get_value(labels)
 
     def inc(self, labels: LabelsType) -> None:
@@ -317,8 +331,10 @@ class Summary(Collector):
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
-        Return a dict containing the sum, count and 0.5, 0.9 and 0.99
-        percentiles.
+        Get gets a dict of values, containing the sum, count and percentiles,
+        matching an arbitrary group of labels.
+
+        :raises: KeyError if an item with matching labels is not present.
         '''
         return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 
@@ -388,7 +404,10 @@ class Histogram(Collector):
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
-        Return a dict containing the sum, count and buckets.
+        Get gets a dict of values, containing the sum, count and buckets,
+        matching an arbitrary group of labels.
+
+        :raises: KeyError if an item with matching labels is not present.
         '''
         return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 

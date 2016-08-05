@@ -8,9 +8,8 @@ from urllib.parse import urljoin
 from .formats import BinaryFormatter
 
 # imports only used for type annotations
-if False:
-    from asyncio.base_events import BaseEventLoop
-    from .registry import CollectorRegistry
+from asyncio.base_events import BaseEventLoop
+from .registry import CollectorRegistry
 
 
 class Pusher(object):
@@ -25,7 +24,7 @@ class Pusher(object):
     def __init__(self,
                  job_name: str,
                  addr: str,
-                 loop: 'BaseEventLoop' = None) -> None:
+                 loop: BaseEventLoop = None) -> None:
         '''
 
         :param job_name: The name of the job.
@@ -45,7 +44,7 @@ class Pusher(object):
         self.path = urljoin(self.addr, self.PATH.format(job_name))
 
     async def add(self,
-                  registry: 'CollectorRegistry') -> aiohttp.web.Response:
+                  registry: CollectorRegistry) -> aiohttp.web.Response:
         '''
         Add works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
@@ -58,7 +57,7 @@ class Pusher(object):
         return resp
 
     async def replace(self,
-                      registry: 'CollectorRegistry') -> aiohttp.web.Response:
+                      registry: CollectorRegistry) -> aiohttp.web.Response:
         '''
         ``replace`` pushes new values for a group of metrics to the push
         gateway.
@@ -77,7 +76,7 @@ class Pusher(object):
         return resp
 
     async def delete(self,
-                     registry: 'CollectorRegistry') -> aiohttp.web.Response:
+                     registry: CollectorRegistry) -> aiohttp.web.Response:
         '''
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.
