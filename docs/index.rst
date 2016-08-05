@@ -11,7 +11,8 @@ aioprometheus
 applications. It provides asyncio based applications with a metrics
 collection and serving capability for use with the
 `Prometheus <https://prometheus.io/>`_ monitoring and alerting system.
-It supports multiple data formats and pushing metrics to a gateway.
+It supports text and binary data formats as well as the ability to push
+metrics to a gateway.
 
 The project source code can be found `here <https://github.com/claws/aioprometheus>`_.
 
@@ -30,10 +31,53 @@ Contents
 Example
 -------
 
-The example below demonstrates how the ``@timer`` decorator can be used to
-simplify measuring how long it takes to run a function.
+The following example shows the ``@timer`` decorator being used to expose
+a metric to Prometheus that measures how long a particular function takes
+to execute. There are more examples in the ``examples`` directory.
 
-.. literalinclude:: ../examples/decorator_timer.py
+.. code-block:: python3
+
+    import asyncio
+    import random
+
+    from aioprometheus import Service, Summary, timer
+
+
+    # Create a metric to track time spent and requests made.
+    REQUEST_TIME = Summary(
+        'request_processing_seconds', 'Time spent processing request')
+
+
+    # Decorate function with metric.
+    @timer(REQUEST_TIME)
+    async def handle_request(duration):
+        ''' A dummy function that takes some time '''
+        await asyncio.sleep(duration)
+
+
+    async def handle_requests():
+        # Start up the server to expose the metrics.
+        await svr.start(port=8000)
+        # Generate some requests.
+        while True:
+            await handle_request(random.random())
+
+
+    if __name__ == '__main__':
+
+        loop = asyncio.get_event_loop()
+
+        svr = Service(loop=loop)
+        svr.registry.register(REQUEST_TIME)
+
+        try:
+            loop.run_until_complete(handle_requests())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            loop.run_until_complete(svr.stop())
+        loop.stop()
+        loop.close()
 
 
 License

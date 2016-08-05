@@ -18,9 +18,8 @@ from .registry import Registry
 from typing import Set
 
 # imports only used for type annotations
-if False:
-    from asyncio.base_events import BaseEventLoop, Server
-    from ssl import SSLContext
+from asyncio.base_events import BaseEventLoop, Server
+from ssl import SSLContext
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +36,7 @@ class Service(object):
 
     def __init__(self,
                  registry: Registry = None,
-                 loop: 'BaseEventLoop' = None) -> None:
+                 loop: BaseEventLoop = None) -> None:
         '''
         Initialise the Prometheus metrics service.
 
@@ -73,7 +72,8 @@ class Service(object):
             raise Exception(
                 "No URL available, Prometheus metrics server is not running")
 
-        host, port = self._svr.sockets[0].getsockname()
+        # IPv4 returns 2-tuple, IPv6 returns 4-tuple
+        host, port, *_ = self._svr.sockets[0].getsockname()
         scheme = "http{}".format('s' if self._https else '')
         url = "{scheme}://{host}:{port}{metrics_url}".format(
             scheme=scheme,
@@ -85,7 +85,7 @@ class Service(object):
     async def start(self,
                     addr: str = '',
                     port: int = 0,
-                    ssl: 'SSLContext' = None,
+                    ssl: SSLContext = None,
                     metrics_url: str = DEFAULT_METRICS_PATH,
                     discovery_agent=None) -> None:
         ''' Start the prometheus metrics HTTP(S) server.

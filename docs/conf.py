@@ -284,6 +284,11 @@ texinfo_documents = [
      'Miscellaneous'),
 ]
 
+# -- suppress specific warnings -------------------------------------------
+
+suppress_warnings = ['image.nonlocal_uri']
+
+
 # -- Custom config to work around readthedocs.org #1139 -------------------
 
 def run_apidoc(_):
