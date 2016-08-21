@@ -306,6 +306,7 @@ def run_apidoc(_):
     subprocess.check_call(
         [cmd_path, '--no-toc', '-o', 'api', '../aioprometheus', '--force'])
 
+
 def setup(app):
     app.connect('builder-inited', run_apidoc)
 

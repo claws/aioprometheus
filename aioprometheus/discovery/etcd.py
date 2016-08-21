@@ -1,3 +1,31 @@
+'''
+This module implements part of a custom service discovery approach that uses
+``etcd``, a highly consistent distributed key-value store, to store the
+metrics service information. This information can be retrieved (using a
+separate ``etcd`` reader tool) and made available to the Prometheus server.
+
+Application's instrumented with the ``aioprometheus`` metrics service expose
+an endpoint for the Prometheus Server to scrape metrics from. The
+``EtcdAgent`` in this module is used by an application to register (and
+deregister) its metrics service (i.e. ``/metrics``) endpoint with the
+service discovery store (i.e. etcd) using a pre-defined key schema:
+
+.. code-block:: console
+
+    /services/<service_name> = <service_data>
+
+The data contained in the ``service_data`` value is a dict of information
+associated with the service:
+
+.. code-block:: json
+
+    {
+     "service_name": "service_a",
+     "tags": [("hostname", "hostname_a")],
+     "address": "http://<addr>:<port>/metrics"
+    }
+
+'''
 
 import asyncio
 import json
@@ -37,6 +65,8 @@ class EtcdAgent(IDiscoveryAgent):
           coming up with unique service names is outside the scope of this
           client.
 
+        :param tags: a optional sequence of key-value tuples.
+
         :keywords: are passed straight down to the etcd client.
         '''
         self.service_name = service_name
@@ -53,11 +83,11 @@ class EtcdAgent(IDiscoveryAgent):
         :param loop: an event loop instance. If no event loop is provided
           then the default event will be used.
         '''
-        key = '/metrics/{}'.format(self.service_name)
+        key = '/services/{}'.format(self.service_name)
         value = dict(
             service_name=self.service_name,
             tags=self.tags,
-            url=metrics_server.url)
+            address=metrics_server.url)
         await self.client.write(key, json.dumps(value))
 
     async def deregister(self, metrics_server: Service) -> None:
@@ -69,7 +99,7 @@ class EtcdAgent(IDiscoveryAgent):
         :param loop: an event loop instance. If no event loop is provided
           then the default event will be used.
         '''
-        key = '/metrics/{}'.format(self.service_name)
+        key = '/services/{}'.format(self.service_name)
         await self.client.delete(key)
 
     async def close(self) -> None:

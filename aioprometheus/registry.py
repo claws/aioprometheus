@@ -8,10 +8,10 @@ CollectorsType = Union[Counter, Gauge, Histogram, Summary]
 class CollectorRegistry(object):
     ''' This class implements the metrics collector registry.
 
-    Collectors must comply with the ICollector interface which means that they
-    have a no-argument method called 'collect' that returns a list of Metric
-    objects. These objects should be consistent with the Prometheus exposition
-    formats.
+    Collectors in the registry must comply with the Collector interface
+    which means that they inherit from the base Collector object and implement
+    a no-argument method called 'get_all' that returns a list of Metric
+    objects.
     '''
 
     def __init__(self) -> None:
@@ -54,12 +54,6 @@ class CollectorRegistry(object):
     def get_all(self) -> List[CollectorsType]:
         ''' Return a list of all collectors '''
         return list(self.collectors.values())
-
-    # def collect(self):
-    #     ''' This generator yields metrics from the collectors in the registry '''
-    #     for collector in self.collectors:
-    #         for metric in collector.collect():
-    #             yield metric
 
 
 # The default registry.

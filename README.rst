@@ -24,6 +24,59 @@ Install
     $ pip install aioprometheus
 
 
+Example
+-------
+
+The following example shows the ``@timer`` decorator being used to expose
+a metric to Prometheus that measures how long a particular function takes
+to execute.
+
+.. code-block:: python3
+
+    import asyncio
+    import random
+
+    from aioprometheus import Service, Summary, timer
+
+
+    # Create a metric to track time spent and requests made.
+    REQUEST_TIME = Summary(
+        'request_processing_seconds', 'Time spent processing request')
+
+
+    # Decorate function with metric.
+    @timer(REQUEST_TIME)
+    async def handle_request(duration):
+        ''' A dummy function that takes some time '''
+        await asyncio.sleep(duration)
+
+
+    async def handle_requests():
+        # Start up the server to expose the metrics.
+        await svr.start(port=8000)
+        # Generate some requests.
+        while True:
+            await handle_request(random.random())
+
+
+    if __name__ == '__main__':
+
+        loop = asyncio.get_event_loop()
+
+        svr = Service(loop=loop)
+        svr.registry.register(REQUEST_TIME)
+
+        try:
+            loop.run_until_complete(handle_requests())
+        except KeyboardInterrupt:
+            pass
+        finally:
+            loop.run_until_complete(svr.stop())
+        loop.stop()
+        loop.close()
+
+
+
 License
 -------
 
