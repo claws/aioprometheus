@@ -216,12 +216,15 @@ class TextFormatter(IFormatter):
         return lines
 
     def marshall_collector(self, collector: CollectorsType) -> str:
+        '''
+        Marshalls a collector into a string containing one or more lines
+        '''
         # need sort?
         result = sorted(self.marshall_lines(collector))
         return LINE_SEPARATOR_FMT.join(result)
 
     def marshall(self, registry: CollectorRegistry) -> bytes:
-        ''' Marshalls a full registry (various collectors) into a bytes
+        ''' Marshalls a registry (containing collectors) into a bytes
         object '''
 
         blocks = []

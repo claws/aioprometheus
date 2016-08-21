@@ -17,7 +17,7 @@ Setup
 -----
 
 The best way to work on `aioprometheus` is to create a virtual env. This
-isolates your work from other projects, dependencies and ensures that any
+isolates your work from other project's dependencies and ensures that any
 commands are pointing at the correct tools.
 
 .. note::
@@ -168,10 +168,14 @@ will be incremented.
 Release Process
 ---------------
 
+Assuming that the tests are passing, the docs build without warnings and the
+type annotations check passes without warnings then a release can be made.
+
 The following steps are used to make a new software release:
 
-- Update the version label in ``__init__.py``. It must comply with the
-  :ref:`version-label` scheme
+- Ensure that the version label in ``__init__.py`` is correct. It must comply
+  with the :ref:`version-label` scheme.
+
 - Create the distribution
 
   .. code-block:: console
@@ -190,17 +194,11 @@ The following steps are used to make a new software release:
       ./test.bash aioprometheus-16.06.01.tar.gz
       cd ..
 
-- Build the docs and check for any errors.
-
-  .. code-block:: console
-
-      make docs
-
 - Upload to PyPI using
 
   .. code-block:: console
 
-      python setup.py sdist upload
+      make dist.upload
 
 - Create and push a repo tag to Github.
 

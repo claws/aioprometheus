@@ -2,8 +2,8 @@
 # It assumes it is operating in an environment, such as a virtual env,
 # where the python command links to Python3.5 executable.
 
-.PHONY: help clean clean.scrub test test.verbose coverage style style.fix
-.PHONY: docs dist sdist
+.PHONY: check_types clean clean.scrub coverage docs dist help
+.PHONY: sdist style style.fix test test.verbose
 
 # Do not remove this block. It is used by the 'help' rule when
 # constructing the help output.
@@ -63,8 +63,10 @@ style.fix:
 	@$(STYLE_CMD) -q  | xargs -r autopep8 -i --max-line-length=$(STYLE_MAX_LINE_LENGTH)
 
 
+# help: check_types                    - check type hint annotations
 check_types:
 	@MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser -s
+
 
 # help: docs                           - generate project documentation
 docs: coverage
@@ -74,9 +76,19 @@ docs: coverage
 	@cd docs; cp -R coverage _build/html/.
 
 
-# help: sdist                          - create a source distribution package
+# help: dist                           - create a source distribution package
 dist: clean
 	@python setup.py sdist
+
+
+# help: dist.test                     - test a source distribution package
+dist.test: dist
+	@cd dist && ./test.bash ./aioprometheus-*.tar.gz
+
+
+# help: dist.upload                    - upload a source distribution package
+dist.upload: clean
+	@python setup.py sdist upload
 
 
 # Keep these lines at the end of the file to retain nice help

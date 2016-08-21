@@ -10,7 +10,6 @@ logger = logging.getLogger(__name__)
 BinaryFormatterClass = Callable[[bool], BinaryFormatter]
 TextFormatterClass = Callable[[bool], TextFormatter]
 FormatterType = Union[BinaryFormatterClass, TextFormatterClass]
-# FormatterType = Union[Type[BinaryFormatter], Type[TextFormatter]]
 
 
 ProtobufAccepts = set(
