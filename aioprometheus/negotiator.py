@@ -17,11 +17,6 @@ ProtobufAccepts = set(
      'proto=io.prometheus.client.MetricFamily',
      'encoding=delimited'])
 
-# ProtobufText = set(
-#     ['application/vnd.google.protobuf',
-#      'proto=io.prometheus.client.MetricFamily',
-#      'encoding=text'])
-
 TextAccepts = set(['text/plain', 'version=0.0.4'])
 
 

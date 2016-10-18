@@ -4,7 +4,7 @@ import re
 
 from pip.req import parse_requirements
 from pip.download import PipSession
-from setuptools import setup
+from setuptools import setup, find_packages
 
 
 install_reqs = parse_requirements("requirements.txt", session=PipSession())
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         license="MIT",
         keywords=["prometheus", "monitoring", "metrics"],
         url="https://github.com/claws/aioprometheus",
-        packages=["aioprometheus"],
+        packages=find_packages(),
         install_requires=requires,
         pyrobuf_modules="proto",
         classifiers=[

@@ -15,7 +15,6 @@ STYLE_EXCLUDE_LIST:=git status --porcelain --ignored | grep "!!" | grep ".py$$" 
 STYLE_MAX_LINE_LENGTH:=160
 STYLE_CMD:=pycodestyle --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402 --max-line-length=$(STYLE_MAX_LINE_LENGTH) aioprometheus tests examples
 
-
 # help: help                           - display this makefile's help information
 help:
 	@grep "^# help\:" Makefile | grep -v grep | sed 's/\# help\: //' | sed 's/\# help\://'
@@ -81,12 +80,12 @@ dist: clean
 	@python setup.py sdist
 
 
-# help: dist.test                     - test a source distribution package
+# help: dist.test                      - test a source distribution package
 dist.test: dist
 	@cd dist && ./test.bash ./aioprometheus-*.tar.gz
 
 
-# help: dist.upload                    - upload a source distribution package
+# help: dist.upload                     - upload a source distribution package
 dist.upload: clean
 	@python setup.py sdist upload
 

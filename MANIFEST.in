@@ -1,5 +1,4 @@
 recursive-include License *
-recursive-include aioprometheus *.py
 recursive-include tests *.py
 include proto/prometheus_metrics.proto
 include requirements.txt
