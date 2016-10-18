@@ -15,11 +15,11 @@ Enhanced :class:`unittest.TestCase`:
 - The :meth:`~TestCase.setUp()` and :meth:`~TestCase.tearDown()` methods can
   be coroutine functions.
 
-- a test method in a TestCase (e.g. `test_*`) decalred as a coroutine function
+- a test method in a TestCase (e.g. `test_*`) declared as a coroutine function
   or returning a coroutine will run in the event loop.
 
 - cleanup functions registered with :meth:`~TestCase.addCleanup()` can be
-  coroutine functions
+  coroutine functions.
 
 
 '''
