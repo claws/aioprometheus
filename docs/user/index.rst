@@ -16,6 +16,20 @@ to install it.
     $ pip install aioprometheus
 
 
+Install optional binary formatter
++++++++++++++++++++++++++++++++++
+
+If you want to make use of the binary formatter it must be installed
+separately.
+
+.. code-block:: console
+
+    $ pip install aioprometheus-binary-format
+
+This command will install the ``aioprometheus_binary_format`` module
+that aioprometheus can detect and make use of.
+
+
 Instrumenting
 -------------
 
@@ -238,7 +252,7 @@ Text (0.0.4):
 
     $ curl 'http://127.0.0.1:60405/metrics' -H 'Accept: text/plain; version=0.0.4'
 
-Protobuf (0.0.4):
+Protobuf (0.0.4) [only if aioprometheus-binary-format is installed]:
 
 .. code-block:: console
 
@@ -308,18 +322,3 @@ via the pull model.
 
     # Push to the pushgateway
     resp = await p.replace(registry)
-
-
-Discovery
----------
-
-.. warning::
-
-    This area is still under development.
-
-Applications need an automated approach to declaring their presence so that
-Prometheus will begin scraping their metrics. `aioprometheus` provides an
-extendable service discovery mechanism interface.
-
-An example implementation based on ``etcd`` is included in the code.
-

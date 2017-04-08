@@ -1,15 +1,14 @@
 
 import logging
 
-from .formats import BinaryFormatter, TextFormatter
-from typing import Callable, Set, Union
+from . import formats
+from typing import Callable, Set
+
 
 logger = logging.getLogger(__name__)
 
 # type aliases
-BinaryFormatterClass = Callable[[bool], BinaryFormatter]
-TextFormatterClass = Callable[[bool], TextFormatter]
-FormatterType = Union[BinaryFormatterClass, TextFormatterClass]
+FormatterType = Callable[[bool], formats.IFormatter]
 
 
 ProtobufAccepts = set(
@@ -26,21 +25,23 @@ def negotiate(accepts: Set[str]) -> FormatterType:
 
     :param accepts: a set of ACCEPT headers fields extracted from a request.
 
-    :returns: a formatter class that should be used to form up the
-      response into the appropriate representation.
+    :returns: a formatter class to form up the response into the
+      appropriate representation.
     '''
     if not isinstance(accepts, set):
         raise TypeError(
             'Expected a set but got {}'.format(type(accepts)))
 
-    formatter = TextFormatter  # type: FormatterType
+    formatter = formats.TextFormatter  # type: FormatterType
 
     if ProtobufAccepts.issubset(accepts):
-        formatter = BinaryFormatter
-    elif TextAccepts.issubset(accepts):
-        formatter = TextFormatter
+        if formats.binary_format_available:
+            formatter = formats.BinaryFormatter  # type: ignore
+        else:
+            logger.warning(
+                'No binary formatter available, falling back to text format')
 
     logger.debug(
-        'negotiating {} resulted in choosing {}'.format(
-            accepts, formatter.__name__))
+        'negotiating %s resulted in choosing %s',
+        accepts, formatter.__name__)
     return formatter

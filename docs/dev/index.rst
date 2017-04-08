@@ -9,7 +9,7 @@ If you have found a bug or have an idea for an enhancement that would
 improve the library, use the
 `bug tracker <https://github.com/claws/aioprometheus/issues>`_.
 
-To develop `aioprometheus` you'll need Python 3.5, some dependencies and
+To develop `aioprometheus` you'll need Python 3.6, some dependencies and
 the source code.
 
 
@@ -22,7 +22,7 @@ commands are pointing at the correct tools.
 
 .. note::
 
-    In the following example ``python`` is assumed to be the Python 3.5
+    In the following example ``python`` is assumed to be the Python 3.6
     executable. You may need to explicitly specify this (e.g. use ``python3``)
     if you have multiple Python's available on your system.
 
@@ -80,6 +80,19 @@ that any changes take effect immediately.
 
     $ pip install -e .
 
+Install optional binary formatter
++++++++++++++++++++++++++++++++++
+
+If you want to make use of the binary formatter it must be installed
+separately.
+
+.. code-block:: console
+
+    $ pip install aioprometheus-binary-format
+
+This command will install the ``aioprometheus_binary_format`` module
+that aioprometheus can detect and make use of.
+
 
 Test
 ----
@@ -105,6 +118,11 @@ package too.
 
     $ cd aioprometheus/tests
     $ python -m unittest test_negotiate
+
+.. note::
+
+    A number of tests may be skipped if you don't have the optional
+    ``aioprometheus-binary-format`` package installed.
 
 
 Type Annotations
@@ -213,20 +231,3 @@ The following steps are used to make a new software release:
     ::
 
         https://github.com/{username}/{repo}/tarball/{tag}.tar.gz
-
-
-
-Internals
----------
-
-`Pyrobuf <https://github.com/appnexus/pyrobuf>`_ is used provide the Protobuf
-Buffers based efficient binary formatting. Pyrobuf is a Cython based
-implementation of the Protocol Buffers serialisation library. Pyrobuf does
-not repuire `protoc`.
-
-Extension modules created by ``pyrobuf`` are installed as separate packages.
-So, when `aioprometheus` is installed you actually get two packages installed;
-``aioprometheus`` and ``prometheus_metrics_proto``.
-
-The Protocol Buffer specification used by `aioprometheus` was obtained from the
-Prometheus `client model <https://github.com/prometheus/client_model/blob/master/metrics.proto>`_ repo.

@@ -1,6 +1,6 @@
 # This makefile has been created to help developers perform common actions.
 # It assumes it is operating in an environment, such as a virtual env,
-# where the python command links to Python3.5 executable.
+# where the python command links to the Python3.6 executable.
 
 .PHONY: check_types clean clean.scrub coverage docs dist help
 .PHONY: sdist style style.fix test test.verbose
@@ -64,7 +64,7 @@ style.fix:
 
 # help: check_types                    - check type hint annotations
 check_types:
-	@MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser -s
+	@MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser --ignore-missing-imports
 
 
 # help: docs                           - generate project documentation

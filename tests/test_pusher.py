@@ -3,7 +3,7 @@ import asyncio
 
 import aiohttp
 
-from aioprometheus import Counter, Pusher, Registry
+from aioprometheus import Counter, pusher, Registry
 from aioprometheus.test_utils import AsyncioTestCase
 
 
@@ -55,7 +55,7 @@ class TestPusherServer(object):
 
 
 def expected_job_path(job):
-    return Pusher.PATH.format(job)
+    return pusher.Pusher.PATH.format(job)
 
 
 class TestPusher(AsyncioTestCase):
@@ -69,7 +69,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_job_ping(self):
         job_name = "my-job"
-        p = Pusher(job_name, TEST_URL, loop=self.loop)
+        p = pusher.Pusher(job_name, TEST_URL, loop=self.loop)
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {})
         registry.register(c)
@@ -86,7 +86,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_add(self):
         job_name = "my-job"
-        p = Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, TEST_URL)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)
@@ -96,10 +96,16 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
-                        b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
-                        b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
-                        b'\x00\x00\x00\x00\x00y@')
+        # TextFormatter expected result
+        valid_result = (
+            b'# HELP counter_test A counter.\n'
+            b'# TYPE counter_test counter\n'
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+        # BinaryFormatter expected result
+        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
+        #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
+        #                 b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
+        #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.add(registry)
@@ -113,7 +119,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_replace(self):
         job_name = "my-job"
-        p = Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, TEST_URL)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)
@@ -123,10 +129,16 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
-                        b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
-                        b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
-                        b'\x00\x00\x00\x00\x00y@')
+        # TextFormatter expected result
+        valid_result = (
+            b'# HELP counter_test A counter.\n'
+            b'# TYPE counter_test counter\n'
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+        # BinaryFormatter expected result
+        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
+        #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
+        #                 b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
+        #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.replace(registry)
@@ -140,7 +152,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_delete(self):
         job_name = "my-job"
-        p = Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, TEST_URL)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)
@@ -150,10 +162,16 @@ class TestPusher(AsyncioTestCase):
         )
 
         [counter.set(c[0], c[1]) for c in counter_data]
-        valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n'
-                        b'\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample'
-                        b'\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t'
-                        b'\x00\x00\x00\x00\x00\x00y@')
+        # TextFormatter expected result
+        valid_result = (
+            b'# HELP counter_test A counter.\n'
+            b'# TYPE counter_test counter\n'
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+        # BinaryFormatter expected result
+        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n'
+        #                 b'\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample'
+        #                 b'\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t'
+        #                 b'\x00\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.delete(registry)

@@ -138,7 +138,7 @@ def count_exceptions(metric: Counter,
                 rv = func(*args, **kwds)
                 if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
                     rv = await rv
-            except:
+            except Exception:
                 metric.inc(labels)
                 raise
             return rv

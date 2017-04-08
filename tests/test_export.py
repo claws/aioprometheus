@@ -59,7 +59,7 @@ test_counter{data="2",test="test_counter"} 200
 test_counter{data="3",test="test_counter"} 300
 """
 
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             headers = {ACCEPT: 'text/plain; version=0.0.4'}
             async with session.get(self.metrics_url, headers=headers) as resp:
                 assert resp.status == 200
@@ -91,7 +91,7 @@ test_gauge{data="2",test="test_gauge"} 200
 test_gauge{data="3",test="test_gauge"} 300
 """
 
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             headers = {ACCEPT: 'text/plain; version=0.0.4'}
             async with session.get(self.metrics_url, headers=headers) as resp:
                 assert resp.status == 200
@@ -122,7 +122,7 @@ test_summary{data="1",quantile="0.9",test="test_summary"} 5.2
 test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
 """
 
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             headers = {ACCEPT: 'text/plain; version=0.0.4'}
             async with session.get(self.metrics_url, headers=headers) as resp:
                 assert resp.status == 200
@@ -157,7 +157,7 @@ histogram_test_count{data="1",type="test_histogram"} 4
 histogram_test_sum{data="1",type="test_histogram"} 25.2
 """
 
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             headers = {ACCEPT: 'text/plain; version=0.0.4'}
             async with session.get(self.metrics_url, headers=headers) as resp:
                 assert resp.status == 200
@@ -277,7 +277,7 @@ summary_test{quantile="0.99",s_sample="2",type="summary"} 2500.0
 summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
 """
 
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             headers = {ACCEPT: 'text/plain; version=0.0.4'}
             async with session.get(self.metrics_url, headers=headers) as resp:
                 assert resp.status == 200
