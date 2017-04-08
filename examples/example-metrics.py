@@ -19,7 +19,6 @@ from aioprometheus import (
     Counter,
     Gauge,
     Histogram,
-    Registry,
     Service,
     Summary,
 )
@@ -82,20 +81,23 @@ async def fetch_metrics(url, loop):
                 print('size: {}'.format(len(content)))
                 print(content.decode())
 
-            await asyncio.sleep(1.0)
+            # await asyncio.sleep(1.0)
 
-            print('fetching metrics, requesting binary format')
-            headers = {
-                ACCEPT: 'application/vnd.google.protobuf; '
-                        'proto=io.prometheus.client.MetricFamily; '
-                        'encoding=delimited'}
-            async with session.get(url, headers=headers) as resp:
-                assert resp.status == 200
-                content = await resp.read()
-                content_type = resp.headers.get(CONTENT_TYPE)
-                print('Content-Type: {}'.format(content_type))
-                print('size: {}'.format(len(content)))
-                print(content)
+            # The binary format depends on pyrobuf and is in the process
+            # of being extracted into a separate plugin library.
+            #
+            # print('fetching metrics, requesting binary format')
+            # headers = {
+            #     ACCEPT: 'application/vnd.google.protobuf; '
+            #             'proto=io.prometheus.client.MetricFamily; '
+            #             'encoding=delimited'}
+            # async with session.get(url, headers=headers) as resp:
+            #     assert resp.status == 200
+            #     content = await resp.read()
+            #     content_type = resp.headers.get(CONTENT_TYPE)
+            #     print('Content-Type: {}'.format(content_type))
+            #     print('size: {}'.format(len(content)))
+            #     print(content)
 
             await asyncio.sleep(2.0)
 

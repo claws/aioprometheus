@@ -45,7 +45,7 @@ async def handle_requests():
     while True:
         try:
             await handle_request(random.random())
-        except:
+        except Exception:
             pass  # keep handling
 
 

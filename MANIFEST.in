@@ -1,6 +1,5 @@
 recursive-include License *
 recursive-include tests *.py
-include proto/prometheus_metrics.proto
 include requirements.txt
 include Makefile
-prune pyrobuf
+

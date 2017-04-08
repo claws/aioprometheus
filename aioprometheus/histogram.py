@@ -1,6 +1,6 @@
 
 from collections import OrderedDict
-from typing import List, Sequence, Union
+from typing import Dict, List, Union
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")

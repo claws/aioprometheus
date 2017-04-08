@@ -24,6 +24,7 @@ def read_version():
             raise RuntimeError(
                 'Cannot find __version__ in aioprometheus/__init__.py')
 
+
 version = read_version()
 
 
@@ -41,12 +42,11 @@ if __name__ == "__main__":
         url="https://github.com/claws/aioprometheus",
         packages=find_packages(),
         install_requires=requires,
-        pyrobuf_modules="proto",
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: MIT License",
             "Natural Language :: English",
             "Operating System :: OS Independent",
-            "Programming Language :: Python :: 3.5",
+            "Programming Language :: Python :: 3.6",
             "Topic :: System :: Monitoring"])

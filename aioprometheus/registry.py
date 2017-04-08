@@ -1,6 +1,6 @@
 
 from .collectors import Collector, Counter, Gauge, Histogram, Summary
-from typing import List, Union
+from typing import Dict, List, Union
 
 CollectorsType = Union[Counter, Gauge, Histogram, Summary]
 

@@ -5,7 +5,7 @@ import aiohttp
 import aiohttp.web
 
 from urllib.parse import urljoin
-from .formats import BinaryFormatter
+from .formats import TextFormatter
 
 # imports only used for type annotations
 from asyncio.base_events import BaseEventLoop
@@ -15,8 +15,8 @@ from .registry import CollectorRegistry
 class Pusher(object):
     '''
     This class can be used in applications that can't support the
-    standard pull strategy. The pusher object pushers the metrics in a
-    registry to a pushgateway which can be scraped by Prometheus.
+    standard pull strategy. The pusher object pushes the metrics
+    to a push-gateway which can be scraped by Prometheus.
     '''
 
     PATH = "/metrics/job/{0}"
@@ -39,7 +39,7 @@ class Pusher(object):
         self.job_name = job_name
         self.addr = addr
         self.loop = loop or asyncio.get_event_loop()
-        self.formatter = BinaryFormatter()
+        self.formatter = TextFormatter()
         self.headers = self.formatter.get_headers()
         self.path = urljoin(self.addr, self.PATH.format(job_name))
 
@@ -49,7 +49,7 @@ class Pusher(object):
         Add works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
         '''
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             payload = self.formatter.marshall(registry)
             resp = await session.post(
                 self.path, data=payload, headers=self.headers)
@@ -68,7 +68,7 @@ class Pusher(object):
             URL will be replaced with the new metrics value.
 
         '''
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             payload = self.formatter.marshall(registry)
             resp = await session.put(
                 self.path, data=payload, headers=self.headers)
@@ -81,7 +81,7 @@ class Pusher(object):
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.
         '''
-        with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession(loop=self.loop) as session:
             payload = self.formatter.marshall(registry)
             resp = await session.delete(
                 self.path, data=payload, headers=self.headers)
