@@ -49,4 +49,5 @@ if __name__ == "__main__":
             "Natural Language :: English",
             "Operating System :: OS Independent",
             "Programming Language :: Python :: 3.6",
+            "Topic :: Software Development :: Libraries :: Python Modules",
             "Topic :: System :: Monitoring"])

@@ -5,3 +5,5 @@ sphinx>=1.4.4
 coverage>=4.1
 mypy
 typed_ast>=0.5.5
+twine
+wheel

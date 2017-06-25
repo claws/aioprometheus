@@ -3,7 +3,7 @@
 # where the python command links to the Python3.6 executable.
 
 .PHONY: check_types clean clean.scrub coverage docs dist help
-.PHONY: sdist style style.fix test test.verbose
+.PHONY: style style.fix test test.verbose
 
 # Do not remove this block. It is used by the 'help' rule when
 # constructing the help output.
@@ -64,7 +64,7 @@ style.fix:
 
 # help: check_types                    - check type hint annotations
 check_types:
-	@MYPYPATH=$VIRTUAL_ENV/lib/python3.5/site-packages mypy -p aioprometheus --fast-parser --ignore-missing-imports
+	@MYPYPATH=$VIRTUAL_ENV/lib/python*/site-packages mypy -p aioprometheus --ignore-missing-imports
 
 
 # help: docs                           - generate project documentation
@@ -77,17 +77,17 @@ docs: coverage
 
 # help: dist                           - create a source distribution package
 dist: clean
-	@python setup.py sdist
+	@python setup.py bdist_wheel
 
 
 # help: dist.test                      - test a source distribution package
 dist.test: dist
-	@cd dist && ./test.bash ./aioprometheus-*.tar.gz
+	@cd dist && ../tests/test.bash ./aioprometheus-*-py3-none-any.whl
 
 
 # help: dist.upload                     - upload a source distribution package
 dist.upload: clean
-	@python setup.py sdist upload
+	@twine upload dist/aioprometheus-*-py3-none-any.whl
 
 
 # Keep these lines at the end of the file to retain nice help
