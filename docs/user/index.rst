@@ -19,15 +19,15 @@ to install it.
 Install optional binary formatter
 +++++++++++++++++++++++++++++++++
 
-If you want to make use of the binary formatter it must be installed
-separately.
+If you want to make use of the binary formatter then a separate package that
+provides the Google Protocol Buffer codec must be installed separately.
 
 .. code-block:: console
 
-    $ pip install aioprometheus-binary-format
+    $ pip install prometheus-metrics-proto
 
-This command will install the ``aioprometheus_binary_format`` module
-that aioprometheus can detect and make use of.
+This command will build and install the ``prometheus_metrics_proto`` extension
+module that aioprometheus can then use to provide metrics in the binary format.
 
 
 Instrumenting

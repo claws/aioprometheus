@@ -12,16 +12,13 @@ from aioprometheus import (
     Summary)
 from aioprometheus.test_utils import AsyncioTestCase
 
-TEST_PORT = 61423
-TEST_HOST = "127.0.0.1"
-
 
 class TestTextExporter(AsyncioTestCase):
 
     async def setUp(self):
         self.registry = Registry()
         self.server = Service(registry=self.registry, loop=self.loop)
-        await self.server.start(addr=TEST_HOST, port=TEST_PORT)
+        await self.server.start(addr="127.0.0.1")
         self.metrics_url = self.server.url
 
     async def tearDown(self):

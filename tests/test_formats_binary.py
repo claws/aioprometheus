@@ -3,8 +3,7 @@ import time
 import unittest
 
 from aioprometheus import (
-    Collector, Counter, Gauge, Histogram, Summary,
-    Registry)
+    Collector, Counter, Gauge, Summary, Registry)
 from aioprometheus.formats import binary_format_available
 if binary_format_available:
     from aioprometheus.formats import BinaryFormatter

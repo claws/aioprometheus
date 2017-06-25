@@ -27,11 +27,11 @@ The standard installation of aioprometheus provides metrics in the text
 format. aioprometheus can encode metrics into the binary format too but it
 requires the optional ``aioprometheus-binary-format`` package to also
 be installed. If you want to make use of the binary metrics encoder you will
-need to install ``aioprometheus-binary-format`` manually.
+need to install ``prometheus-metrics-proto`` separately.
 
 .. code-block:: console
 
-    $ pip install aioprometheus-binary-format
+    $ pip install prometheus-metrics-proto
 
 
 Example

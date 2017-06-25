@@ -7,11 +7,6 @@ from aioprometheus import Counter, pusher, Registry
 from aioprometheus.test_utils import AsyncioTestCase
 
 
-TEST_PORT = 61423
-TEST_HOST = "127.0.0.1"
-TEST_URL = "http://{host}:{port}".format(host=TEST_HOST, port=TEST_PORT)
-
-
 class TestPusherServer(object):
     ''' This fixture class acts as the Push Gateway.
 
@@ -33,7 +28,7 @@ class TestPusherServer(object):
         resp = aiohttp.web.Response(status=200)
         return resp
 
-    async def start(self, addr='', port=TEST_PORT):
+    async def start(self, addr="127.0.0.1", port=None):
         self._svc = aiohttp.web.Application()
         self._svc.router.add_route(
             '*',
@@ -42,6 +37,11 @@ class TestPusherServer(object):
         self._handler = self._svc.make_handler()
         self._svr = await self.loop.create_server(
             self._handler, addr, port)
+        # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
+        _details = self._svr.sockets[0].getsockname()
+        _host, _port = _details[0:2]
+        self.port = _port
+        self.url = "http://{host}:{port}".format(host=addr, port=_port)
 
     async def stop(self):
         self._svr.close()
@@ -69,7 +69,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_job_ping(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, TEST_URL, loop=self.loop)
+        p = pusher.Pusher(job_name, self.server.url, loop=self.loop)
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {})
         registry.register(c)
@@ -86,7 +86,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_add(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)
@@ -119,7 +119,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_replace(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)
@@ -152,7 +152,7 @@ class TestPusher(AsyncioTestCase):
 
     async def test_push_delete(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, TEST_URL)
+        p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
         counter = Counter("counter_test", "A counter.", {'type': "counter"})
         registry.register(counter)

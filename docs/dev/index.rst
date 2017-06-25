@@ -66,7 +66,11 @@ Install the developmental dependencies using ``pip``.
 .. code-block:: console
 
     $ cd aioprometheus
+    $ pip install pip -U
     $ pip install -r requirements.dev.txt
+
+Some rules in the convenience Makefile only work if the dependencies have been
+installed, such as **dist**, **style**, etc.
 
 
 Install aioprometheus
@@ -80,18 +84,19 @@ that any changes take effect immediately.
 
     $ pip install -e .
 
+
 Install optional binary formatter
 +++++++++++++++++++++++++++++++++
 
-If you want to make use of the binary formatter it must be installed
-separately.
+If you want to make use of the binary formatter then a separate package that
+provides the Google Protocol Buffer codec must be installed separately.
 
 .. code-block:: console
 
-    $ pip install aioprometheus-binary-format
+    $ pip install prometheus-metrics-proto
 
-This command will install the ``aioprometheus_binary_format`` module
-that aioprometheus can detect and make use of.
+This command will build and install the ``prometheus_metrics_proto`` extension
+module that aioprometheus can then use to provide metrics in the binary format.
 
 
 Test
@@ -122,7 +127,7 @@ package too.
 .. note::
 
     A number of tests may be skipped if you don't have the optional
-    ``aioprometheus-binary-format`` package installed.
+    ``prometheus-metrics-proto`` package installed.
 
 
 Type Annotations
@@ -132,7 +137,7 @@ The code base has been updated with type annotations. These provide helpful
 gradual typing information that can improve how easily the code is understood
 and which helps with any future enhancements.
 
-The type annotations checker ``mypy`` currently runs cleanly with no warnings.
+The type annotations checker ``mypy`` should run cleanly with no warnings.
 
 Use the Makefile convenience rule to check no issues are reported.
 
@@ -194,7 +199,9 @@ The following steps are used to make a new software release:
 - Ensure that the version label in ``__init__.py`` is correct. It must comply
   with the :ref:`version-label` scheme.
 
-- Create the distribution
+- Create the distribution. This project produces an artefact called a pure
+  Python wheel. Unlike a Universal wheel a pure Python wheel does not natively
+  support both Python2 and Python3. Only Python3 is supported by this package.
 
   .. code-block:: console
 
@@ -202,14 +209,14 @@ The following steps are used to make a new software release:
 
 - Test distribution in ``dist/`` directory. This involves creating a virtual
   environment, installing the source distribution in it and running the tests.
-  These steps have been captured for convenience in the ``dist/test.bash``
-  helper script. The script takes the distribution archive as its only
-  argument.
+  These steps have been captured for convenience in the
+  ``tests/test_dist.bash`` helper script. The script takes the distribution
+  archive as its only argument.
 
   .. code-block:: console
 
       cd dist
-      ./test.bash aioprometheus-16.06.01.tar.gz
+      ../tests/test_dist.bash aioprometheus-17.6.1-py3-none-any.whl
       cd ..
 
 - Upload to PyPI using

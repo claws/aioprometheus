@@ -18,6 +18,7 @@ lib/
 lib64/
 parts/
 sdist/
+dist/
 var/
 *.egg-info/
 .installed.cfg
@@ -87,6 +88,7 @@ ENV/
 # Rope project settings
 .ropeproject
 
-pyrobuf
-prometheus_metrics_proto.*
+# mypy artefacts
+.mypy_cache
+
 

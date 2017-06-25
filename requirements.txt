@@ -1,2 +1,2 @@
-aiohttp==0.21.6
+aiohttp
 quantile-python>=1.1
