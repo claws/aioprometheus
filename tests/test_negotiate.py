@@ -2,15 +2,11 @@
 import unittest
 
 from aioprometheus.negotiator import negotiate
-from aioprometheus.formats import TextFormatter, binary_format_available
-if binary_format_available:
-    from aioprometheus.formats import BinaryFormatter
+from aioprometheus.formats import TextFormatter, BinaryFormatter
 
 
 class TestNegotiate(unittest.TestCase):
 
-    @unittest.skipUnless(
-        binary_format_available, "Binary formatter plugin is not available")
     def test_protobuffer(self):
         ''' check that a protobuf formatter is returned '''
         headers = (

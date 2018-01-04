@@ -91,4 +91,5 @@ ENV/
 # mypy artefacts
 .mypy_cache
 
-
+# vscode
+.vscode/

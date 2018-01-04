@@ -10,6 +10,7 @@ LabelsType = Dict[str, str]
 
 
 class IFormatter(abc.ABC):
+    ''' Formatter interface '''
 
     @abc.abstractmethod
     def get_headers(self):
@@ -21,7 +22,7 @@ class IFormatter(abc.ABC):
         Returns a representation of a counter value in the implemented
         format.
         :param counter: a 2-tuple containing labels and the counter value.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -32,7 +33,7 @@ class IFormatter(abc.ABC):
         Returns a representation of a gauge value in the implemented
         format.
         :param gauge: a 2-tuple containing labels and the gauge value.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -46,7 +47,7 @@ class IFormatter(abc.ABC):
         :param summary: a 2-tuple containing labels and a dict representing
           the summary value. The dict contains keys for each quantile as
           well as the sum and count fields.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -60,7 +61,7 @@ class IFormatter(abc.ABC):
         :param histogram: a 2-tuple containing labels and a dict representing
           the histogram value. The dict contains keys for each bucket as
           well as the sum and count fields.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''

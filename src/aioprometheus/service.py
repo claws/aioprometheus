@@ -1,11 +1,10 @@
 '''
-This module implements an asynchronous Prometheus.io metrics service.
-The service is built upon ``aiohttp``.
+This module implements an asynchronous Prometheus metrics service.
 '''
 
 import asyncio
 import logging
-
+import socket
 import aiohttp
 import aiohttp.web
 
@@ -14,7 +13,7 @@ from aiohttp.hdrs import (
     ACCEPT)
 
 from .negotiator import negotiate
-from .registry import Registry
+from .registry import Registry, CollectorsType
 from typing import Set
 
 # imports only used for type annotations
@@ -29,7 +28,7 @@ DEFAULT_METRICS_PATH = '/metrics'
 
 class Service(object):
     '''
-    This class implements a Prometheus.io metrics service that can
+    This class implements a Prometheus metrics service that can
     be embedded within asyncio based applications so they can be scraped
     by the Prometheus.io server.
     '''
@@ -85,6 +84,7 @@ class Service(object):
     async def start(self,
                     addr: str = '',
                     port: int = 0,
+                    family: socket.AddressFamily = socket.AF_INET,
                     ssl: SSLContext = None,
                     metrics_url: str = DEFAULT_METRICS_PATH,
                     discovery_agent=None) -> None:
@@ -98,6 +98,9 @@ class Service(object):
           which will cause the server to bind to an ephemeral port. If you
           want the server to operate on a fixed port then you need to specifiy
           the port.
+
+        :param family: family can be set to either socket.AF_INET or AF_INET6
+          to force the socket to use IPv4 or IPv6. Defaults to socket.AF_INET.
 
         :param ssl: a sslContext for use with TLS.
 
@@ -126,7 +129,7 @@ class Service(object):
         self._https = ssl is not None
         try:
             self._svr = await self.loop.create_server(
-                self._handler, addr, port, ssl=ssl)
+                self._handler, addr, port, family=family, ssl=ssl)
         except Exception:
             logger.exception('error creating metrics server')
             raise
@@ -145,8 +148,8 @@ class Service(object):
         :param wait_duration: the number of seconds to wait for connections to
           finish.
 
-        :param discovery_agent: an agent that can register the metrics
-          service with a service discovery mechanism.
+        :param discovery_agent: an agent that can deregister the metrics
+          service from a service discovery mechanism.
 
         '''
         logger.debug(
@@ -154,7 +157,7 @@ class Service(object):
 
         if self._svr is None:
             logger.warning(
-                'Metrics HTTP Server is already stopped')
+                'Prometheus metrics server is already stopped')
             return
 
         # de-register service with service discovery
@@ -164,12 +167,30 @@ class Service(object):
         self._svr.close()
         await self._svr.wait_closed()
         await self._svc.shutdown()
-        await self._handler.finish_connections(wait_duration)
         await self._svc.cleanup()
+        # A brief delay is used here to allow the event loop to clean
+        # up the connections, which avoids pending tasks warnings
+        await asyncio.sleep(0)
         self._svr = None
         self._svc = None
         self._handler = None
         logger.debug('Prometheus metrics server stopped')
+
+    def register(self, collector: CollectorsType) -> None:
+        ''' Register a collector.
+
+        :raises: TypeError if collector is not an instance of
+          :class:`Collector`.
+        :raises: ValueError if collector is already registered.
+        '''
+        self.registry.register(collector)
+
+    def deregister(self, name: str) -> None:
+        ''' Deregister a collector.
+
+        :param name: A collector name to deregister.
+        '''
+        self.registry.deregister(name)
 
     async def handle_metrics(self,
                              request: aiohttp.web.Request) -> aiohttp.web.Response:

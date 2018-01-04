@@ -16,20 +16,6 @@ to install it.
     $ pip install aioprometheus
 
 
-Install optional binary formatter
-+++++++++++++++++++++++++++++++++
-
-If you want to make use of the binary formatter then a separate package that
-provides the Google Protocol Buffer codec must be installed separately.
-
-.. code-block:: console
-
-    $ pip install prometheus-metrics-proto
-
-This command will build and install the ``prometheus_metrics_proto`` extension
-module that aioprometheus can then use to provide metrics in the binary format.
-
-
 Instrumenting
 -------------
 
@@ -136,8 +122,8 @@ memory usage:
     ram_metric = Gauge("memory_usage_bytes", "Memory usage in bytes.")
     ram_metric.set({'type': "virtual"}, 100)
 
-A single collector is capable of store multiple metric. For example, the
-swap memory could also be monitored using this collector:
+A single collector is capable of store multiple metric instances. For
+example, the swap memory could also be monitored using this collector:
 
 .. code-block:: python
 
@@ -148,8 +134,10 @@ Const labels
 ++++++++++++
 
 When you create a collector you can also add constant labels. These constant
-labels will be included with all the metrics gathered by that collector. For
-example this example without const labels
+labels will be included with all the metrics gathered by that collector. This
+avoids needing to constantly add extra labels when updating the metric.
+
+So this example without const labels
 
 .. code-block:: python
 
@@ -164,15 +152,164 @@ is the same as this one with const labels:
 
     host = socket.gethostname()
     ram_metric = Gauge(
-        "memory_usage_bytes", "Memory usage in bytes.",  {'host': host})
+        "memory_usage_bytes", "Memory usage in bytes.",
+        const_labels={'host': host})
     ram_metric.set({'type': "virtual"}, 100)
     ram_metric.set({'type': "swap"}, 100)
 
 
-Decorators
-++++++++++
+Exporting Metrics
+-----------------
 
-A number of different decorators are provided to help simplfy the process of
+
+
+Simple Example
+++++++++++++++
+
+Metrics are exposed to the Prometheus server via a HTTP endpoint. The metrics
+can retrieved in two different formats; text and binary.
+
+The following example shows how a metrics service can be instantiated along
+with a Counter. Following typical ``asyncio`` usage, an event loop is
+instantiated first then a Prometheus metrics service is instantiated.
+The server accepts various arguments such as the interface and port to bind
+to.
+
+The service can also be passed a specific registry to use or if none is
+explicitly defined it will create a registry. A registry holds the
+various metrics collectors that will be exposed by the service.
+
+Next, a counter metric is created to track the number of iterations. This
+example uses a timer callback to periodically increment the metric
+tracking iterations. In a realistic application a metric might track the
+number of requests, etc.
+
+.. literalinclude:: ../../examples/simple-example.py
+    :language: python3
+
+The example can be run using
+
+.. code-block:: console
+
+    (env) $ python simple-example.py
+    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+
+In another terminal fetch the metrics using the ``curl`` command line tool.
+
+By default metrics will be returned in plan text format.
+
+.. code-block:: console
+
+    $ curl http://127.0.0.1:50624/metrics
+    # HELP events Number of events.
+    # TYPE events counter
+    events{host="alpha",kind="timer_expiry"} 33
+    $ curl http://127.0.0.1:50624/metrics -H 'Accept: text/plain; version=0.0.4'
+    # HELP events Number of events.
+    # TYPE events counter
+    events{host="alpha",kind="timer_expiry"} 36
+
+Similarly, you can request metrics in binary format, though this will be hard
+to read on the command line.
+
+.. code-block:: console
+
+    $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+
+
+Application Example
++++++++++++++++++++
+
+A more representative example is shown below. It implements an application
+class that uses the ``aioprometheus`` package to collect application metrics
+and expose them on a service endpoint.
+
+.. literalinclude:: ../../examples/app-example.py
+    :language: python3
+
+The example can be run using
+
+.. code-block:: console
+
+    (env) $ python app-example.py
+    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+
+You can use the ``curl`` command line tool to fetch metrics manually or use
+the helper script described in the next section.
+
+
+Checking Example using helper script
+------------------------------------
+
+There is a script in the examples directory that emulates Prometheus server
+scraping a metrics service endpoint. You can specify a particular format to
+use (e.g. text or binary). If no format is specified then it will randomly
+choose a format each time it requests metrics.
+
+.. code-block:: console
+
+    usage: metrics-fetcher.py [-h] [--url URL] [--format FORMAT]
+                            [--interval INTERVAL] [--debug]
+
+    Metrics Fetcher
+
+    optional arguments:
+    -h, --help           show this help message and exit
+    --url URL            The metrics URL
+    --format FORMAT      Metrics response format (i.e. 'text' or 'binary'
+    --interval INTERVAL  The number of seconds between metrics requests
+    --debug              Show debug output
+
+
+Example:
+
+.. code-block:: console
+
+    $ python metrics-fetcher.py --url=http://127.0.0.1:50624/metrics --format=text --interval=2.0
+
+
+Checking Example using Prometheus
+---------------------------------
+
+Once an example is running you can configure Prometheus to begin scraping
+it's metrics by creating or updating the configuration file passed to
+Prometheus. Using the official Prometheus
+`documentation <https://prometheus.io/docs/operating/configuration/>`_
+we can create a minimal configuration file to scrape the example application.
+
+.. code-block:: yaml
+
+    global:
+      scrape_interval:     15s # By default, scrape targets every 15 seconds.
+      evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+
+    scrape_configs:
+      - job_name:       'test-app'
+
+        # Override the global default and scrape targets from this job every
+        # 5 seconds.
+        scrape_interval: 5s
+        scrape_timeout: 10s
+
+        target_groups:
+          - targets: ['localhost:50624']
+            labels:
+              group: 'dev'
+
+We can then run Prometheus and configure it using the configuration file.
+
+.. code-block:: console
+
+    $ ./prometheus -config.file my-prom-config.yaml
+
+Once Prometheus is running you can access at `localhost:9090 <http://localhost:9090/>`_
+and can observe the metrics from the example.
+
+
+Decorators
+----------
+
+A number of different decorators are provided to help simplify the process of
 instrumenting your code. As the ``aioprometheus`` library is targeting use in
 long running ``asyncio`` based applications, the decorators return a
 coroutine object. However, the wrapped function does not have to be a
@@ -195,106 +332,6 @@ used to track the number of exceptions that occur in a function block.
 
 .. literalinclude:: ../../examples/decorator_count_exceptions.py
     :language: python3
-
-
-Exporting Metrics
------------------
-
-HTTP
-++++
-
-Metrics are typically exposed to the Prometheus server via a HTTP endpoint.
-The metrics can also be exposed using two different formats; text and binary.
-
-The following example shows how a metrics service can be instantiated along
-with a Counter. Following typical ``asyncio`` usage, an event loop is
-instantiated first then a Prometheus metrics service is instantiated.
-The server accepts various arguments such as the interface and port to bind
-to.
-
-.. literalinclude:: ../../examples/docs-example.py
-    :language: python3
-
-The service can also be passed a specific registry to use or if none is
-explicitly defined it will create a registry. A registry holds the
-various metrics collectors that will be exposed by the service.
-
-Next, a counter metric is created to track the number of iterations. This
-example uses a timer callback to periodically increment the metric
-tracking iterations. In a realistic application a metric might track the
-number of requests, etc.
-
-The example can be run using:
-
-.. code-block:: console
-
-    $ python docs-example.py
-    serving prometheus metrics on: http://0.0.0.0:60405/metrics
-
-You can visit `http://0.0.0.0:60405/metrics <http://0.0.0.0:60405/metrics>`_
-to view the metrics.
-
-
-Checking Metrics Server using curl
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Check the different formats with curl:
-
-Default (Text 0.0.4):
-
-.. code-block:: console
-
-    $ curl 'http://127.0.0.1:60405/metrics'
-
-Text (0.0.4):
-
-.. code-block:: console
-
-    $ curl 'http://127.0.0.1:60405/metrics' -H 'Accept: text/plain; version=0.0.4'
-
-Protobuf (0.0.4) [only if aioprometheus-binary-format is installed]:
-
-.. code-block:: console
-
-    $ curl 'http://127.0.0.1:60405/metrics' -H 'Accept: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited'
-
-
-Checking Metrics Server using Prometheus
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Once the example is running you can configure Prometheus to begin scraping
-it's metrics by creating or updating the configuration file passed to
-Prometheus. Using the official Prometheus
-`documentation <https://prometheus.io/docs/operating/configuration/>`_
-we can create a minimal configuration file to scrape the example application.
-
-.. code-block:: yaml
-
-    global:
-      scrape_interval:     15s # By default, scrape targets every 15 seconds.
-      evaluation_interval: 15s # By default, scrape targets every 15 seconds.
-
-    scrape_configs:
-      - job_name:       'test-app'
-
-        # Override the global default and scrape targets from this job every
-        # 5 seconds.
-        scrape_interval: 5s
-        scrape_timeout: 10s
-
-        target_groups:
-          - targets: ['localhost:60405']
-            labels:
-              group: 'dev'
-
-We can then run Prometheus and configure it using the configuration file.
-
-.. code-block:: console
-
-    $ ./prometheus -config.file my-prom-config.yaml
-
-Once Prometheus is running you can access at `localhost:9090 <http://localhost:9090/>`_
-and can observe the metrics from the example.
 
 
 Push Gateway

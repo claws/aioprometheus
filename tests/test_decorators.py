@@ -1,4 +1,5 @@
 
+import asynctest
 from aioprometheus import (
     Counter,
     Gauge,
@@ -7,10 +8,9 @@ from aioprometheus import (
     timer,
     inprogress,
     count_exceptions)
-from aioprometheus.test_utils import AsyncioTestCase
 
 
-class TestDecorators(AsyncioTestCase):
+class TestDecorators(asynctest.TestCase):
 
     async def test_timer(self):
         m = Summary('metric_label', 'metric help')

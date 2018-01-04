@@ -7,25 +7,25 @@ from pip.download import PipSession
 from setuptools import setup, find_packages
 
 
-install_reqs = parse_requirements("requirements.txt", session=PipSession())
-requires = [str(ir.req) for ir in install_reqs]
+regexp = re.compile(r'.*__version__ = [\'\"](.*?)[\'\"]', re.S)
 
 
-def read_version():
-    regexp = re.compile(r"^__version__\W*=\W*['\"](\d\d\.\d\d\.\d+)['\"]")
-    init_file = os.path.join(
-        os.path.dirname(__file__), 'aioprometheus', '__init__.py')
-    with open(init_file) as f:
-        for line in f:
-            match = regexp.match(line)
-            if match:
-                return match.group(1)
-        else:
-            raise RuntimeError(
-                'Cannot find __version__ in aioprometheus/__init__.py')
+init_file = os.path.join(
+    os.path.dirname(__file__), 'src', 'aioprometheus', '__init__.py')
+with open(init_file, 'r') as f:
+    module_content = f.read()
+    match = regexp.match(module_content)
+    if match:
+        version = match.group(1)
+    else:
+        raise RuntimeError(
+            'Cannot find __version__ in {}'.format(init_file))
 
+with open('README.rst', 'r') as f:
+    readme = f.read()
 
-version = read_version()
+with open('requirements.txt', 'r') as f:
+    requirements = [line for line in f.read().split('\n') if len(line.strip())]
 
 
 if __name__ == "__main__":
@@ -36,18 +36,17 @@ if __name__ == "__main__":
         author="Chris Laws",
         author_email="clawsicus@gmail.com",
         description="A Prometheus Python client library for asyncio-based applications",
-        long_description="",
+        long_description=readme,
         license="MIT",
         keywords=["prometheus", "monitoring", "metrics"],
         url="https://github.com/claws/aioprometheus",
-        packages=find_packages(),
-        install_requires=requires,
+        package_dir={'': 'src'},
+        packages=find_packages('src'),
+        install_requires=requirements,
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: MIT License",
-            "Natural Language :: English",
-            "Operating System :: OS Independent",
             "Programming Language :: Python :: 3.6",
             "Topic :: Software Development :: Libraries :: Python Modules",
             "Topic :: System :: Monitoring"])

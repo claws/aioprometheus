@@ -1,6 +1,7 @@
 language: python
 python:
   - 3.6
+  - pypy3
 os:
   - linux
 git:
@@ -8,6 +9,7 @@ git:
 before_install:
   - pip install pip --upgrade
 install:
-  - pip install -e .
+  - make dist
+  - pip install dist/aioprometheus-*.whl
 script:
   - make test

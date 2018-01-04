@@ -12,11 +12,13 @@ BucketType = float
 def linearBuckets(start: Union[float, int],
                   width: Union[int, float],
                   count: int) -> List[BucketType]:
-    '''
-    Returns 'count' buckets, each 'width' wide, where the lowest bucket has an
-    upper bound of 'start'. No +Inf bucket is included in the returned list.
+    ''' Returns buckets that are spaced linearly.
 
-    Raises exception if 'count' is zero or negative.
+    Returns ``count`` buckets, each ``width`` wide, where the lowest bucket
+    has an upper bound of ``start``. There is no +Inf bucket is included in
+    the returned list.
+
+    :raises: Exception if ``count`` is zero or negative.
     '''
     if count < 1:
         raise Exception('Invalid count, must be a positive number')
@@ -26,14 +28,16 @@ def linearBuckets(start: Union[float, int],
 def exponentialBuckets(start: Union[float, int],
                        factor: Union[float, int],
                        count: int) -> List[BucketType]:
-    '''
-    Returns 'count' buckets, where the lowest bucket has an upper bound of
-    'start' and each following bucket's upper bound is 'factor' times the
-    previous bucket's upper bound. No +Inf bucket is included in the returned
-    list.
+    ''' Returns buckets that are spaced exponentially.
 
-    Raises exception if 'count' is 0 or negative, if 'start' is 0 or negative,
-    or if 'factor' is less than or equal 1.
+    Returns ``count`` buckets, where the lowest bucket has an upper bound of
+    ``start`` and each following bucket's upper bound is ``factor`` times the
+    previous bucket's upper bound. There is no +Inf bucket is included in the
+    returned list.
+
+    :raises: Exception if ``count`` is 0 or negative.
+    :raises: Exception if ``start`` is 0 or negative,
+    :raises: Exception if ``factor`` is less than or equal 1.
     '''
 
     if count < 1:
@@ -72,8 +76,11 @@ class Histogram(object):
     def observe(self, value: Union[float, int]) -> None:
         ''' Observe the given amount.
 
-        Increment the count of observations, add value to the sum and
+        Observing a value into the histogram will increment the count of
+        observations, add the value to the sum of all observations and
         increment the appropriate bucket counter.
+
+        :param value: A metric value to add to the histogram.
         '''
         # The last bucket is +Inf, so we will always increment at least
         # one bucket

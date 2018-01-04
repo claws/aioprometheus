@@ -1,7 +1,10 @@
 
+import asynctest
 import aiohttp
-
+import unittest.mock
 from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
+import aioprometheus
+import prometheus_metrics_proto as pmp
 
 from aioprometheus import (
     Counter,
@@ -10,14 +13,19 @@ from aioprometheus import (
     Registry,
     Service,
     Summary)
-from aioprometheus.test_utils import AsyncioTestCase
+from aioprometheus.formats import TEXT_CONTENT_TYPE, BINARY_CONTENT_TYPE
 
 
-class TestTextExporter(AsyncioTestCase):
+TEXT = 'text'
+BINARY = 'binary'
+format_kinds = {TEXT: TEXT_CONTENT_TYPE, BINARY: BINARY_CONTENT_TYPE}
+
+
+class TestTextExporter(asynctest.TestCase):
 
     async def setUp(self):
         self.registry = Registry()
-        self.server = Service(registry=self.registry, loop=self.loop)
+        self.server = Service(registry=self.registry)
         await self.server.start(addr="127.0.0.1")
         self.metrics_url = self.server.url
 
@@ -28,11 +36,53 @@ class TestTextExporter(AsyncioTestCase):
         ''' check only valid registry can be provided '''
         for invalid_registry in ['nope', dict(), list()]:
             with self.assertRaises(Exception) as cm:
-                Service(registry=invalid_registry, loop=self.loop)
+                Service(registry=invalid_registry)
             self.assertIn(
                 'registry must be a Registry, got:', str(cm.exception))
 
-        Service(registry=Registry(), loop=self.loop)
+        Service(registry=Registry())
+
+    def test_fetch_url_before_starting_server(self):
+        ''' check accessing URL property raises expection if not available '''
+        s = Service()
+        with self.assertRaises(Exception) as cm:
+            _ = s.url
+        self.assertIn(
+            'No URL available, Prometheus metrics server is not running', str(cm.exception))
+
+    def test_register_deregister(self):
+        c = Counter("test_counter", "Test Counter.", {'test': "test_counter"})
+        self.server.register(c)
+
+        # Check registering a collector with same name raises an exception
+        c2 = Counter("test_counter", "Another Test Counter.")
+        with self.assertRaises(ValueError) as cm:
+            self.server.register(c2)
+        self.assertIn('is already registered', str(cm.exception))
+
+        self.server.deregister("test_counter")
+
+        # Check deregistering a non-existant collector raises an exception
+        with self.assertRaises(KeyError) as cm:
+            self.server.deregister("test_counter")
+
+    async def test_start_started_server(self):
+
+        with unittest.mock.patch.object(aioprometheus.service.logger, 'warning') as mock_warn:
+            await self.server.start(addr="127.0.0.1")
+            self.assertEqual(mock_warn.call_count, 1)
+            mock_warn.assert_called_once_with('Prometheus metrics server is already running')
+
+    async def test_stop_stopped_server(self):
+
+        s = Service(registry=self.registry)
+        await s.start(addr="127.0.0.1")
+        await s.stop()
+
+        with unittest.mock.patch.object(aioprometheus.service.logger, 'warning') as mock_warn:
+            await s.stop()
+            self.assertEqual(mock_warn.call_count, 1)
+            mock_warn.assert_called_once_with('Prometheus metrics server is already stopped')
 
     async def test_counter(self):
 
@@ -44,7 +94,7 @@ class TestTextExporter(AsyncioTestCase):
             ({'data': 1}, 400),
         )
         c = Counter("test_counter", "Test Counter.", {'test': "test_counter"})
-        self.registry.register(c)
+        self.server.register(c)
 
         for i in data:
             c.set(i[0], i[1])
@@ -56,15 +106,26 @@ test_counter{data="2",test="test_counter"} 200
 test_counter{data="3",test="test_counter"} 300
 """
 
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            headers = {ACCEPT: 'text/plain; version=0.0.4'}
-            async with session.get(self.metrics_url, headers=headers) as resp:
-                assert resp.status == 200
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual("text/plain; version=0.0.4; charset=utf-8",
-                                 resp.headers.get(CONTENT_TYPE))
-                self.assertEqual(200, resp.status)
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                metrics = pmp.decode(content)
+                self.assertEqual(len(metrics), 1)
+                mf = metrics[0]
+                self.assertIsInstance(mf, pmp.MetricFamily)
+                self.assertEqual(mf.type, pmp.COUNTER)
+                self.assertEqual(len(mf.metric), 3)
 
     async def test_gauge(self):
 
@@ -76,7 +137,7 @@ test_counter{data="3",test="test_counter"} 300
             ({'data': 1}, 400),
         )
         g = Gauge("test_gauge", "Test Gauge.", {'test': "test_gauge"})
-        self.registry.register(g)
+        self.server.register(g)
 
         for i in data:
             g.set(i[0], i[1])
@@ -88,15 +149,26 @@ test_gauge{data="2",test="test_gauge"} 200
 test_gauge{data="3",test="test_gauge"} 300
 """
 
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            headers = {ACCEPT: 'text/plain; version=0.0.4'}
-            async with session.get(self.metrics_url, headers=headers) as resp:
-                assert resp.status == 200
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual("text/plain; version=0.0.4; charset=utf-8",
-                                 resp.headers.get(CONTENT_TYPE))
-                self.assertEqual(200, resp.status)
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                metrics = pmp.decode(content)
+                self.assertEqual(len(metrics), 1)
+                mf = metrics[0]
+                self.assertIsInstance(mf, pmp.MetricFamily)
+                self.assertEqual(mf.type, pmp.GAUGE)
+                self.assertEqual(len(mf.metric), 3)
 
     async def test_summary(self):
 
@@ -105,7 +177,7 @@ test_gauge{data="3",test="test_gauge"} 300
         label = {'data': 1}
 
         s = Summary("test_summary", "Test Summary.", {'test': "test_summary"})
-        self.registry.register(s)
+        self.server.register(s)
 
         for i in data:
             s.add(label, i)
@@ -119,15 +191,27 @@ test_summary{data="1",quantile="0.9",test="test_summary"} 5.2
 test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
 """
 
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            headers = {ACCEPT: 'text/plain; version=0.0.4'}
-            async with session.get(self.metrics_url, headers=headers) as resp:
-                assert resp.status == 200
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual("text/plain; version=0.0.4; charset=utf-8",
-                                 resp.headers.get(CONTENT_TYPE))
-                self.assertEqual(200, resp.status)
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                metrics = pmp.decode(content)
+                self.assertEqual(len(metrics), 1)
+                mf = metrics[0]
+                self.assertIsInstance(mf, pmp.MetricFamily)
+                self.assertEqual(mf.type, pmp.SUMMARY)
+                self.assertEqual(len(mf.metric), 1)
+                self.assertEqual(len(mf.metric[0].summary.quantile), 3)
 
     async def test_histogram(self):
         pass
@@ -139,7 +223,7 @@ test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
         h = Histogram(
             "histogram_test", "Test Histogram.", {'type': "test_histogram"},
             buckets=[5.0, 10.0, 15.0])
-        self.registry.register(h)
+        self.server.register(h)
 
         for i in data:
             h.add(label, i)
@@ -154,15 +238,27 @@ histogram_test_count{data="1",type="test_histogram"} 4
 histogram_test_sum{data="1",type="test_histogram"} 25.2
 """
 
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            headers = {ACCEPT: 'text/plain; version=0.0.4'}
-            async with session.get(self.metrics_url, headers=headers) as resp:
-                assert resp.status == 200
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual("text/plain; version=0.0.4; charset=utf-8",
-                                 resp.headers.get(CONTENT_TYPE))
-                self.assertEqual(200, resp.status)
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                metrics = pmp.decode(content)
+                self.assertEqual(len(metrics), 1)
+                mf = metrics[0]
+                self.assertIsInstance(mf, pmp.MetricFamily)
+                self.assertEqual(mf.type, pmp.HISTOGRAM)
+                self.assertEqual(len(mf.metric), 1)
+                self.assertEqual(len(mf.metric[0].histogram.bucket), 4)
 
     async def test_all(self):
 
@@ -201,10 +297,10 @@ histogram_test_sum{data="1",type="test_histogram"} 25.2
             "histogram_test", "A histogram.", {'type': "histogram"},
             buckets=[5.0, 10.0, 15.0])
 
-        self.registry.register(counter)
-        self.registry.register(gauge)
-        self.registry.register(summary)
-        self.registry.register(histogram)
+        self.server.register(counter)
+        self.server.register(gauge)
+        self.server.register(summary)
+        self.server.register(histogram)
 
         # Add data
         [counter.set(c[0], c[1]) for c in counter_data]
@@ -274,12 +370,31 @@ summary_test{quantile="0.99",s_sample="2",type="summary"} 2500.0
 summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
 """
 
-        async with aiohttp.ClientSession(loop=self.loop) as session:
-            headers = {ACCEPT: 'text/plain; version=0.0.4'}
-            async with session.get(self.metrics_url, headers=headers) as resp:
-                assert resp.status == 200
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual("text/plain; version=0.0.4; charset=utf-8",
-                                 resp.headers.get(CONTENT_TYPE))
-                self.assertEqual(200, resp.status)
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
+
+            # Fetch as text
+            async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                metrics = pmp.decode(content)
+                self.assertEqual(len(metrics), 4)
+                for mf in metrics:
+                    self.assertIsInstance(mf, pmp.MetricFamily)
+                    if mf.type == pmp.COUNTER:
+                        self.assertEqual(len(mf.metric), 4)
+                    elif mf.type == pmp.GAUGE:
+                        self.assertEqual(len(mf.metric), 4)
+                    elif mf.type == pmp.SUMMARY:
+                        self.assertEqual(len(mf.metric), 4)
+                        self.assertEqual(len(mf.metric[0].summary.quantile), 3)
+                    elif mf.type == pmp.HISTOGRAM:
+                        self.assertEqual(len(mf.metric), 4)
+                        self.assertEqual(len(mf.metric[0].histogram.bucket), 4)

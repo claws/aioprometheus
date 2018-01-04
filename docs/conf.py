@@ -24,15 +24,17 @@ import alabaster
 sys.path.insert(0, os.path.abspath('..'))
 
 
+regexp = re.compile(r'.*__version__ = [\'\"](.*?)[\'\"]', re.S)
 init_file = os.path.join(
-    os.path.dirname(os.path.dirname(__file__)), 'aioprometheus', '__init__.py')
-with open(init_file, 'rt') as f:
-    m = re.search(
-        r'''^__version__\W*=\W*['\"](\d\d\.\d\d\.\d+)['\"]''', f.read(), re.M)
-    if not m:
+    os.path.dirname(__file__), '..', 'src', 'aioprometheus', '__init__.py')
+with open(init_file, 'r') as f:
+    module_content = f.read()
+    match = regexp.match(module_content)
+    if match:
+        version = match.group(1)
+    else:
         raise RuntimeError(
-            'Cannot find __version__ in aioprometheus/__init__.py')
-    version = m.group(1)
+            'Cannot find __version__ in {}'.format(init_file))
 
 
 # -- General configuration ------------------------------------------------
@@ -260,29 +262,6 @@ html_show_copyright = False
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'aioprometheusdoc'
 
-# -- Options for LaTeX output ---------------------------------------------
-
-latex_elements = {}
-
-latex_documents = [
-    (master_doc, 'aioprometheus.tex', 'aioprometheus Documentation',
-     'Chris Laws', 'manual'),
-]
-
-# -- Options for manual page output ---------------------------------------
-
-man_pages = [
-    (master_doc, 'aioprometheus', 'aioprometheus Documentation',
-     [author], 1)
-]
-
-# -- Options for Texinfo output -------------------------------------------
-
-texinfo_documents = [
-    (master_doc, 'aioprometheus', 'aioprometheus Documentation',
-     author, 'aioprometheus', 'One line description of project.',
-     'Miscellaneous'),
-]
 
 # -- suppress specific warnings -------------------------------------------
 
@@ -304,7 +283,7 @@ def run_apidoc(_):
         cmd_path = os.path.abspath(
             os.path.join(sys.prefix, 'bin', 'sphinx-apidoc'))
     subprocess.check_call(
-        [cmd_path, '--no-toc', '-o', 'api', '../aioprometheus', '--force'])
+        [cmd_path, '--no-toc', '-o', 'api', '../src/aioprometheus', '--force'])
 
 
 def setup(app):

@@ -1,435 +1,26 @@
 import datetime
 import time
 import unittest
-
+import unittest.mock
+import prometheus_metrics_proto as pmp
+from aioprometheus.formats import BinaryFormatter, BINARY_CONTENT_TYPE
 from aioprometheus import (
-    Collector, Counter, Gauge, Summary, Registry)
-from aioprometheus.formats import binary_format_available
-if binary_format_available:
-    from aioprometheus.formats import BinaryFormatter
-    import prometheus_metrics_proto as pmp
+    Collector, Counter, Gauge, Histogram, Summary, Registry)
 
 
-@unittest.skipUnless(
-    binary_format_available, "Binary formatter plugin is not available")
+TEST_TIMESTAMP = 1515044377268
+
+
 class TestProtobufFormat(unittest.TestCase):
 
-    # Test Utils
-    def _create_protobuf_object(self, data, metrics, metric_type,
-                                const_labels={}, ts=False):
-        pb_metrics = []
-        for i in metrics:
-            labels = [pmp.LabelPair(name=k, value=v) for k, v in i[0].items()]
-            c_labels = [
-                pmp.LabelPair(name=k, value=v) for k, v in const_labels.items()]
-            labels.extend(c_labels)
+    def setUp(self):
 
-            if metric_type == pmp.COUNTER:
-                metric = pmp.Metric(
-                    counter=pmp.Counter(value=i[1]),
-                    label=labels)
-            elif metric_type == pmp.GAUGE:
-                metric = pmp.Metric(
-                    gauge=pmp.Gauge(value=i[1]),
-                    label=labels)
-            elif metric_type == pmp.SUMMARY:
-                quantiles = []
+        self.const_labels = {"app": "my_app"}
 
-                for k, v in i[1].items():
-                    if not isinstance(k, str):
-                        q = pmp.Quantile(quantile=k, value=v)
-                        quantiles.append(q)
-
-                metric = pmp.Metric(
-                    summary=pmp.Summary(quantile=quantiles,
-                                        sample_sum=i[1]['sum'],
-                                        sample_count=i[1]['count']),
-                    label=labels)
-            elif metric_type == pmp.HISTOGRAM:
-                buckets = []
-
-                for k, v in i[1].items():
-                    if not isinstance(k, str):
-                        bucket = pmp.Bucket(
-                            cumulative_count=v, upper_bound=k)
-                        buckets.append(bucket)
-
-                metric = pmp.Metric(
-                    summary=pmp.Histogram(buckets=buckets,
-                                          histogram_sum=i[1]['sum'],
-                                          histogram_count=i[1]['count']),
-                    label=labels)
-
-            else:
-                raise TypeError("Not a valid metric")
-
-            if ts:
-                metric.timestamp_ms = int(
-                    datetime.datetime.now(
-                        tz=datetime.timezone.utc).timestamp() * 1000)
-
-            pb_metrics.append(metric)
-
-        valid_result = pmp.MetricFamily(
-            name=data['name'],
-            help=data['doc'],
-            type=metric_type,
-            metric=pb_metrics
-        )
-
-        return valid_result
-
-    def _protobuf_metric_equal(self, ptb1, ptb2):
-        if ptb1 is ptb2:
-            return True
-
-        if not ptb1 or not ptb2:
-            return False
-
-        # start all the filters
-        # 1st level:  Metric Family
-        if (ptb1.name != ptb2.name) or\
-           (ptb1.help != ptb2.help) or\
-           (ptb1.type != ptb2.type) or\
-           (len(ptb1.metric) != len(ptb2.metric)):
-            return False
-
-        def sort_metric(v):
-            """ Small function to order the lists of protobuf """
-            x = sorted(v.label, key=lambda x: x.name + x.value)
-            return("".join([i.name + i.value for i in x]))
-
-        # Before continuing, sort stuff
-        mts1 = sorted(ptb1.metric, key=sort_metric)
-        mts2 = sorted(ptb2.metric, key=sort_metric)
-
-        # Now that they are ordered we can compare each element with each
-        for k, m1 in enumerate(mts1):
-            m2 = mts2[k]
-
-            # Check ts
-            if m1.timestamp_ms != m2.timestamp_ms:
-                return False
-
-            # Check value
-            if ptb1.type == pmp.COUNTER and ptb2.type == pmp.COUNTER:
-                if m1.counter.value != m2.counter.value:
-                    return False
-            elif ptb1.type == pmp.GAUGE and ptb2.type == pmp.GAUGE:
-                if m1.gauge.value != m2.gauge.value:
-                    return False
-            elif ptb1.type == pmp.SUMMARY and ptb2.type == pmp.SUMMARY:
-                mm1, mm2 = m1.summary, m2.summary
-                if ((mm1.sample_count != mm2.sample_count) or
-                        (mm1.sample_sum != mm2.sample_sum)):
-                    return False
-
-                # order quantiles to test
-                mm1_quantiles = sorted(
-                    [(x.quantile, x.value) for x in mm1.quantile])
-                mm2_quantiles = sorted(
-                    [(x.quantile, x.value) for x in mm2.quantile])
-
-                if mm1_quantiles != mm2_quantiles:
-                    return False
-
-            elif ptb1.type == pmp.HISTOGRAM and ptb2.type == pmp.HISTOGRAM:
-                mm1, mm2 = m1.summary, m2.summary
-                if ((mm1.sample_count != mm2.sample_count) or
-                        (mm1.sample_sum != mm2.sample_sum)):
-                    return False
-
-                # order buckets to test
-                # mm1_buckets = sorted(mm1.bucket, key=lambda x: x.bucket)
-                mm1_buckets = sorted(
-                    [(x.upper_bound, x.cumulative_count) for x in mm1.bucket])
-                # mm2_buckets = sorted(mm2.bucket, key=lambda x: x.bucket)
-                mm2_buckets = sorted(
-                    [(x.upper_bound, x.cumulative_count) for x in mm2.bucket])
-
-                if mm1_buckets != mm2_buckets:
-                    return False
-
-            else:
-                return False
-
-            # Check labels
-            # Sort labels
-            l1 = sorted(m1.label, key=lambda x: x.name + x.value)
-            l2 = sorted(m2.label, key=lambda x: x.name + x.value)
-            if not all([l.name == l2[k].name and l.value == l2[k].value for k, l in enumerate(l1)]):
-                return False
-
-        return True
-
-    def test_create_protobuf_object_wrong(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        values = (
-            ({'country': "sp", "device": "desktop"}, 520),
-            ({'country': "us", "device": "mobile"}, 654),
-        )
-
-        with self.assertRaises(TypeError) as context:
-            self._create_protobuf_object(data, values, 7)
-
-        self.assertEqual("Not a valid metric", str(context.exception))
-
-    def test_timestamp(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        values = (
-            ({'country': "sp", "device": "desktop"}, 520),
-            ({'country': "us", "device": "mobile"}, 654),
-        )
-
-        c = self._create_protobuf_object(data, values, pmp.COUNTER, {})
-        for i in c.metric:
-            self.assertEqual(0, i.timestamp_ms)
-
-        c = self._create_protobuf_object(data, values, pmp.COUNTER, {}, True)
-        for i in c.metric:
-            self.assertIsNotNone(i.timestamp_ms)
-
-        self.assertEqual(c, c)
-        self.assertTrue(self._protobuf_metric_equal(c, c))
-        time.sleep(0.5)
-        c2 = self._create_protobuf_object(data, values, pmp.COUNTER, {}, True)
-        self.assertFalse(self._protobuf_metric_equal(c, c2))
-
-    def test_protobuf_metric_equal_not_metric(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        values = (({"device": "mobile", 'country': "us"}, 654),
-                  ({'country': "sp", "device": "desktop"}, 520))
-        pt1 = self._create_protobuf_object(data, values, pmp.COUNTER)
-
-        self.assertFalse(self._protobuf_metric_equal(pt1, None))
-        self.assertFalse(self._protobuf_metric_equal(None, pt1))
-
-    def test_protobuf_metric_equal_not_basic_data(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        pt1 = self._create_protobuf_object(data, (), pmp.COUNTER)
-
-        data2 = data.copy()
-        data2['name'] = "other"
-        pt2 = self._create_protobuf_object(data2, (), pmp.COUNTER)
-        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
-
-        data2 = data.copy()
-        data2['doc'] = "other"
-        pt2 = self._create_protobuf_object(data2, (), pmp.COUNTER)
-        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
-
-        pt2 = self._create_protobuf_object(data, (), pmp.SUMMARY)
-        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
-
-        pt3 = self._create_protobuf_object(data, (), pmp.HISTOGRAM)
-        self.assertFalse(self._protobuf_metric_equal(pt2, pt3))
-
-    def test_protobuf_metric_equal_not_labels(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        values = (({"device": "mobile", 'country': "us"}, 654),)
-        pt1 = self._create_protobuf_object(data, values, pmp.COUNTER)
-
-        values2 = (({"device": "mobile", 'country': "es"}, 654),)
-        pt2 = self._create_protobuf_object(data, values2, pmp.COUNTER)
-
-        self.assertFalse(self._protobuf_metric_equal(pt1, pt2))
-
-    def test_protobuf_metric_equal_counter(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        counter_data = (
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'pt2': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 521),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'pt2': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': False
-            },
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 520),
-                        ({"device": "mobile", 'country': "us"}, 654),),
-                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-            {
-                'pt1': (({"device": "mobile", 'country': "us"}, 654),
-                        ({'country': "sp", "device": "desktop"}, 520)),
-                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-        )
-
-        for i in counter_data:
-            p1 = self._create_protobuf_object(data, i['pt1'], pmp.COUNTER)
-            p2 = self._create_protobuf_object(data, i['pt2'], pmp.COUNTER)
-
-            if i['ok']:
-                self.assertTrue(self._protobuf_metric_equal(p1, p2))
-            else:
-                self.assertFalse(self._protobuf_metric_equal(p1, p2))
-
-    def test_protobuf_metric_equal_gauge(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        gauge_data = (
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'pt2': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 521),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'pt2': (({'country': "sp", "device": "desktop"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': False
-            },
-            {
-                'pt1': (({'country': "sp", "device": "desktop"}, 520),
-                        ({"device": "mobile", 'country': "us"}, 654),),
-                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-            {
-                'pt1': (({"device": "mobile", 'country': "us"}, 654),
-                        ({'country': "sp", "device": "desktop"}, 520)),
-                'pt2': (({"device": "desktop", 'country': "sp"}, 520),
-                        ({'country': "us", "device": "mobile"}, 654),),
-                'ok': True
-            },
-        )
-
-        for i in gauge_data:
-            p1 = self._create_protobuf_object(data, i['pt1'], pmp.GAUGE)
-            p2 = self._create_protobuf_object(data, i['pt2'], pmp.GAUGE)
-
-            if i['ok']:
-                self.assertTrue(self._protobuf_metric_equal(p1, p2))
-            else:
-                self.assertFalse(self._protobuf_metric_equal(p1, p2))
-
-    def test_protobuf_metric_equal_summary(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-
-        gauge_data = (
-            {
-                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
-                'pt2': (({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),
-                        ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4})),
-                'ok': True
-            },
-            {
-                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
-                'pt2': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-                        ({'interval': "10s"}, {0.5: 90, 0.9: 150, 0.99: 150, "sum": 385, "count": 10}),),
-                'ok': False
-            },
-            {
-                'pt1': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 10}),),
-                'pt2': (({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-                        ({'interval': "10s"}, {0.5: 90, 0.9: 149, 0.99: 150, "sum": 385, "count": 11}),),
-                'ok': False
-            },
-        )
-
-        for i in gauge_data:
-            p1 = self._create_protobuf_object(data, i['pt1'], pmp.SUMMARY)
-            p2 = self._create_protobuf_object(data, i['pt2'], pmp.SUMMARY)
-
-            if i['ok']:
-                self.assertTrue(self._protobuf_metric_equal(p1, p2))
-            else:
-                self.assertFalse(self._protobuf_metric_equal(p1, p2))
-
-#     # Finish Test Utils
-#     # ######################################
-
-    def test_headers(self):
-        f = BinaryFormatter()
-        result = {
-            'Content-Type': 'application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited'
-        }
-
-        self.assertEqual(result, f.get_headers())
-
-    def test_wrong_format(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
-        }
-
-        f = BinaryFormatter()
-
-        c = Collector(**data)
-
-        with self.assertRaises(TypeError) as context:
-            f.marshall_collector(c)
-
-        self.assertEqual('Not a valid object format', str(context.exception))
-
-    def test_counter_format(self):
-
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-        c = Counter(**data)
-
-        counter_data = (
+        # Counter test fields
+        self.counter_metric_name = 'logged_users_total'
+        self.counter_metric_help = 'Logged users in the application.'
+        self.counter_metric_data = (
             ({'country': "sp", "device": "desktop"}, 520),
             ({'country': "us", "device": "mobile"}, 654),
             ({'country': "uk", "device": "desktop"}, 1001),
@@ -437,210 +28,442 @@ class TestProtobufFormat(unittest.TestCase):
             ({'country': "zh", "device": "desktop"}, 520),
         )
 
-        # Construct the result to compare
-        valid_result = self._create_protobuf_object(
-            data, counter_data, pmp.COUNTER)
+        # Gauge test fields
+        self.gauge_metric_name = 'logged_users_total'
+        self.gauge_metric_help = 'Logged users in the application.'
+        self.gauge_metric_data = (
+            ({'country': "sp", "device": "desktop"}, 520),
+            ({'country': "us", "device": "mobile"}, 654),
+            ({'country': "uk", "device": "desktop"}, 1001),
+            ({'country': "de", "device": "desktop"}, 995),
+            ({'country': "zh", "device": "desktop"}, 520),
+        )
 
-        # Add data to the collector
-        for i in counter_data:
-            c.set_value(i[0], i[1])
+        # Summary test fields
+        self.summary_metric_name = 'request_payload_size_bytes'
+        self.summary_metric_help = 'Request payload size in bytes.'
+        self.summary_metric_data = (
+            ({'route': '/'}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, 'sum': 25.2, 'count': 4}),
+        )
+        self.summary_metric_data_values = (
+            ({'route': '/'}, (3, 5.2, 13, 4)),
+        )
+
+        # Histogram test fields
+        self.histogram_metric_name = 'request_latency_seconds'
+        self.histogram_metric_help = 'Request latency in seconds.'
+        self.histogram_metric_buckets = [5.0, 10.0, 15.0]
+        # buckets typically have a POS_INF upper bound to catch values
+        # beyond the largest bucket bound. Simulate this behavior.
+        POS_INF = float("inf")
+        self.histogram_metric_data = (
+            ({'route': '/'}, {5.0: 2, 10.0: 1, 15.0: 1, POS_INF: 0, 'sum': 25.2, 'count': 4}),
+        )
+        self.histogram_metric_data_values = (
+            ({'route': '/'}, (3, 5.2, 13, 4)),
+        )
+
+    def test_headers_binary(self):
+        ''' check binary header info is provided '''
+        f = BinaryFormatter()
+        expected_result = {'Content-Type': BINARY_CONTENT_TYPE}
+        self.assertEqual(expected_result, f.get_headers())
+
+    def test_no_metric_instances_present_binary(self):
+        ''' Check marshalling a collector with no metrics instances present '''
+
+        c = Counter(name=self.counter_metric_name,
+                    doc=self.counter_metric_help,
+                    const_labels=self.const_labels)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(c)
+        self.assertIsInstance(result, pmp.MetricFamily)
 
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        # Construct the result expected to receive when the counter
+        # collector is marshalled.
+        expected_result = pmp.create_counter(
+            self.counter_metric_name,
+            self.counter_metric_help,
+            [])
 
-    def test_counter_format_with_const_labels(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
-        }
-        c = Counter(**data)
+        self.assertEqual(result, expected_result)
 
-        counter_data = (
-            ({'country': "sp", "device": "desktop"}, 520),
-            ({'country': "us", "device": "mobile"}, 654),
-            ({'country': "uk", "device": "desktop"}, 1001),
-            ({'country': "de", "device": "desktop"}, 995),
-            ({'country': "zh", "device": "desktop"}, 520),
-        )
+    def test_counter_format_binary(self):
 
-        # Construct the result to compare
-        valid_result = self._create_protobuf_object(
-            data, counter_data, pmp.COUNTER, data['const_labels'])
+        # Check simple metric
+        c = Counter(name=self.counter_metric_name,
+                    doc=self.counter_metric_help)
 
         # Add data to the collector
-        for i in counter_data:
-            c.set_value(i[0], i[1])
+        for labels, value in self.counter_metric_data:
+            c.set_value(labels, value)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(c)
+        self.assertIsInstance(result, pmp.MetricFamily)
 
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        # Construct the result expected to receive when the counter
+        # collector is marshalled.
+        expected_result = pmp.create_counter(
+            self.counter_metric_name,
+            self.counter_metric_help,
+            self.counter_metric_data)
 
-    def test_gauge_format(self):
+        self.assertEqual(result, expected_result)
 
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': None,
-        }
-        g = Gauge(**data)
+        ######################################################################
 
-        gauge_data = (
-            ({'country': "sp", "device": "desktop"}, 520),
-            ({'country': "us", "device": "mobile"}, 654),
-            ({'country': "uk", "device": "desktop"}, 1001),
-            ({'country': "de", "device": "desktop"}, 995),
-            ({'country': "zh", "device": "desktop"}, 520),
-        )
-
-        # Construct the result to compare
-        valid_result = self._create_protobuf_object(
-            data, gauge_data, pmp.GAUGE)
+        # Check metric with constant labels
+        c = Counter(name=self.counter_metric_name,
+                    doc=self.counter_metric_help,
+                    const_labels=self.const_labels)
 
         # Add data to the collector
-        for i in gauge_data:
-            g.set_value(i[0], i[1])
+        for labels, value in self.counter_metric_data:
+            c.set_value(labels, value)
+
+        f = BinaryFormatter()
+
+        result = f.marshall_collector(c)
+        self.assertIsInstance(result, pmp.MetricFamily)
+
+        # Construct the result to expected to receive when the counter
+        # collector is marshalled.
+        expected_result = pmp.create_counter(
+            self.counter_metric_name,
+            self.counter_metric_help,
+            self.counter_metric_data,
+            const_labels=self.const_labels)
+
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with timestamps
+        with unittest.mock.patch.object(pmp.utils, '_timestamp_ms', return_value=TEST_TIMESTAMP):
+
+            c = Counter(name=self.counter_metric_name,
+                        doc=self.counter_metric_help)
+
+            # Add data to the collector
+            for labels, value in self.counter_metric_data:
+                c.set_value(labels, value)
+
+            f = BinaryFormatter(timestamp=True)
+
+            result = f.marshall_collector(c)
+            self.assertIsInstance(result, pmp.MetricFamily)
+
+            # Construct the result to expected to receive when the counter
+            # collector is marshalled.
+            expected_result = pmp.create_counter(
+                self.counter_metric_name,
+                self.counter_metric_help,
+                self.counter_metric_data,
+                timestamp=True)
+
+            self.assertEqual(result, expected_result)
+
+    def test_gauge_format_binary(self):
+
+        g = Gauge(name=self.gauge_metric_name,
+                  doc=self.gauge_metric_help)
+
+        # Add data to the collector
+        for labels, values in self.gauge_metric_data:
+            g.set_value(labels, values)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(g)
+        self.assertIsInstance(result, pmp.MetricFamily)
 
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        # Construct the result to expected to receive when the gauge
+        # collector is marshalled.
+        expected_result = pmp.create_gauge(
+            self.gauge_metric_name,
+            self.gauge_metric_help,
+            self.gauge_metric_data)
 
-    def test_gauge_format_with_const_labels(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
-        }
-        g = Gauge(**data)
+        self.assertEqual(result, expected_result)
 
-        gauge_data = (
-            ({'country': "sp", "device": "desktop"}, 520),
-            ({'country': "us", "device": "mobile"}, 654),
-            ({'country': "uk", "device": "desktop"}, 1001),
-            ({'country': "de", "device": "desktop"}, 995),
-            ({'country': "zh", "device": "desktop"}, 520),
-        )
+        ######################################################################
 
-        # Construct the result to compare
-        valid_result = self._create_protobuf_object(
-            data, gauge_data, pmp.GAUGE, data['const_labels'])
+        # Check metric with constant labels
+        g = Gauge(name=self.gauge_metric_name,
+                  doc=self.gauge_metric_help,
+                  const_labels=self.const_labels)
 
         # Add data to the collector
-        for i in gauge_data:
-            g.set_value(i[0], i[1])
+        for labels, values in self.gauge_metric_data:
+            g.set_value(labels, values)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(g)
+        self.assertIsInstance(result, pmp.MetricFamily)
 
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        # Construct the result to expected to receive when the gauge
+        # collector is marshalled.
+        expected_result = pmp.create_gauge(
+            self.gauge_metric_name,
+            self.gauge_metric_help,
+            self.gauge_metric_data,
+            const_labels=self.const_labels)
 
-    def test_one_summary_format(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {},
-        }
+        self.assertEqual(result, expected_result)
 
-        labels = {'handler': '/static'}
-        values = [3, 5.2, 13, 4]
+        ######################################################################
 
-        s = Summary(**data)
+        # Check metric with timestamps
+        with unittest.mock.patch.object(pmp.utils, '_timestamp_ms', return_value=TEST_TIMESTAMP):
 
-        for i in values:
-            s.add(labels, i)
+            g = Gauge(name=self.gauge_metric_name,
+                      doc=self.gauge_metric_help)
 
-        tmp_valid_data = [
-            (labels, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-        ]
-        valid_result = self._create_protobuf_object(data, tmp_valid_data,
-                                                    pmp.SUMMARY)
+            # Add data to the collector
+            for labels, values in self.gauge_metric_data:
+                g.set_value(labels, values)
 
-        f = BinaryFormatter()
+            f = BinaryFormatter(timestamp=True)
 
-        result = f.marshall_collector(s)
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+            result = f.marshall_collector(g)
+            self.assertIsInstance(result, pmp.MetricFamily)
 
-    def test_one_summary_format_with_const_labels(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {"app": "my_app"},
-        }
+            # Construct the result to expected to receive when the gauge
+            # collector is marshalled.
+            expected_result = pmp.create_gauge(
+                self.gauge_metric_name,
+                self.gauge_metric_help,
+                self.gauge_metric_data,
+                timestamp=True)
 
-        labels = {'handler': '/static'}
-        values = [3, 5.2, 13, 4]
+            self.assertEqual(result, expected_result)
 
-        s = Summary(**data)
+    def test_summary_format_binary(self):
 
-        for i in values:
-            s.add(labels, i)
+        s = Summary(name=self.summary_metric_name,
+                    doc=self.summary_metric_help)
 
-        tmp_valid_data = [
-            (labels, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
-        ]
-        valid_result = self._create_protobuf_object(data, tmp_valid_data,
-                                                    pmp.SUMMARY,
-                                                    data['const_labels'])
+        # Add data to the collector
+        for labels, values in self.summary_metric_data_values:
+            for value in values:
+                s.add(labels, value)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(s)
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        self.assertIsInstance(result, pmp.MetricFamily)
+        self.assertEqual(len(result.metric), 1)
 
-    def test_summary_format(self):
-        data = {
-            'name': "logged_users_total",
-            'doc': "Logged users in the application",
-            'const_labels': {},
-        }
+        # Construct the result to expected to receive when the summary
+        # collector is marshalled.
+        expected_result = pmp.create_summary(
+            self.summary_metric_name,
+            self.summary_metric_help,
+            self.summary_metric_data)
 
-        summary_data = (
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with constant labels
+        s = Summary(name=self.summary_metric_name,
+                    doc=self.summary_metric_help,
+                    const_labels=self.const_labels)
+
+        # Add data to the collector
+        for labels, values in self.summary_metric_data_values:
+            for value in values:
+                s.add(labels, value)
+
+        f = BinaryFormatter()
+
+        result = f.marshall_collector(s)
+        self.assertIsInstance(result, pmp.MetricFamily)
+        self.assertEqual(len(result.metric), 1)
+
+        # Construct the result to expected to receive when the summary
+        # collector is marshalled.
+        expected_result = pmp.create_summary(
+            self.summary_metric_name,
+            self.summary_metric_help,
+            self.summary_metric_data,
+            const_labels=self.const_labels)
+
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with timestamps
+        with unittest.mock.patch.object(pmp.utils, '_timestamp_ms', return_value=TEST_TIMESTAMP):
+
+            s = Summary(name=self.summary_metric_name,
+                        doc=self.summary_metric_help)
+
+            # Add data to the collector
+            for labels, values in self.summary_metric_data_values:
+                for value in values:
+                    s.add(labels, value)
+
+            f = BinaryFormatter(timestamp=True)
+
+            result = f.marshall_collector(s)
+            self.assertIsInstance(result, pmp.MetricFamily)
+            self.assertEqual(len(result.metric), 1)
+
+            # Construct the result to expected to receive when the summary
+            # collector is marshalled.
+            expected_result = pmp.create_summary(
+                self.summary_metric_name,
+                self.summary_metric_help,
+                self.summary_metric_data,
+                timestamp=True)
+
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with multiple metric instances
+
+        input_summary_data = (
             ({'interval': "5s"}, [3, 5.2, 13, 4]),
             ({'interval': "10s"}, [1.3, 1.2, 32.1, 59.2, 109.46, 70.9]),
             ({'interval': "10s", 'method': "fast"}, [5, 9.8, 31, 9.7, 101.4]),
         )
 
-        s = Summary(**data)
-
-        for i in summary_data:
-            for j in i[1]:
-                s.add(i[0], j)
-
-        tmp_valid_data = [
+        managed_summary_data = (
             ({'interval': "5s"}, {0.5: 4.0, 0.9: 5.2, 0.99: 5.2, "sum": 25.2, "count": 4}),
             ({'interval': "10s"}, {0.5: 32.1, 0.9: 59.2, 0.99: 59.2, "sum": 274.15999999999997, "count": 6}),
             ({'interval': "10s", 'method': "fast"}, {0.5: 9.7, 0.9: 9.8, 0.99: 9.8, "sum": 156.9, "count": 5}),
-        ]
-        valid_result = self._create_protobuf_object(data, tmp_valid_data,
-                                                    pmp.SUMMARY)
+        )
+
+        s = Summary(name=self.summary_metric_name,
+                    doc=self.summary_metric_help)
+
+        # Add data to the collector
+        for labels, values in input_summary_data:
+            for value in values:
+                s.add(labels, value)
 
         f = BinaryFormatter()
 
         result = f.marshall_collector(s)
-        self.assertTrue(self._protobuf_metric_equal(valid_result, result))
+        self.assertIsInstance(result, pmp.MetricFamily)
+        self.assertEqual(len(result.metric), 3)
+
+        # Construct the result to expected to receive when the summary
+        # collector is marshalled.
+        expected_result = pmp.create_summary(
+            self.summary_metric_name,
+            self.summary_metric_help,
+            managed_summary_data)
+
+        self.assertEqual(result, expected_result)
+
+    def test_histogram_format_binary(self):
+
+        h = Histogram(name=self.histogram_metric_name,
+                      doc=self.histogram_metric_help,
+                      buckets=self.histogram_metric_buckets)
+
+        # Add data to the collector
+        for labels, values in self.histogram_metric_data_values:
+            for value in values:
+                h.add(labels, value)
+
+        f = BinaryFormatter()
+
+        result = f.marshall_collector(h)
+        self.assertIsInstance(result, pmp.MetricFamily)
+        self.assertEqual(len(result.metric), 1)
+
+        # Construct the result to expected to receive when the histogram
+        # collector is marshalled.
+        expected_result = pmp.create_histogram(
+            self.histogram_metric_name,
+            self.histogram_metric_help,
+            self.histogram_metric_data)
+
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with constant labels
+        h = Histogram(name=self.histogram_metric_name,
+                      doc=self.histogram_metric_help,
+                      const_labels=self.const_labels,
+                      buckets=self.histogram_metric_buckets)
+
+        # Add data to the collector
+        for labels, values in self.histogram_metric_data_values:
+            for value in values:
+                h.add(labels, value)
+
+        f = BinaryFormatter()
+
+        result = f.marshall_collector(h)
+        self.assertIsInstance(result, pmp.MetricFamily)
+        self.assertEqual(len(result.metric), 1)
+
+        # Construct the result to expected to receive when the histogram
+        # collector is marshalled.
+        expected_result = pmp.create_histogram(
+            self.histogram_metric_name,
+            self.histogram_metric_help,
+            self.histogram_metric_data,
+            const_labels=self.const_labels)
+
+        self.assertEqual(result, expected_result)
+
+        ######################################################################
+
+        # Check metric with timestamps
+        with unittest.mock.patch.object(pmp.utils, '_timestamp_ms', return_value=TEST_TIMESTAMP):
+
+            h = Histogram(name=self.histogram_metric_name,
+                          doc=self.histogram_metric_help,
+                          buckets=self.histogram_metric_buckets)
+
+            # Add data to the collector
+            for labels, values in self.histogram_metric_data_values:
+                for value in values:
+                    h.add(labels, value)
+
+            f = BinaryFormatter(timestamp=True)
+
+            result = f.marshall_collector(h)
+            self.assertIsInstance(result, pmp.MetricFamily)
+            self.assertEqual(len(result.metric), 1)
+
+            # Construct the result to expected to receive when the histogram
+            # collector is marshalled.
+            expected_result = pmp.create_histogram(
+                self.histogram_metric_name,
+                self.histogram_metric_help,
+                self.histogram_metric_data,
+                timestamp=True)
+
+        self.assertEqual(result, expected_result)
 
     def test_registry_marshall_counter(self):
-
-        format_times = 10
 
         counter_data = (
             ({'c_sample': '1', 'c_subsample': 'b'}, 400),
         )
 
+        counter = Counter(
+            "counter_test",
+            "A counter.",
+            const_labels={'type': "counter"})
+
+        for labels, value in counter_data:
+            counter.set(labels, value)
+
         registry = Registry()
-        counter = Counter("counter_test", "A counter.", {'type': "counter"})
-
-        # Add data
-        [counter.set(c[0], c[1]) for c in counter_data]
-
         registry.register(counter)
 
         valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
@@ -649,23 +472,23 @@ class TestProtobufFormat(unittest.TestCase):
                         b'\x00\x00\x00\x00y@')
         f = BinaryFormatter()
 
-        # Check multiple times to ensure multiple marshalling requests
-        for i in range(format_times):
-            self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(registry))
 
     def test_registry_marshall_gauge(self):
-        format_times = 10
 
         gauge_data = (
             ({'g_sample': '1', 'g_subsample': 'b'}, 800),
         )
 
+        gauge = Gauge(
+            "gauge_test",
+            "A gauge.",
+            const_labels={'type': "gauge"})
+
+        for labels, value in gauge_data:
+            gauge.set(labels, value)
+
         registry = Registry()
-        gauge = Gauge("gauge_test", "A gauge.", {'type': "gauge"})
-
-        # Add data
-        [gauge.set(g[0], g[1]) for g in gauge_data]
-
         registry.register(gauge)
 
         valid_result = (b'U\n\ngauge_test\x12\x08A gauge.\x18\x01";'
@@ -675,23 +498,31 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = BinaryFormatter()
 
-        # Check multiple times to ensure multiple marshalling requests
-        for i in range(format_times):
-            self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(registry))
 
     def test_registry_marshall_summary(self):
-        format_times = 10
+
+        metric_name = "summary_test"
+        metric_help = "A summary."
+        # metric_data = (
+        #     ({'s_sample': '1', 's_subsample': 'b'},
+        #      {0.5: 4235.0, 0.9: 4470.0, 0.99: 4517.0, 'count': 22, 'sum': 98857.0}),
+        # )
 
         summary_data = (
             ({'s_sample': '1', 's_subsample': 'b'}, range(4000, 5000, 47)),
         )
 
+        summary = Summary(
+            metric_name,
+            metric_help,
+            const_labels={'type': "summary"})
+
+        for labels, values in summary_data:
+            for v in values:
+                summary.add(labels, v)
+
         registry = Registry()
-        summary = Summary("summary_test", "A summary.", {'type': "summary"})
-
-        # Add data
-        [summary.add(i[0], s) for i in summary_data for s in i[1]]
-
         registry.register(summary)
 
         valid_result = (b'\x99\x01\n\x0csummary_test\x12\nA summary.'
@@ -706,6 +537,42 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = BinaryFormatter()
 
-        # Check multiple times to ensure multiple marshalling requests
-        for i in range(format_times):
-            self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(registry))
+
+    def test_registry_marshall_histogram(self):
+        ''' check encode of histogram matches expected output '''
+
+        metric_name = "histogram_test"
+        metric_help = "A histogram."
+        metric_data = (
+            ({'h_sample': '1', 'h_subsample': 'b'},
+             {5.0: 3, 10.0: 2, 15.0: 1, 'count': 6, 'sum': 46.0}),
+        )
+        histogram_data = (
+            ({'h_sample': '1', 'h_subsample': 'b'}, (4.5, 5.0, 4.0, 9.6, 9.0, 13.9)),
+        )
+
+        POS_INF = float("inf")
+        histogram = Histogram(
+            metric_name, metric_help,
+            const_labels={'type': "histogram"},
+            buckets=(5.0, 10.0, 15.0, POS_INF))
+        for labels, values in histogram_data:
+            for v in values:
+                histogram.add(labels, v)
+
+        registry = Registry()
+        registry.register(histogram)
+
+        valid_result = (b'\x97\x01\n\x0ehistogram_test\x12\x0cA histogram.'
+                        b'\x18\x04"u\n\r\n\x08h_sample\x12\x011\n\x10\n'
+                        b'\x0bh_subsample\x12\x01b\n\x11\n\x04type\x12\t'
+                        b'histogram:?\x08\x06\x11\x00\x00\x00\x00\x00\x00G@'
+                        b'\x1a\x0b\x08\x03\x11\x00\x00\x00\x00\x00\x00\x14@'
+                        b'\x1a\x0b\x08\x02\x11\x00\x00\x00\x00\x00\x00$@\x1a'
+                        b'\x0b\x08\x01\x11\x00\x00\x00\x00\x00\x00.@\x1a\x0b'
+                        b'\x08\x00\x11\x00\x00\x00\x00\x00\x00\xf0\x7f')
+
+        f = BinaryFormatter()
+
+        self.assertEqual(valid_result, f.marshall(registry))
