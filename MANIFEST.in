@@ -1,5 +1,0 @@
-recursive-include License *
-recursive-include tests *.py
-include requirements.txt
-include Makefile
-
