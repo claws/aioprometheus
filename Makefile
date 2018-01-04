@@ -101,7 +101,7 @@ dist.test: dist
 
 
 # help: dist.upload                    - upload a wheel distribution package
-dist.upload: clean
+dist.upload:
 	@twine upload dist/aioprometheus-*-py3-none-any.whl
 
 
