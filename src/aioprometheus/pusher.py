@@ -46,10 +46,10 @@ class Pusher(object):
     async def add(self,
                   registry: CollectorRegistry) -> aiohttp.web.Response:
         '''
-        Add works like replace, but only metrics with the same name as the
+        ``add`` works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
         '''
-        async with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
             resp = await session.post(
                 self.path, data=payload, headers=self.headers)
@@ -68,7 +68,7 @@ class Pusher(object):
             URL will be replaced with the new metrics value.
 
         '''
-        async with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
             resp = await session.put(
                 self.path, data=payload, headers=self.headers)
@@ -81,7 +81,7 @@ class Pusher(object):
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.
         '''
-        async with aiohttp.ClientSession(loop=self.loop) as session:
+        async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
             resp = await session.delete(
                 self.path, data=payload, headers=self.headers)

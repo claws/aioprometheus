@@ -34,6 +34,9 @@ POS_INF = float("inf")
 NEG_INF = float("-inf")
 
 
+TEXT_CONTENT_TYPE = 'text/plain; version=0.0.4; charset=utf-8'
+
+
 class TextFormatter(IFormatter):
     ''' This formatter encodes into the Protocol Buffers binary format '''
 
@@ -43,8 +46,7 @@ class TextFormatter(IFormatter):
         timestamp is a boolean, if you want timestamp in each metric.
         '''
         self.timestamp = timestamp
-        self._headers = {
-            'Content-Type': 'text/plain; version=0.0.4; charset=utf-8'}
+        self._headers = {'Content-Type': TEXT_CONTENT_TYPE}
 
     def get_headers(self) -> Dict[str, str]:
         return self._headers
@@ -80,7 +82,7 @@ class TextFormatter(IFormatter):
                         const_labels: LabelsType) -> List[str]:
         '''
         :param counter: a 2-tuple containing labels and the counter value.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -95,7 +97,7 @@ class TextFormatter(IFormatter):
                       const_labels: LabelsType) -> List[str]:
         '''
         :param gauge: a 2-tuple containing labels and the gauge value.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -112,7 +114,7 @@ class TextFormatter(IFormatter):
         :param summary: a 2-tuple containing labels and a dict representing
           the summary value. The dict contains keys for each quantile as
           well as the sum and count fields.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -146,7 +148,7 @@ class TextFormatter(IFormatter):
         :param histogram: a 2-tuple containing labels and a dict representing
           the histogram value. The dict contains keys for each bucket as
           well as the sum and count fields.
-        :param labels: a dict of labels for a metric.
+        :param name: the metric name.
         :param const_labels: a dict of constant labels to be associated with
           the metric.
         '''
@@ -231,7 +233,7 @@ class TextFormatter(IFormatter):
         for i in registry.get_all():
             blocks.append(self.marshall_collector(i))
 
-        # Sort? used in tests
+        # Sort? useful in tests
         blocks = sorted(blocks)
 
         # Needs EOF

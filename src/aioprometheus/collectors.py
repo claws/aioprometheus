@@ -165,10 +165,10 @@ class Collector(object):
     def __eq__(self, other) -> bool:
         return (
             isinstance(other, self.__class__) and
-            self.name == other.name and
-            self.doc == other.doc and
-            type(self) == type(other) and
-            self.values == other.values)
+            self.name == other.name and  # type: ignore
+            self.doc == other.doc and  # type: ignore
+            type(self) == type(other) and  # type: ignore
+            self.values == other.values)  # type: ignore
 
 
 class Counter(Collector):
@@ -188,22 +188,26 @@ class Counter(Collector):
     kind = MetricsTypes.counter
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get gets the Counter value matching an arbitrary group of labels.
+        ''' Get the Counter value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
         '''
         return self.get_value(labels)
 
-    def set(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Set is used to set the Counter to an arbitrary value. '''
+    def set(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Set the counter to an arbitrary value. '''
         self.set_value(labels, value)
 
     def inc(self, labels: LabelsType) -> None:
-        ''' Inc increments the counter by 1.'''
+        ''' Increments the counter by 1.'''
         self.add(labels, 1)
 
-    def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Add will add the given value to the counter.
+    def add(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Add the given value to the counter.
 
         :raises: ValueError if the value is negative. Counters can only
           increase.
@@ -223,7 +227,7 @@ class Counter(Collector):
 
 class Gauge(Collector):
     '''
-    A Gauge is a metric that represents a single numerical value that can
+    A gauge is a metric that represents a single numerical value that can
     arbitrarily go up and down.
 
     Examples of Gauges include:
@@ -233,33 +237,38 @@ class Gauge(Collector):
     - Total memory
     - Temperature
 
-     Gauges can go both up and down.
+    Gauges can go both up and down.
     '''
 
     kind = MetricsTypes.gauge
 
-    def set(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Set sets the Gauge to an arbitrary value.'''
+    def set(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Set the gauge to an arbitrary value.'''
         self.set_value(labels, value)
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get gets the Gauge value matching an arbitrary group of labels.
+        ''' Get the gauge value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
         '''
         return self.get_value(labels)
 
     def inc(self, labels: LabelsType) -> None:
-        ''' Inc increments the Gauge by 1.'''
+        ''' Increments the gauge by 1.'''
         self.add(labels, 1)
 
     def dec(self, labels: LabelsType) -> None:
-        ''' Dec decrements the Gauge by 1.'''
+        ''' Decrement the gauge by 1.'''
         self.add(labels, -1)
 
-    def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Add adds the given value to the Gauge. (The value can be
-            negative, resulting in a decrease of the Gauge.)
+    def add(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Add the given value to the Gauge.
+
+        The value can be negative, resulting in a decrease of the gauge.
         '''
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
 
@@ -271,9 +280,12 @@ class Gauge(Collector):
 
         self.set_value(labels, current + value)
 
-    def sub(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Sub subtracts the given value from the Gauge. (The value can be
-            negative, resulting in an increase of the Gauge.)
+    def sub(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Subtract the given value from the Gauge.
+
+        The value can be negative, resulting in an increase of the gauge.
         '''
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         self.add(labels, -value)
@@ -281,8 +293,9 @@ class Gauge(Collector):
 
 class Summary(Collector):
     '''
-    A Summary captures individual observations from an event or sample stream
-    and summarizes them in a manner similar to traditional summary statistics:
+    A Summary metric captures individual observations from an event or sample
+    stream and summarizes them in a manner similar to traditional summary
+    statistics:
 
     1. sum of observations,
     2. observation count,
@@ -308,8 +321,10 @@ class Summary(Collector):
         super().__init__(name, doc, const_labels=const_labels)
         self.invariants = invariants
 
-    def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Add adds a single observation to the summary '''
+    def add(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Add a single observation to the summary '''
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
@@ -331,7 +346,7 @@ class Summary(Collector):
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
-        Get gets a dict of values, containing the sum, count and percentiles,
+        Get a dict of values, containing the sum, count and quantiles,
         matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
@@ -355,9 +370,7 @@ class Summary(Collector):
 
 class Histogram(Collector):
     '''
-    A Histogram tracks the size and number of events in buckets.
-
-    You can use Histograms for aggregatable calculation of quantiles.
+    A Histogram metric tracks the size and number of events in buckets.
 
     Example use cases:
     - Response latency
@@ -380,8 +393,10 @@ class Histogram(Collector):
         super().__init__(name, doc, const_labels=const_labels)
         self.upper_bounds = buckets
 
-    def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        ''' Add adds a single observation to the histogram '''
+    def add(self,
+            labels: LabelsType,
+            value: NumericValueType) -> None:
+        ''' Add a single observation to the histogram '''
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
@@ -404,7 +419,7 @@ class Histogram(Collector):
     def get(self,
             labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
         '''
-        Get gets a dict of values, containing the sum, count and buckets,
+        Get a dict of values, containing the sum, count and buckets,
         matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.

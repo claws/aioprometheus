@@ -1,10 +1,10 @@
 
+import asynctest
 import asyncio
 
 import aiohttp
 
 from aioprometheus import Counter, pusher, Registry
-from aioprometheus.test_utils import AsyncioTestCase
 
 
 class TestPusherServer(object):
@@ -47,7 +47,9 @@ class TestPusherServer(object):
         self._svr.close()
         await self._svr.wait_closed()
         await self._svc.shutdown()
-        await self._handler.finish_connections(1.0)
+        # A brief delay is used here to allow the event loop to clean
+        # up the connections, which avoids pending tasks warnings
+        await asyncio.sleep(0)
         await self._svc.cleanup()
         self._svr = None
         self._svc = None
@@ -58,7 +60,7 @@ def expected_job_path(job):
     return pusher.Pusher.PATH.format(job)
 
 
-class TestPusher(AsyncioTestCase):
+class TestPusher(asynctest.TestCase):
 
     async def setUp(self):
         self.server = TestPusherServer(loop=self.loop)

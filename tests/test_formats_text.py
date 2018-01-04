@@ -3,18 +3,15 @@ import unittest
 
 from aioprometheus import (
     Collector, Counter, Gauge, Histogram, Summary, Registry)
-from aioprometheus.formats import TextFormatter
+from aioprometheus.formats import TextFormatter, TEXT_CONTENT_TYPE
 
 
 class TestTextFormat(unittest.TestCase):
 
     def test_headers(self):
         f = TextFormatter()
-        result = {
-            'Content-Type': 'text/plain; version=0.0.4; charset=utf-8'
-        }
-
-        self.assertEqual(result, f.get_headers())
+        expected_result = {'Content-Type': TEXT_CONTENT_TYPE}
+        self.assertEqual(expected_result, f.get_headers())
 
     def test_wrong_format(self):
         self.data = {
@@ -523,7 +520,6 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
 
         self.assertEqual(sorted(valid_result), sorted(result))
 
-#    # This one hans't got labels
     def test_single_summary_format(self):
         data = {
             'name': "logged_users_total",
@@ -531,7 +527,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
             'const_labels': {},
         }
 
-        labels = {}
+        labels = {}  # This one hasn't got labels
         values = [3, 5.2, 13, 4]
 
         valid_result = (

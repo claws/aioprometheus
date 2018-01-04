@@ -13,6 +13,14 @@ To develop `aioprometheus` you'll need Python 3.6, some dependencies and
 the source code.
 
 
+Get the source
+--------------
+
+.. code-block:: console
+
+    $ git clone git@github.com:claws/aioprometheus.git
+
+
 Setup
 -----
 
@@ -40,24 +48,6 @@ To exit the virtual environment simply type ``deactivate``.
     The following steps assume you are operating in a virtual environment.
 
 
-Get the source
---------------
-
-If you don't care about contributing back and just want the source then use:
-
-.. code-block:: console
-
-    $ git clone git@github.com:claws/aioprometheus.git
-
-If you want to contribute changes back to the project you should first create a
-fork of the `aioprometheus` repository and then clone the repo to your file-system.
-Replace ``USER`` with your Github user name.
-
-.. code-block:: console
-
-    $ git clone git@github.com:USER/aioprometheus.git
-
-
 Install Dependencies
 --------------------
 
@@ -66,7 +56,6 @@ Install the developmental dependencies using ``pip``.
 .. code-block:: console
 
     $ cd aioprometheus
-    $ pip install pip -U
     $ pip install -r requirements.dev.txt
 
 Some rules in the convenience Makefile only work if the dependencies have been
@@ -83,20 +72,6 @@ that any changes take effect immediately.
 .. code-block:: console
 
     $ pip install -e .
-
-
-Install optional binary formatter
-+++++++++++++++++++++++++++++++++
-
-If you want to make use of the binary formatter then a separate package that
-provides the Google Protocol Buffer codec must be installed separately.
-
-.. code-block:: console
-
-    $ pip install prometheus-metrics-proto
-
-This command will build and install the ``prometheus_metrics_proto`` extension
-module that aioprometheus can then use to provide metrics in the binary format.
 
 
 Test
@@ -123,11 +98,6 @@ package too.
 
     $ cd aioprometheus/tests
     $ python -m unittest test_negotiate
-
-.. note::
-
-    A number of tests may be skipped if you don't have the optional
-    ``prometheus-metrics-proto`` package installed.
 
 
 Type Annotations
@@ -200,24 +170,19 @@ The following steps are used to make a new software release:
   with the :ref:`version-label` scheme.
 
 - Create the distribution. This project produces an artefact called a pure
-  Python wheel. Unlike a Universal wheel a pure Python wheel does not natively
-  support both Python2 and Python3. Only Python3 is supported by this package.
+  Python wheel. Only Python3 is supported by this package.
 
   .. code-block:: console
 
       make dist
 
-- Test distribution in ``dist/`` directory. This involves creating a virtual
-  environment, installing the source distribution in it and running the tests.
-  These steps have been captured for convenience in the
-  ``tests/test_dist.bash`` helper script. The script takes the distribution
-  archive as its only argument.
+- Test distribution. This involves creating a virtual environment, installing
+  the distribution in it and running the tests. These steps have been captured
+  for convenience in a Makefile rule.
 
   .. code-block:: console
 
-      cd dist
-      ../tests/test_dist.bash aioprometheus-17.6.1-py3-none-any.whl
-      cd ..
+      make dist.test
 
 - Upload to PyPI using
 
