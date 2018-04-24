@@ -1,3 +1,4 @@
+pip==9.0.3
 aiohttp
 asynctest
 prometheus-metrics-proto >= 18.1.1
