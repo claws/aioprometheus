@@ -1,4 +1,4 @@
-# Byte-compiled / optimized / DLL files
+ga# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
@@ -93,3 +93,6 @@ ENV/
 
 # vscode
 .vscode/
+
+# sublimttext
+/*.sublime-*

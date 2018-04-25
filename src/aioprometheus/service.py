@@ -211,7 +211,7 @@ class Service(object):
                 request: aiohttp.web.Request) -> Set[str]:
         ''' Return a sequence of accepts items in the request headers '''
         accepts = set()  # type: Set[str]
-        accept_headers = request.headers.getall(ACCEPT)
+        accept_headers = request.headers.getall(ACCEPT, [])
         logger.debug('accept: {}'.format(accept_headers))
         for accept_items in accept_headers:
             if ';' in accept_items:
