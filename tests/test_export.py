@@ -51,6 +51,7 @@ class TestTextExporter(asynctest.TestCase):
             'No URL available, Prometheus metrics server is not running', str(cm.exception))
 
     def test_register_deregister(self):
+        ''' check registering and deregistering metrics '''
         c = Counter("test_counter", "Test Counter.", {'test': "test_counter"})
         self.server.register(c)
 
@@ -67,6 +68,7 @@ class TestTextExporter(asynctest.TestCase):
             self.server.deregister("test_counter")
 
     async def test_start_started_server(self):
+        ''' check starting a started server '''
 
         with unittest.mock.patch.object(aioprometheus.service.logger, 'warning') as mock_warn:
             await self.server.start(addr="127.0.0.1")
@@ -74,6 +76,7 @@ class TestTextExporter(asynctest.TestCase):
             mock_warn.assert_called_once_with('Prometheus metrics server is already running')
 
     async def test_stop_stopped_server(self):
+        ''' check stopping a stopped server '''
 
         s = Service(registry=self.registry)
         await s.start(addr="127.0.0.1")
@@ -85,6 +88,7 @@ class TestTextExporter(asynctest.TestCase):
             mock_warn.assert_called_once_with('Prometheus metrics server is already stopped')
 
     async def test_counter(self):
+        ''' check counter metric export '''
 
         # Add some metrics
         data = (
@@ -115,7 +119,7 @@ test_counter{data="3",test="test_counter"} 300
                 self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
-            # Fetch as text
+            # Fetch as binary
             async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
@@ -128,6 +132,7 @@ test_counter{data="3",test="test_counter"} 300
                 self.assertEqual(len(mf.metric), 3)
 
     async def test_gauge(self):
+        ''' check gauge metric export '''
 
         # Add some metrics
         data = (
@@ -158,7 +163,7 @@ test_gauge{data="3",test="test_gauge"} 300
                 self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
-            # Fetch as text
+            # Fetch as binary
             async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
@@ -171,6 +176,7 @@ test_gauge{data="3",test="test_gauge"} 300
                 self.assertEqual(len(mf.metric), 3)
 
     async def test_summary(self):
+        ''' check summary metric export '''
 
         # Add some metrics
         data = [3, 5.2, 13, 4]
@@ -200,7 +206,7 @@ test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
                 self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
-            # Fetch as text
+            # Fetch as binary
             async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
@@ -214,7 +220,7 @@ test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
                 self.assertEqual(len(mf.metric[0].summary.quantile), 3)
 
     async def test_histogram(self):
-        pass
+        ''' check histogram metric export '''
 
         # Add some metrics
         data = [3, 5.2, 13, 4]
@@ -247,7 +253,7 @@ histogram_test_sum{data="1",type="test_histogram"} 25.2
                 self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
-            # Fetch as text
+            # Fetch as binary
             async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
@@ -379,7 +385,7 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
                 self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
-            # Fetch as text
+            # Fetch as binary
             async with session.get(self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
@@ -398,3 +404,35 @@ summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
                     elif mf.type == pmp.HISTOGRAM:
                         self.assertEqual(len(mf.metric), 4)
                         self.assertEqual(len(mf.metric[0].histogram.bucket), 4)
+
+    async def test_no_accept_header(self):
+        ''' check default format is used when no accept header is defined '''
+
+        # Add some metrics
+        data = (
+            ({'data': 1}, 100),
+        )
+        c = Counter("test_counter", "Test Counter.", {'test': "test_counter"})
+        self.server.register(c)
+
+        for i in data:
+            c.set(i[0], i[1])
+
+        expected_data = """# HELP test_counter Test Counter.
+# TYPE test_counter counter
+test_counter{data="1",test="test_counter"} 100
+"""
+
+        async with aiohttp.ClientSession() as session:
+
+            # Fetch without explicit accept type
+            async with session.get(self.metrics_url) as resp:
+                self.assertEqual(resp.status, 200)
+                content = await resp.read()
+                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(expected_data, content.decode())
+
+            # TODO: Add another test here that includes the ACCEPT header
+            # but with no value set. I have not worked out how to do this
+            # yet as aiohttp expects headers to be a dict and a value of None
+            # is not permitted.
