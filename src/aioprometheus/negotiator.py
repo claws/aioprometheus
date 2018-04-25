@@ -12,7 +12,7 @@ FormatterType = Callable[[bool], formats.IFormatter]
 
 
 ProtobufAccepts = set(formats.BINARY_CONTENT_TYPE.split('; '))
-TextAccepts = set(formats.BINARY_CONTENT_TYPE.split('; '))
+TextAccepts = set(formats.TEXT_CONTENT_TYPE.split('; '))
 
 
 def negotiate(accepts: Set[str]) -> FormatterType:

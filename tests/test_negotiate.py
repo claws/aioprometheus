@@ -48,3 +48,8 @@ class TestNegotiate(unittest.TestCase):
         for accept in headers:
             self.assertEqual(
                 TextFormatter, negotiate(set(accept.split(';'))))
+
+    def test_no_accept_header(self):
+        ''' check request with no accept header works '''
+        self.assertEqual(TextFormatter, negotiate(set()))
+        self.assertEqual(TextFormatter, negotiate(set(['', ])))
