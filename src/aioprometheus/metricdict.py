@@ -5,7 +5,7 @@ import re
 
 # Sometimes python will access by string for example iterating objects, and
 # it has this notation
-regex = re.compile("\{.*:.*,?\}")
+regex = re.compile(r"\{.*:.*,?\}")
 
 
 # http://stackoverflow.com/questions/3387691/python-how-to-perfectly-override-a-dict

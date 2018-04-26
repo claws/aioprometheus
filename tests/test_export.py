@@ -27,7 +27,8 @@ class TestTextExporter(asynctest.TestCase):
         self.registry = Registry()
         self.server = Service(registry=self.registry)
         await self.server.start(addr="127.0.0.1")
-        self.metrics_url = self.server.url
+        self.metrics_url = self.server.metrics_url
+        self.root_url = self.server.root_url
 
     async def tearDown(self):
         await self.server.stop()
@@ -43,10 +44,16 @@ class TestTextExporter(asynctest.TestCase):
         Service(registry=Registry())
 
     def test_fetch_url_before_starting_server(self):
-        ''' check accessing URL property raises expection if not available '''
+        ''' check accessing a URL property raises expection if not available '''
         s = Service()
+
         with self.assertRaises(Exception) as cm:
-            _ = s.url
+            _ = s.root_url
+        self.assertIn(
+            'No URL available, Prometheus metrics server is not running', str(cm.exception))
+
+        with self.assertRaises(Exception) as cm:
+            _ = s.metrics_url
         self.assertIn(
             'No URL available, Prometheus metrics server is not running', str(cm.exception))
 
@@ -436,3 +443,17 @@ test_counter{data="1",test="test_counter"} 100
             # but with no value set. I have not worked out how to do this
             # yet as aiohttp expects headers to be a dict and a value of None
             # is not permitted.
+
+    async def test_root_route(self):
+        ''' check root route returns content '''
+        async with aiohttp.ClientSession() as session:
+            async with session.get(self.root_url) as resp:
+                self.assertEqual(resp.status, 200)
+                self.assertIn("text/html", resp.headers.get(CONTENT_TYPE))
+
+    async def test_robots_route(self):
+        ''' check robots route returns content '''
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'{self.root_url}robots.txt') as resp:
+                self.assertEqual(resp.status, 200)
+                self.assertIn("text/plain", resp.headers.get(CONTENT_TYPE))

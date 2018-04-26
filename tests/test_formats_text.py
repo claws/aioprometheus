@@ -189,7 +189,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
 
         c.set_value(counter_data[0], counter_data[1])
 
-        result_regex = """# HELP logged_users_total Logged users in the application
+        result_regex = r"""# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total counter
 logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
@@ -380,7 +380,7 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
 
         g.set_value(counter_data[0], counter_data[1])
 
-        result_regex = """# HELP logged_users_total Logged users in the application
+        result_regex = r"""# HELP logged_users_total Logged users in the application
 # TYPE logged_users_total gauge
 logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
@@ -563,7 +563,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
         labels = {'interval': '5s'}
         values = [3, 5.2, 13, 4]
 
-        result_regex = """# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
+        result_regex = r"""# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
 # TYPE prometheus_target_interval_length_seconds summary
 prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?
@@ -620,7 +620,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*
         registry.register(gauge)
         registry.register(summary)
 
-        valid_regex = """# HELP counter_test A counter.
+        valid_regex = r"""# HELP counter_test A counter.
 # TYPE counter_test counter
 counter_test{c_sample="1",c_subsample="b",type="counter"} 400
 counter_test{c_sample="1",type="counter"} 100

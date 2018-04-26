@@ -58,14 +58,16 @@ class Service(object):
         self._svc = None  # type: aiohttp.web.Application
         self._handler = None  # type: aiohttp.web.RequestHandlerFactory
         self._https = None  # type: bool
+        self._root_url = '/'
+        self._metrics_url = None  # type: str
 
     @property
-    def url(self) -> str:
-        ''' Return the Prometheus metrics url
+    def base_url(self) -> str:
+        ''' Return the base service url
 
         :raises: Exception if the server has not been started.
 
-        :return: the service URL as a string
+        :return: the base service URL as a string
         '''
         if self._svr is None:
             raise Exception(
@@ -74,12 +76,31 @@ class Service(object):
         # IPv4 returns 2-tuple, IPv6 returns 4-tuple
         host, port, *_ = self._svr.sockets[0].getsockname()
         scheme = "http{}".format('s' if self._https else '')
-        url = "{scheme}://{host}:{port}{metrics_url}".format(
+        url = "{scheme}://{host}:{port}".format(
             scheme=scheme,
             host=host if ":" not in host else "[{}]".format(host),
-            port=port,
-            metrics_url=self._metrics_url)
+            port=port)
         return url
+
+    @property
+    def root_url(self) -> str:
+        ''' Return the root service url
+
+        :raises: Exception if the server has not been started.
+
+        :return: the root URL as a string
+        '''
+        return f'{self.base_url}{self._root_url}'
+
+    @property
+    def metrics_url(self) -> str:
+        ''' Return the Prometheus metrics url
+
+        :raises: Exception if the server has not been started.
+
+        :return: the metrics URL as a string
+        '''
+        return f'{self.base_url}{self._metrics_url}'
 
     async def start(self,
                     addr: str = '',
@@ -127,7 +148,7 @@ class Service(object):
         self._svc.router.add_route(
             GET, metrics_url, self.handle_metrics)
         self._svc.router.add_route(
-            GET, '/', self.handle_root)
+            GET, self._root_url, self.handle_root)
         self._svc.router.add_route(
             GET, '/robots.txt', self.handle_robots)
         self._handler = self._svc.make_handler()
@@ -139,7 +160,7 @@ class Service(object):
             logger.exception('error creating metrics server')
             raise
 
-        logger.debug('Prometheus metrics server started on %s', self.url)
+        logger.debug('Prometheus metrics server started on %s', self.metrics_url)
 
         # register service with service discovery
         if discovery_agent:
@@ -227,26 +248,23 @@ class Service(object):
         return accepts
 
     async def handle_root(self,
-                             request: aiohttp.web.Request) -> aiohttp.web.Response:
+                          request: aiohttp.web.Request) -> aiohttp.web.Response:
         ''' Handle a request to the / route.
-            
-            Serves a trivial page with a link to the metrics.  Use this if ever
-            you need to point a health check at your the service.
+
+        Serves a trivial page with a link to the metrics.  Use this if ever
+        you need to point a health check at your the service.
         '''
         return aiohttp.web.Response(
             content_type="text/html",
             text="<html><body><a href='{}'>metrics</a></body></html>".format(
-                request.app['metrics_url']
-            )
-        )
+                request.app['metrics_url']))
 
     async def handle_robots(self,
-                             request: aiohttp.web.Request) -> aiohttp.web.Response:
+                            request: aiohttp.web.Request) -> aiohttp.web.Response:
         ''' Handle a request to /robots.txt
-            
-            If a robot ever stumbles on this server, discourage it from indexing.
+
+        If a robot ever stumbles on this server, discourage it from indexing.
         '''
         return aiohttp.web.Response(
             content_type="text/plain",
-            text="User-agent: *\nDisallow: /\n"
-        )
+            text="User-agent: *\nDisallow: /\n")

@@ -26,7 +26,7 @@ from asyncio.base_events import BaseEventLoop
 TEXT = 'text'
 BINARY = 'binary'
 header_kinds = {
-    TEXT: 'text/plain',
+    TEXT: aioprometheus.formats.TEXT_CONTENT_TYPE,  # 'text/plain',
     BINARY: aioprometheus.formats.BINARY_CONTENT_TYPE,
 }
 
@@ -42,13 +42,13 @@ async def fetch_metrics(url: str,
     '''
     if fmt is None:
         # Randomly choose a format to request metrics in.
-        choice = random.choice(('text', 'binary'))
+        choice = random.choice((TEXT, BINARY))
     else:
         assert fmt in header_kinds
         choice = fmt
 
     print(f'fetching metrics in {choice} format')
-    with aiohttp.ClientSession() as session:
+    async with aiohttp.ClientSession() as session:
         async with session.get(url, headers={ACCEPT: header_kinds[choice]}) as resp:
             assert resp.status == 200
             content = await resp.read()

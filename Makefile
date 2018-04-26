@@ -11,7 +11,7 @@
 
 STYLE_EXCLUDE_LIST:=git status --porcelain --ignored | grep "!!" | grep ".py$$" | cut -d " " -f2 | tr "\n" ","
 STYLE_MAX_LINE_LENGTH:=160
-STYLE_CMD:=pycodestyle --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402 --max-line-length=$(STYLE_MAX_LINE_LENGTH) src/aioprometheus tests examples
+STYLE_CMD:=pycodestyle --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402,W504 --max-line-length=$(STYLE_MAX_LINE_LENGTH) src/aioprometheus tests examples
 VENVS_DIR := $(HOME)/.venvs
 VENV_DIR := $(VENVS_DIR)/vap
 
