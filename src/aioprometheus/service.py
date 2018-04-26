@@ -123,8 +123,13 @@ class Service(object):
 
         self._svc = aiohttp.web.Application()
         self._metrics_url = metrics_url
+        self._svc['metrics_url'] = metrics_url
         self._svc.router.add_route(
             GET, metrics_url, self.handle_metrics)
+        self._svc.router.add_route(
+            GET, '/', self.handle_root)
+        self._svc.router.add_route(
+            GET, '/robots.txt', self.handle_robots)
         self._handler = self._svc.make_handler()
         self._https = ssl is not None
         try:
@@ -220,3 +225,28 @@ class Service(object):
                 accept_items = [accept_items]
             accepts.update(accept_items)
         return accepts
+
+    async def handle_root(self,
+                             request: aiohttp.web.Request) -> aiohttp.web.Response:
+        ''' Handle a request to the / route.
+            
+            Serves a trivial page with a link to the metrics.  Use this if ever
+            you need to point a health check at your the service.
+        '''
+        return aiohttp.web.Response(
+            content_type="text/html",
+            text="<html><body><a href='{}'>metrics</a></body></html>".format(
+                request.app['metrics_url']
+            )
+        )
+
+    async def handle_robots(self,
+                             request: aiohttp.web.Request) -> aiohttp.web.Response:
+        ''' Handle a request to /robots.txt
+            
+            If a robot ever stumbles on this server, discourage it from indexing.
+        '''
+        return aiohttp.web.Response(
+            content_type="text/plain",
+            text="User-agent: *\nDisallow: /\n"
+        )
