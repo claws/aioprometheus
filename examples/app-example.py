@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 '''
-This more complicated example implements an application that uses the
-aioprometheus package to collect application metrics and expose them on a
-service endpoint.
+This more complicated example implements an application that exposes
+application metrics obtained from the psutil package.
 
-This example requires ``psutil`` which can be obtained using
-``pip install psutil``.
+This example requires the ``psutil`` package which can be installed
+using ``pip install psutil``.
 '''
 
 import asyncio
@@ -97,7 +96,7 @@ class ExampleApp(object):
     async def start(self):
         ''' Start the application '''
         await self.msvr.start(addr=self.metrics_host, port=self.metrics_port)
-        logger.debug('Serving prometheus metrics on: %s', self.msvr.url)
+        logger.debug('Serving prometheus metrics on: %s', self.msvr.metrics_url)
 
         # Schedule a timer to update internal metrics. In a realistic
         # application metrics would be updated as needed. In this example

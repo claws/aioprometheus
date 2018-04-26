@@ -35,7 +35,7 @@ if __name__ == '__main__':
     svr.registry.register(events_collector)
 
     loop.run_until_complete(svr.start(addr="127.0.0.1"))
-    print('Serving prometheus metrics on: {}'.format(svr.url))
+    print('Serving prometheus metrics on: {}'.format(svr.metrics_url))
 
     loop.call_later(1.0, on_timer_expiry, loop, events_collector)
 

@@ -9,4 +9,4 @@ from .registry import Registry, CollectorRegistry
 from .service import Service
 
 
-__version__ = "18.01.02"
+__version__ = "18.01.03"

@@ -58,7 +58,7 @@ Example
         svr.registry.register(events_collector)
 
         loop.run_until_complete(svr.start())
-        print('Serving prometheus metrics on: {}'.format(svr.url))
+        print('Serving prometheus metrics on: {}'.format(svr.metrics_url))
 
         loop.call_later(1.0, on_timer_expiry, loop, events_collector)
 
