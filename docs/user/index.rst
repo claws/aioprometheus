@@ -8,7 +8,7 @@ This section of the documentation provides information about how to use
 Install
 -------
 
-The current realease of `aioprometheus` is available from PyPI. Use ``pip``
+The current release of `aioprometheus` is available from PyPI. Use ``pip``
 to install it.
 
 .. code-block:: console
@@ -161,40 +161,46 @@ is the same as this one with const labels:
 Exporting Metrics
 -----------------
 
+Metrics are exposed to the Prometheus server via a HTTP endpoint. The metrics
+can retrieved in two different formats; text and binary.
 
 
 Simple Example
 ++++++++++++++
 
-Metrics are exposed to the Prometheus server via a HTTP endpoint. The metrics
-can retrieved in two different formats; text and binary.
+The example below shows a single Counter metric collector being created
+and exposed via a HTTP endpoint.
 
-The following example shows how a metrics service can be instantiated along
-with a Counter. Following typical ``asyncio`` usage, an event loop is
-instantiated first then a Prometheus metrics service is instantiated.
-The server accepts various arguments such as the interface and port to bind
-to.
-
-The service can also be passed a specific registry to use or if none is
-explicitly defined it will create a registry. A registry holds the
-various metrics collectors that will be exposed by the service.
-
-Next, a counter metric is created to track the number of iterations. This
-example uses a timer callback to periodically increment the metric
-tracking iterations. In a realistic application a metric might track the
-number of requests, etc.
-
-.. literalinclude:: ../../examples/simple-example.py
+.. literalinclude:: ../examples/simple-example.py
     :language: python3
 
-The example can be run using
+In this simple example the counter metric is tracking the number of
+while loop iterations executed by the updater coroutine. In a realistic
+application a metric might track the number of requests, etc.
+
+Following typical ``asyncio`` usage, an event loop is instantiated first
+then a metrics service is instantiated. The metrics service is responsible
+for managing metric collectors and responding to metrics requests.
+
+The service accepts various arguments such as the interface and port to bind
+to. A collector registry is used within the service to hold metrics
+collectors that will be exposed by the service. The service will create a new
+collector registry if one is not passed in.
+
+A counter metric is created and registered with the service. The service is
+started and then a coroutine is started to periodically update the metric
+to simulate progress.
+
+The example script can be run using:
 
 .. code-block:: console
 
-    (env) $ python simple-example.py
+    (venv) $ cd examples
+    (venv) $ python simple-example.py
     Serving prometheus metrics on: http://127.0.0.1:50624/metrics
 
-In another terminal fetch the metrics using the ``curl`` command line tool.
+In another terminal fetch the metrics using the ``curl`` command line tool
+to verify they can be retrieved by Prometheus server.
 
 By default metrics will be returned in plan text format.
 
@@ -204,6 +210,7 @@ By default metrics will be returned in plan text format.
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
+
     $ curl http://127.0.0.1:50624/metrics -H 'Accept: text/plain; version=0.0.4'
     # HELP events Number of events.
     # TYPE events counter
@@ -215,6 +222,16 @@ to read on the command line.
 .. code-block:: console
 
     $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+
+The metrics service also responds to requests sent to its ``/`` route. The
+response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
+style health indicator as it does not incur any overhead within the service
+to serialize a full metrics response.
+
+.. code-block:: console
+
+    $ curl http://127.0.0.1:50624/
+    <html><body><a href='/metrics'>metrics</a></body></html>
 
 
 Application Example
@@ -238,8 +255,8 @@ You can use the ``curl`` command line tool to fetch metrics manually or use
 the helper script described in the next section.
 
 
-Checking Example using helper script
-------------------------------------
+Checking examples using helper script
+-------------------------------------
 
 There is a script in the examples directory that emulates Prometheus server
 scraping a metrics service endpoint. You can specify a particular format to

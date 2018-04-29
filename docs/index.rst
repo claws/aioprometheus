@@ -32,33 +32,35 @@ The project source code can be found `here <https://github.com/claws/aiopromethe
 Example
 -------
 
+The example below shows a single Counter metric collector being created
+and exposed via a HTTP endpoint.
+
 .. literalinclude:: ../examples/simple-example.py
     :language: python3
 
-The example above shows a single Counter metric collector being created
-and exposed via a HTTP endpoint.
-
-The counter metric is created to track the number of iterations. This
-example uses a timer callback to periodically increment the metric
-tracking iterations. In a realistic application a metric might track the
-number of requests, etc.
+In this simple example the counter metric is tracking the number of
+while loop iterations executed by the updater coroutine. In a realistic
+application a metric might track the number of requests, etc.
 
 Following typical ``asyncio`` usage, an event loop is instantiated first
 then a metrics service is instantiated. The metrics service is responsible
-for managing the various metrics collectors and responding to Prometheus
-server when it requests metrics.
+for managing metric collectors and responding to metrics requests.
 
-The server accepts various arguments such as the interface and port to bind
-to. The service will create a new collector registry if one is not passed
-in. A collector registry holds the various metrics collectors that will be
-exposed by the service.
+The service accepts various arguments such as the interface and port to bind
+to. A collector registry is used within the service to hold metrics
+collectors that will be exposed by the service. The service will create a new
+collector registry if one is not passed in.
+
+A counter metric is created and registered with the service. The service is
+started and then a coroutine is started to periodically update the metric
+to simulate progress.
 
 The example script can be run using:
 
 .. code-block:: console
 
-    (env) $ cd examples
-    (env) $ python simple-example.py
+    (venv) $ cd examples
+    (venv) $ python simple-example.py
     Serving prometheus metrics on: http://127.0.0.1:50624/metrics
 
 In another terminal fetch the metrics using the ``curl`` command line tool
@@ -72,6 +74,7 @@ By default metrics will be returned in plan text format.
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
+
     $ curl http://127.0.0.1:50624/metrics -H 'Accept: text/plain; version=0.0.4'
     # HELP events Number of events.
     # TYPE events counter
@@ -84,12 +87,22 @@ to read on the command line.
 
     $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
-There are more examples in the ``examples`` directory. The ``app-example.py``
-file will likely be of interest as it provides a more representative
-application example.
+The metrics service also responds to requests sent to its ``/`` route. The
+response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
+style health indicator as it does not incur any overhead within the service
+to serialize a full metrics response.
+
+.. code-block:: console
+
+    $ curl http://127.0.0.1:50624/
+    <html><body><a href='/metrics'>metrics</a></body></html>
 
 A number of convenience decorator functions are also available to assist with
 updating metrics.
+
+There are more examples in the ``examples`` directory. The ``app-example.py``
+file will likely be of interest as it provides a more representative
+application example.
 
 
 License

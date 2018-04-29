@@ -52,7 +52,7 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
     svr = Service(loop=loop)
-    svr.registry.register(REQUEST_TIME)
+    svr.register(REQUEST_TIME)
 
     try:
         loop.run_until_complete(handle_requests())
