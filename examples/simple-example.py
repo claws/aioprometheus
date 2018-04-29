@@ -18,29 +18,29 @@ from aioprometheus import Counter, Service
 
 if __name__ == '__main__':
 
-    def on_timer_expiry(loop, events_collector):
-        ''' Update the metric periodically '''
-        events_collector.inc({'kind': 'timer_expiry'})
-        loop.call_later(1.0, on_timer_expiry, loop, events_collector)
-
     loop = asyncio.get_event_loop()
 
-    svr = Service(loop=loop)
+    svr = Service()
 
-    events_collector = Counter(
+    events_counter = Counter(
         "events",
         "Number of events.",
         const_labels={'host': socket.gethostname()})
 
-    svr.registry.register(events_collector)
+    svr.register(events_counter)
 
     loop.run_until_complete(svr.start(addr="127.0.0.1"))
-    print('Serving prometheus metrics on: {}'.format(svr.metrics_url))
+    print(f'Serving prometheus metrics on: {svr.metrics_url}')
 
-    loop.call_later(1.0, on_timer_expiry, loop, events_collector)
+    async def updater(m: Counter):
+        # Periodically update the metric to simulate some progress
+        # happening in a real application.
+        while True:
+            m.inc({'kind': 'timer_expiry'})
+            await asyncio.sleep(1.0)
 
     try:
-        loop.run_forever()
+        loop.run_until_complete(updater(events_counter))
     except KeyboardInterrupt:
         pass
     finally:
