@@ -4,7 +4,6 @@ This module implements an asynchronous Prometheus metrics service.
 
 import asyncio
 import logging
-import socket
 import aiohttp
 import aiohttp.web
 
@@ -49,9 +48,9 @@ class Service(object):
         if registry is not None and not isinstance(registry, Registry):
             raise Exception("registry must be a Registry, got: {}".format(registry))
         self.registry = registry or Registry()
-        self._svr = None  # type: Server
-        self._svc = None  # type: aiohttp.web.Application
-        self._handler = None  # type: aiohttp.web.RequestHandlerFactory
+        self._site = None  # type: Server
+        self._app = None  # type: aiohttp.web.Application
+        self._runner = None  # type: aiohttp.web.RequestHandlerFactory
         self._https = None  # type: bool
         self._root_url = "/"
         self._metrics_url = None  # type: str
@@ -64,19 +63,22 @@ class Service(object):
 
         :return: the base service URL as a string
         """
-        if self._svr is None:
+        if self._site is None:
             raise Exception(
                 "No URL available, Prometheus metrics server is not running"
             )
 
         # IPv4 returns 2-tuple, IPv6 returns 4-tuple
-        host, port, *_ = self._svr.sockets[0].getsockname()
+        host, port, *_ = self._site._server.sockets[0].getsockname()
         scheme = "http{}".format("s" if self._https else "")
         url = "{scheme}://{host}:{port}".format(
             scheme=scheme,
             host=host if ":" not in host else "[{}]".format(host),
             port=port,
         )
+        #
+        # TODO: replace the above with self._site.name when aiohttp issue
+        # #3018 is resolved.
         return url
 
     @property
@@ -103,7 +105,6 @@ class Service(object):
         self,
         addr: str = "",
         port: int = 0,
-        family: socket.AddressFamily = socket.AF_INET,
         ssl: SSLContext = None,
         metrics_url: str = DEFAULT_METRICS_PATH,
         discovery_agent=None,
@@ -119,9 +120,6 @@ class Service(object):
           want the server to operate on a fixed port then you need to specifiy
           the port.
 
-        :param family: family can be set to either socket.AF_INET or AF_INET6
-          to force the socket to use IPv4 or IPv6. Defaults to socket.AF_INET.
-
         :param ssl: a sslContext for use with TLS.
 
         :param metrics_url: The name of the endpoint route to expose
@@ -136,22 +134,23 @@ class Service(object):
             "Prometheus metrics server starting on %s:%s%s", addr, port, metrics_url
         )
 
-        if self._svr:
+        if self._site:
             logger.warning("Prometheus metrics server is already running")
             return
 
-        self._svc = aiohttp.web.Application()
+        self._app = aiohttp.web.Application()
         self._metrics_url = metrics_url
-        self._svc["metrics_url"] = metrics_url
-        self._svc.router.add_route(GET, metrics_url, self.handle_metrics)
-        self._svc.router.add_route(GET, self._root_url, self.handle_root)
-        self._svc.router.add_route(GET, "/robots.txt", self.handle_robots)
-        self._handler = self._svc.make_handler()
+        self._app["metrics_url"] = metrics_url
+        self._app.router.add_route(GET, metrics_url, self.handle_metrics)
+        self._app.router.add_route(GET, self._root_url, self.handle_root)
+        self._app.router.add_route(GET, "/robots.txt", self.handle_robots)
+        self._runner = aiohttp.web.AppRunner(self._app)
+        await self._runner.setup()
+
         self._https = ssl is not None
         try:
-            self._svr = await self.loop.create_server(
-                self._handler, addr, port, family=family, ssl=ssl
-            )
+            self._site = aiohttp.web.TCPSite(self._runner, addr, port, ssl_context=ssl)
+            await self._site.start()
         except Exception:
             logger.exception("error creating metrics server")
             raise
@@ -174,7 +173,7 @@ class Service(object):
         """
         logger.debug("Prometheus metrics server stopping")
 
-        if self._svr is None:
+        if self._site is None:
             logger.warning("Prometheus metrics server is already stopped")
             return
 
@@ -182,16 +181,10 @@ class Service(object):
         if discovery_agent:
             await discovery_agent.deregister(self)
 
-        self._svr.close()
-        await self._svr.wait_closed()
-        await self._svc.shutdown()
-        await self._svc.cleanup()
-        # A brief delay is used here to allow the event loop to clean
-        # up the connections, which avoids pending tasks warnings
-        await asyncio.sleep(0)
-        self._svr = None
-        self._svc = None
-        self._handler = None
+        await self._runner.cleanup()
+        self._site = None
+        self._app = None
+        self._runner = None
         logger.debug("Prometheus metrics server stopped")
 
     def register(self, collector: CollectorsType) -> None:

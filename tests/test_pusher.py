@@ -30,27 +30,25 @@ class TestPusherServer(object):
         return resp
 
     async def start(self, addr="127.0.0.1", port=None):
-        self._svc = aiohttp.web.Application()
-        self._svc.router.add_route("*", "/metrics/job/{job}", self.handler)
-        self._handler = self._svc.make_handler()
-        self._svr = await self.loop.create_server(self._handler, addr, port)
+        self._app = aiohttp.web.Application()
+        self._app.router.add_route("*", "/metrics/job/{job}", self.handler)
+        self._runner = aiohttp.web.AppRunner(self._app)
+        await self._runner.setup()
+        self._site = aiohttp.web.TCPSite(self._runner, addr, port)
+        await self._site.start()
         # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
-        _details = self._svr.sockets[0].getsockname()
+        _details = self._site._server.sockets[0].getsockname()
         _host, _port = _details[0:2]
         self.port = _port
         self.url = "http://{host}:{port}".format(host=addr, port=_port)
+        # TODO: replace the above with url = self._site.name when aiohttp
+        # issue #3018 is resolved.
 
     async def stop(self):
-        self._svr.close()
-        await self._svr.wait_closed()
-        await self._svc.shutdown()
-        # A brief delay is used here to allow the event loop to clean
-        # up the connections, which avoids pending tasks warnings
-        await asyncio.sleep(0)
-        await self._svc.cleanup()
-        self._svr = None
-        self._svc = None
-        self._handler = None
+        await self._runner.cleanup()
+        self._site = None
+        self._app = None
+        self._runner = None
 
 
 def expected_job_path(job):
