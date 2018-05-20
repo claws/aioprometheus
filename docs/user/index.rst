@@ -171,7 +171,7 @@ Simple Example
 The example below shows a single Counter metric collector being created
 and exposed via a HTTP endpoint.
 
-.. literalinclude:: ../examples/simple-example.py
+.. literalinclude:: ../../examples/simple-example.py
     :language: python3
 
 In this simple example the counter metric is tracking the number of

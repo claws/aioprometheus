@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 This script implements a fetching function that emulates Prometheus server
 scraping a metrics service endpoint. The fetching function can randomly
 requests metrics in text or binary formats or you can specify a format to
@@ -10,7 +10,7 @@ Usage:
 
     $ python metrics-fetcher.py --url http://0.0.0.0:50123/metrics --format=text --interval=2.0
 
-'''
+"""
 
 import aiohttp
 import aioprometheus
@@ -23,23 +23,22 @@ from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
 from asyncio.base_events import BaseEventLoop
 
 
-TEXT = 'text'
-BINARY = 'binary'
+TEXT = "text"
+BINARY = "binary"
 header_kinds = {
     TEXT: aioprometheus.formats.TEXT_CONTENT_TYPE,  # 'text/plain',
     BINARY: aioprometheus.formats.BINARY_CONTENT_TYPE,
 }
 
 
-async def fetch_metrics(url: str,
-                        fmt: str = None,
-                        interval: float = 1.0,
-                        loop: BaseEventLoop = None):
-    ''' Fetch metrics from the service endpoint using different formats.
+async def fetch_metrics(
+    url: str, fmt: str = None, interval: float = 1.0, loop: BaseEventLoop = None
+):
+    """ Fetch metrics from the service endpoint using different formats.
 
     This coroutine runs 'n' times, with a brief interval in between, before
     exiting.
-    '''
+    """
     if fmt is None:
         # Randomly choose a format to request metrics in.
         choice = random.choice((TEXT, BINARY))
@@ -47,15 +46,15 @@ async def fetch_metrics(url: str,
         assert fmt in header_kinds
         choice = fmt
 
-    print(f'fetching metrics in {choice} format')
+    print(f"fetching metrics in {choice} format")
     async with aiohttp.ClientSession() as session:
         async with session.get(url, headers={ACCEPT: header_kinds[choice]}) as resp:
             assert resp.status == 200
             content = await resp.read()
             content_type = resp.headers.get(CONTENT_TYPE)
-            print('Content-Type: {}'.format(content_type))
-            print('size: {}'.format(len(content)))
-            if choice == 'text':
+            print("Content-Type: {}".format(content_type))
+            print("size: {}".format(len(content)))
+            if choice == "text":
                 print(content.decode())
             else:
                 print(content)
@@ -70,38 +69,40 @@ def fetch_task(url, fmt, interval, loop):
     asyncio.ensure_future(fetch_metrics(url, fmt, interval, loop))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    ARGS = argparse.ArgumentParser(description='Metrics Fetcher')
+    ARGS = argparse.ArgumentParser(description="Metrics Fetcher")
+    ARGS.add_argument("--url", type=str, default=None, help="The metrics URL")
     ARGS.add_argument(
-        '--url', type=str,
+        "--format",
+        type=str,
         default=None,
-        help='The metrics URL')
+        help="Metrics response format (i.e. 'text' or 'binary'",
+    )
     ARGS.add_argument(
-        '--format', type=str,
-        default=None,
-        help="Metrics response format (i.e. 'text' or 'binary'")
-    ARGS.add_argument(
-        '--interval', type=float,
+        "--interval",
+        type=float,
         default=1.0,
-        help='The number of seconds between metrics requests')
+        help="The number of seconds between metrics requests",
+    )
     ARGS.add_argument(
-        '--debug', default=False, action="store_true",
-        help='Show debug output')
+        "--debug", default=False, action="store_true", help="Show debug output"
+    )
 
     args = ARGS.parse_args()
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG)
         # Silence asyncio and aiohttp loggers
-        logging.getLogger('asyncio').setLevel(logging.ERROR)
-        logging.getLogger('aiohttp').setLevel(logging.ERROR)
+        logging.getLogger("asyncio").setLevel(logging.ERROR)
+        logging.getLogger("aiohttp").setLevel(logging.ERROR)
 
     loop = asyncio.get_event_loop()
 
     # create a task to fetch metrics at a periodic interval
     loop.call_later(
-        args.interval, fetch_task, args.url, args.format, args.interval, loop)
+        args.interval, fetch_task, args.url, args.format, args.interval, loop
+    )
 
     try:
         loop.run_forever()

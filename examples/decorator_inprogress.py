@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 
 .. code-block:: python
 
@@ -14,7 +14,7 @@ The example script can be tested using ``curl``.
     # TYPE request_in_progress gauge
     request_in_progress{route="/"} 1
 
-'''
+"""
 
 import asyncio
 import random
@@ -23,14 +23,13 @@ from aioprometheus import Service, Gauge, inprogress
 
 
 # Create a metric to track requests currently in progress.
-REQUESTS = Gauge(
-    'request_in_progress', 'Number of requests in progress')
+REQUESTS = Gauge("request_in_progress", "Number of requests in progress")
 
 
 # Decorate function with metric.
-@inprogress(REQUESTS, {'route': '/'})
+@inprogress(REQUESTS, {"route": "/"})
 async def handle_request(duration):
-    ''' A dummy function that takes some time '''
+    """ A dummy function that takes some time """
     await asyncio.sleep(duration)
 
 
@@ -42,7 +41,7 @@ async def handle_requests():
         await handle_request(random.random())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
 

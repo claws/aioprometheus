@@ -24,11 +24,15 @@ with open('README.rst', 'r') as f:
 
 def parse_requirements(filename):
     ''' Load requirements from a pip requirements file '''
-    lineiter = (line.strip() for line in open(filename))
-    return [line for line in lineiter if line and not line.startswith("#")]
+    with open(filename, 'r') as fd:
+        lines = []
+        for line in fd:
+            line.strip()
+            if line and not line.startswith("#"):
+                lines.append(line)
+    return lines
 
-with open('requirements.txt', 'r') as f:
-    requirements = [line for line in f.read().split('\n') if len(line.strip())]
+requirements = parse_requirements('requirements.txt')
 
 
 if __name__ == "__main__":

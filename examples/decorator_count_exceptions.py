@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 
 .. code-block:: python
 
@@ -16,7 +16,7 @@ The example script can be tested using ``curl``.
 
 You may need to Ctrl+C twice to exit the example script.
 
-'''
+"""
 
 import asyncio
 import random
@@ -25,16 +25,15 @@ from aioprometheus import Service, Counter, count_exceptions
 
 
 # Create a metric to track requests currently in progress.
-REQUESTS = Counter(
-    'request_handler_exceptions', 'Number of exceptions in requests')
+REQUESTS = Counter("request_handler_exceptions", "Number of exceptions in requests")
 
 
 # Decorate function with metric.
-@count_exceptions(REQUESTS, {'route': '/'})
+@count_exceptions(REQUESTS, {"route": "/"})
 async def handle_request(duration):
-    ''' A dummy function that occasionally raises an exception '''
+    """ A dummy function that occasionally raises an exception """
     if duration < 0.3:
-        raise Exception('Ooops')
+        raise Exception("Ooops")
     await asyncio.sleep(duration)
 
 
@@ -49,7 +48,7 @@ async def handle_requests():
             pass  # keep handling
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
 

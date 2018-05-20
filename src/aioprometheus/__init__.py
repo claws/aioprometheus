@@ -1,6 +1,5 @@
 
-from .collectors import (
-    Collector, Counter, Gauge, Summary, Histogram)
+from .collectors import Collector, Counter, Gauge, Summary, Histogram
 from .decorators import count_exceptions, inprogress, timer
 from . import formats
 from . import pusher

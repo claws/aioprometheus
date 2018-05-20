@@ -15,9 +15,9 @@ from typing import cast, Any, Dict, List, Sequence, Tuple, Union
 decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)  # type: ignore
 
 
-METRIC_NAME_RE = re.compile(r'^[a-zA-Z_:][a-zA-Z0-9_:]*$')
-RESTRICTED_LABELS_NAMES = ('job',)
-RESTRICTED_LABELS_PREFIXES = ('__',)
+METRIC_NAME_RE = re.compile(r"^[a-zA-Z_:][a-zA-Z0-9_:]*$")
+RESTRICTED_LABELS_NAMES = ("job",)
+RESTRICTED_LABELS_PREFIXES = ("__",)
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")
@@ -26,7 +26,7 @@ NEG_INF = float("-inf")
 LabelsType = Dict[str, str]
 NumericValueType = Union[int, float, histogram.Histogram, quantile.Estimator]
 ValueType = Union[str, NumericValueType]
-CollectorsType = Union['Counter', 'Gauge', 'Histogram', 'Summary']
+CollectorsType = Union["Counter", "Gauge", "Histogram", "Summary"]
 
 
 class MetricsTypes(enum.Enum):
@@ -38,7 +38,7 @@ class MetricsTypes(enum.Enum):
 
 
 class Collector(object):
-    ''' Base class for all collectors.
+    """ Base class for all collectors.
 
     **Metric names and labels**
 
@@ -81,16 +81,13 @@ class Collector(object):
 
         api_http_requests_total{method="POST", handler="/messages"}
 
-    '''
+    """
 
     kind = MetricsTypes.untyped
 
-    def __init__(self,
-                 name: str,
-                 doc: str,
-                 const_labels: LabelsType = None) -> None:
+    def __init__(self, name: str, doc: str, const_labels: LabelsType = None) -> None:
         if not METRIC_NAME_RE.match(name):
-            raise ValueError('Invalid metric name: {}'.format(name))
+            raise ValueError("Invalid metric name: {}".format(name))
         self.name = name
         self.doc = doc
         self.const_labels = const_labels
@@ -102,39 +99,39 @@ class Collector(object):
         self.values = MetricDict()
 
     def set_value(self, labels: LabelsType, value: NumericValueType) -> None:
-        '''  Sets a value in the container '''
+        """  Sets a value in the container """
         if labels:
             self._label_names_correct(labels)
         self.values[labels] = value
 
     def get_value(self, labels: LabelsType) -> NumericValueType:
-        '''  Gets a value in the container.
+        """  Gets a value in the container.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return self.values[labels]
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Gets a value in the container.
+        """ Gets a value in the container.
 
         Handy alias for `get_value`.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return self.get_value(labels)
 
     def _label_names_correct(self, labels: LabelsType) -> bool:
-        ''' Check validity of label names.
+        """ Check validity of label names.
 
         :raises: ValueError if labels are invalid
-        '''
+        """
         for k, v in labels.items():
             # Check reserved labels
             if k in RESTRICTED_LABELS_NAMES:
                 raise ValueError("Invalid label name: {}".format(k))
 
             if self.kind == MetricsTypes.histogram:
-                if k in ('le', ):
+                if k in ("le",):
                     raise ValueError("Invalid label name: {}".format(k))
 
             # Check prefixes
@@ -144,11 +141,11 @@ class Collector(object):
         return True
 
     def get_all(self) -> List[Tuple[LabelsType, NumericValueType]]:
-        '''
+        """
         Returns a list populated with 2-tuples. The first element is
         a dict of labels and the second element is the value of the metric
         itself.
-        '''
+        """
         items = self.values.items()
 
         result = []
@@ -164,15 +161,16 @@ class Collector(object):
 
     def __eq__(self, other) -> bool:
         return (
-            isinstance(other, self.__class__) and
-            self.name == other.name and  # type: ignore
-            self.doc == other.doc and  # type: ignore
-            type(self) == type(other) and  # type: ignore
-            self.values == other.values)  # type: ignore
+            isinstance(other, self.__class__)
+            and self.name == other.name
+            and self.doc == other.doc  # type: ignore
+            and type(self) == type(other)  # type: ignore
+            and self.values == other.values  # type: ignore
+        )  # type: ignore
 
 
 class Counter(Collector):
-    '''
+    """
     A counter is a cumulative metric that represents a single numerical value
     that only ever goes up. A counter is typically used to count requests
     served, tasks completed, errors occurred, etc. Counters should not be used
@@ -183,35 +181,31 @@ class Counter(Collector):
     - Number of requests processed
     - Number of items that were inserted into a queue
     - Total amount of data that a system has processed
-    '''
+    """
 
     kind = MetricsTypes.counter
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get the Counter value matching an arbitrary group of labels.
+        """ Get the Counter value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return self.get_value(labels)
 
-    def set(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Set the counter to an arbitrary value. '''
+    def set(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Set the counter to an arbitrary value. """
         self.set_value(labels, value)
 
     def inc(self, labels: LabelsType) -> None:
-        ''' Increments the counter by 1.'''
+        """ Increments the counter by 1."""
         self.add(labels, 1)
 
-    def add(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Add the given value to the counter.
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Add the given value to the counter.
 
         :raises: ValueError if the value is negative. Counters can only
           increase.
-        '''
+        """
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if value < 0:
             raise ValueError("Counters can't decrease")
@@ -221,12 +215,14 @@ class Counter(Collector):
         except KeyError:
             current = 0
 
-        current = cast(Union[float, int], current)  # typing check, no runtime behaviour.
+        current = cast(
+            Union[float, int], current
+        )  # typing check, no runtime behaviour.
         self.set_value(labels, current + value)
 
 
 class Gauge(Collector):
-    '''
+    """
     A gauge is a metric that represents a single numerical value that can
     arbitrarily go up and down.
 
@@ -238,61 +234,57 @@ class Gauge(Collector):
     - Temperature
 
     Gauges can go both up and down.
-    '''
+    """
 
     kind = MetricsTypes.gauge
 
-    def set(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Set the gauge to an arbitrary value.'''
+    def set(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Set the gauge to an arbitrary value."""
         self.set_value(labels, value)
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        ''' Get the gauge value matching an arbitrary group of labels.
+        """ Get the gauge value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return self.get_value(labels)
 
     def inc(self, labels: LabelsType) -> None:
-        ''' Increments the gauge by 1.'''
+        """ Increments the gauge by 1."""
         self.add(labels, 1)
 
     def dec(self, labels: LabelsType) -> None:
-        ''' Decrement the gauge by 1.'''
+        """ Decrement the gauge by 1."""
         self.add(labels, -1)
 
-    def add(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Add the given value to the Gauge.
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Add the given value to the Gauge.
 
         The value can be negative, resulting in a decrease of the gauge.
-        '''
+        """
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
 
         try:
             current = self.get_value(labels)
         except KeyError:
             current = 0
-        current = cast(Union[float, int], current)  # typing check, no runtime behaviour.
+        current = cast(
+            Union[float, int], current
+        )  # typing check, no runtime behaviour.
 
         self.set_value(labels, current + value)
 
-    def sub(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Subtract the given value from the Gauge.
+    def sub(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Subtract the given value from the Gauge.
 
         The value can be negative, resulting in an increase of the gauge.
-        '''
+        """
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         self.add(labels, -value)
 
 
 class Summary(Collector):
-    '''
+    """
     A Summary metric captures individual observations from an event or sample
     stream and summarizes them in a manner similar to traditional summary
     statistics:
@@ -304,7 +296,7 @@ class Summary(Collector):
     Example use cases for Summaries:
     - Response latency
     - Request size
-    '''
+    """
 
     kind = MetricsTypes.summary
 
@@ -313,18 +305,18 @@ class Summary(Collector):
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
-    def __init__(self,
-                 name: str,
-                 doc: str,
-                 const_labels: LabelsType = None,
-                 invariants: Sequence[Tuple[float, float]] = DEFAULT_INVARIANTS) -> None:
+    def __init__(
+        self,
+        name: str,
+        doc: str,
+        const_labels: LabelsType = None,
+        invariants: Sequence[Tuple[float, float]] = DEFAULT_INVARIANTS,
+    ) -> None:
         super().__init__(name, doc, const_labels=const_labels)
         self.invariants = invariants
 
-    def add(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Add a single observation to the summary '''
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Add a single observation to the summary """
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
@@ -343,14 +335,13 @@ class Summary(Collector):
     # A summary MUST have the ``observe`` methods
     observe = add
 
-    def get(self,
-            labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
-        '''
+    def get(self, labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
+        """
         Get a dict of values, containing the sum, count and quantiles,
         matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 
         e = self.get_value(labels)
@@ -369,34 +360,46 @@ class Summary(Collector):
 
 
 class Histogram(Collector):
-    '''
+    """
     A Histogram metric tracks the size and number of events in buckets.
 
     Example use cases:
     - Response latency
     - Request size
-    '''
+    """
 
     kind = MetricsTypes.histogram
 
     REPR_STR = "histogram"
-    DEFAULT_BUCKETS = (0.005, 0.01, 0.025, 0.05, 0.1, 0.25,
-                       0.5, 1.0, 2.5, 5.0, 10.0, POS_INF)
+    DEFAULT_BUCKETS = (
+        0.005,
+        0.01,
+        0.025,
+        0.05,
+        0.1,
+        0.25,
+        0.5,
+        1.0,
+        2.5,
+        5.0,
+        10.0,
+        POS_INF,
+    )
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
-    def __init__(self,
-                 name: str,
-                 doc: str,
-                 const_labels: LabelsType = None,
-                 buckets: Sequence[float] = DEFAULT_BUCKETS) -> None:
+    def __init__(
+        self,
+        name: str,
+        doc: str,
+        const_labels: LabelsType = None,
+        buckets: Sequence[float] = DEFAULT_BUCKETS,
+    ) -> None:
         super().__init__(name, doc, const_labels=const_labels)
         self.upper_bounds = buckets
 
-    def add(self,
-            labels: LabelsType,
-            value: NumericValueType) -> None:
-        ''' Add a single observation to the histogram '''
+    def add(self, labels: LabelsType, value: NumericValueType) -> None:
+        """ Add a single observation to the histogram """
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
@@ -416,14 +419,13 @@ class Histogram(Collector):
     # A histogram MUST have the ``observe`` methods
     observe = add
 
-    def get(self,
-            labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
-        '''
+    def get(self, labels: LabelsType) -> Dict[Union[float, str], NumericValueType]:
+        """
         Get a dict of values, containing the sum, count and buckets,
         matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
-        '''
+        """
         return_data = {}  # type: Dict[Union[float, str], NumericValueType]
 
         h = self.get_value(labels)
