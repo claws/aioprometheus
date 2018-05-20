@@ -14,16 +14,16 @@ class TestMetricDict(unittest.TestCase):
     def test_bad_keys(self):
         with self.assertRaises(TypeError) as context:
             metrics = MetricDict()
-            metrics['not_valid'] = "value"
+            metrics["not_valid"] = "value"
 
-        self.assertEqual('Only accepts dicts as keys', str(context.exception))
+        self.assertEqual("Only accepts dicts as keys", str(context.exception))
 
     def test_set(self):
         metrics = MetricDict()
         data = (
-            ({'a': 1}, 1000),
-            ({'b': 2, 'c': 3}, 2000),
-            ({'d': 4, 'e': 5, 'f': 6}, 3000),
+            ({"a": 1}, 1000),
+            ({"b": 2, "c": 3}, 2000),
+            ({"d": 4, "e": 5, "f": 6}, 3000),
         )
 
         for i in data:
@@ -34,9 +34,9 @@ class TestMetricDict(unittest.TestCase):
     def test_get(self):
         metrics = MetricDict()
         data = (
-            ({'a': 1}, 1000),
-            ({'b': 2, 'c': 3}, 2000),
-            ({'d': 4, 'e': 5, 'f': 6}, 3000),
+            ({"a": 1}, 1000),
+            ({"b": 2, "c": 3}, 2000),
+            ({"d": 4, "e": 5, "f": 6}, 3000),
         )
 
         for i in data:
@@ -47,7 +47,7 @@ class TestMetricDict(unittest.TestCase):
 
     def test_override(self):
         metrics = MetricDict()
-        key = {'a': 1}
+        key = {"a": 1}
 
         for i in range(100):
             metrics[key] = i
@@ -58,9 +58,9 @@ class TestMetricDict(unittest.TestCase):
     def test_similar(self):
         metrics = MetricDict()
         data = (
-            ({'d': 4, 'e': 5, 'f': 6}, 3000),
-            ({'e': 5, 'd': 4, 'f': 6}, 4000),
-            ({'d': 4, 'f': 6, 'e': 5}, 5000),
+            ({"d": 4, "e": 5, "f": 6}, 3000),
+            ({"e": 5, "d": 4, "f": 6}, 4000),
+            ({"d": 4, "f": 6, "e": 5}, 5000),
         )
 
         for i in data:
@@ -69,7 +69,7 @@ class TestMetricDict(unittest.TestCase):
         self.assertEqual(1, len(metrics))
 
     def test_access_by_str(self):
-        label = {'b': 2, 'c': 3, 'a': 1}
+        label = {"b": 2, "c": 3, "a": 1}
         access_key = '{"a": 1, "b": 2, "c": 3}'
         bad_access_key = '{"b": 2, "c": 3, "a": 1}'
         value = 100
@@ -79,8 +79,8 @@ class TestMetricDict(unittest.TestCase):
 
         # Wrong string
         with self.assertRaises(TypeError) as context:
-            metrics['dasdasd']
-        self.assertEqual('Only accepts dicts as keys', str(context.exception))
+            metrics["dasdasd"]
+        self.assertEqual("Only accepts dicts as keys", str(context.exception))
 
         # Access ok with string
         self.assertEqual(value, metrics[access_key])
@@ -88,8 +88,7 @@ class TestMetricDict(unittest.TestCase):
         # Access ok but wrong key by order
         with self.assertRaises(KeyError) as context:
             metrics[bad_access_key]
-        self.assertEqual("'{0}'".format(bad_access_key),
-                         str(context.exception))
+        self.assertEqual("'{0}'".format(bad_access_key), str(context.exception))
 
     def test_empty_key(self):
         metrics = MetricDict()
@@ -106,12 +105,12 @@ class TestMetricDict(unittest.TestCase):
     def test_delete(self):
         metrics = MetricDict()
         data = (
-            ({'d': 4, 'e': 5, 'f': 6}, 3000),
-            ({'e': 5, 'd': 4, 'f': 6}, 4000),
-            ({'d': 4, 'f': 6, 'e': 5}, 5000),
-            ({'d': 41, 'f': 61, 'e': 51}, 6000),
-            ({'d': 41, 'e': 51, 'f': 61}, 7000),
-            ({'f': 61, 'e': 51, 'd': 41}, 8000),
+            ({"d": 4, "e": 5, "f": 6}, 3000),
+            ({"e": 5, "d": 4, "f": 6}, 4000),
+            ({"d": 4, "f": 6, "e": 5}, 5000),
+            ({"d": 41, "f": 61, "e": 51}, 6000),
+            ({"d": 41, "e": 51, "f": 61}, 7000),
+            ({"f": 61, "e": 51, "d": 41}, 8000),
         )
 
         for i in data:
@@ -124,12 +123,12 @@ class TestMetricDict(unittest.TestCase):
     def test_all(self):
         metrics = MetricDict()
         data = (
-            ({'d': 4, 'e': 5, 'f': 6}, 3000),
-            ({'e': 5, 'd': 4, 'f': 6}, 4000),
-            ({'d': 4, 'f': 6, 'e': 5}, 5000),
-            ({'d': 41, 'f': 61, 'e': 51}, 6000),
-            ({'d': 41, 'e': 51, 'f': 61}, 7000),
-            ({'f': 61, 'e': 51, 'd': 41}, 8000),
+            ({"d": 4, "e": 5, "f": 6}, 3000),
+            ({"e": 5, "d": 4, "f": 6}, 4000),
+            ({"d": 4, "f": 6, "e": 5}, 5000),
+            ({"d": 41, "f": 61, "e": 51}, 6000),
+            ({"d": 41, "e": 51, "f": 61}, 7000),
+            ({"f": 61, "e": 51, "d": 41}, 8000),
         )
 
         for i in data:
@@ -137,5 +136,5 @@ class TestMetricDict(unittest.TestCase):
 
         self.assertEqual(2, len(metrics))
 
-        self.assertEqual(5000, metrics[{'d': 4, 'e': 5, 'f': 6}])
-        self.assertEqual(8000, metrics[{'d': 41, 'f': 61, 'e': 51}])
+        self.assertEqual(5000, metrics[{"d": 4, "e": 5, "f": 6}])
+        self.assertEqual(8000, metrics[{"d": 41, "f": 61, "e": 51}])

@@ -8,11 +8,11 @@ from aioprometheus import Counter, pusher, Registry
 
 
 class TestPusherServer(object):
-    ''' This fixture class acts as the Push Gateway.
+    """ This fixture class acts as the Push Gateway.
 
     It handles requests and stores various request attributes in the
     test_results attribute which is later checked in tests.
-    '''
+    """
 
     def __init__(self, loop=None):
         self.loop = loop or asyncio.get_event_loop()
@@ -21,22 +21,19 @@ class TestPusherServer(object):
     async def handler(self, request):
         data = await request.read()
         self.test_results = {
-            'path': request.path,
-            'headers': request.raw_headers,
-            'method': request.method,
-            'body': data}
+            "path": request.path,
+            "headers": request.raw_headers,
+            "method": request.method,
+            "body": data,
+        }
         resp = aiohttp.web.Response(status=200)
         return resp
 
     async def start(self, addr="127.0.0.1", port=None):
         self._svc = aiohttp.web.Application()
-        self._svc.router.add_route(
-            '*',
-            "/metrics/job/{job}",
-            self.handler)
+        self._svc.router.add_route("*", "/metrics/job/{job}", self.handler)
         self._handler = self._svc.make_handler()
-        self._svr = await self.loop.create_server(
-            self._handler, addr, port)
+        self._svr = await self.loop.create_server(self._handler, addr, port)
         # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
         _details = self._svr.sockets[0].getsockname()
         _host, _port = _details[0:2]
@@ -76,33 +73,30 @@ class TestPusher(asynctest.TestCase):
         c = Counter("total_requests", "Total requests.", {})
         registry.register(c)
 
-        c.inc({'url': "/p/user", })
+        c.inc({"url": "/p/user"})
 
         # Push to the pushgateway
         resp = await p.replace(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(
-            expected_job_path(job_name),
-            self.server.test_results['path'])
+        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
 
     async def test_push_add(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
-        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+        counter = Counter("counter_test", "A counter.", {"type": "counter"})
         registry.register(counter)
 
-        counter_data = (
-            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
-        )
+        counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
         [counter.set(c[0], c[1]) for c in counter_data]
         # TextFormatter expected result
         valid_result = (
-            b'# HELP counter_test A counter.\n'
-            b'# TYPE counter_test counter\n'
-            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+            b"# HELP counter_test A counter.\n"
+            b"# TYPE counter_test counter\n"
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
+        )
         # BinaryFormatter expected result
         # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
         #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
@@ -113,29 +107,26 @@ class TestPusher(asynctest.TestCase):
         resp = await p.add(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(
-            expected_job_path(job_name),
-            self.server.test_results['path'])
-        self.assertEqual("POST", self.server.test_results['method'])
-        self.assertEqual(valid_result, self.server.test_results['body'])
+        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("POST", self.server.test_results["method"])
+        self.assertEqual(valid_result, self.server.test_results["body"])
 
     async def test_push_replace(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
-        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+        counter = Counter("counter_test", "A counter.", {"type": "counter"})
         registry.register(counter)
 
-        counter_data = (
-            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
-        )
+        counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
         [counter.set(c[0], c[1]) for c in counter_data]
         # TextFormatter expected result
         valid_result = (
-            b'# HELP counter_test A counter.\n'
-            b'# TYPE counter_test counter\n'
-            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+            b"# HELP counter_test A counter.\n"
+            b"# TYPE counter_test counter\n"
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
+        )
         # BinaryFormatter expected result
         # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
         #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
@@ -146,29 +137,26 @@ class TestPusher(asynctest.TestCase):
         resp = await p.replace(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(
-            expected_job_path(job_name),
-            self.server.test_results['path'])
-        self.assertEqual("PUT", self.server.test_results['method'])
-        self.assertEqual(valid_result, self.server.test_results['body'])
+        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("PUT", self.server.test_results["method"])
+        self.assertEqual(valid_result, self.server.test_results["body"])
 
     async def test_push_delete(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
-        counter = Counter("counter_test", "A counter.", {'type': "counter"})
+        counter = Counter("counter_test", "A counter.", {"type": "counter"})
         registry.register(counter)
 
-        counter_data = (
-            ({'c_sample': '1', 'c_subsample': 'b'}, 400),
-        )
+        counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
         [counter.set(c[0], c[1]) for c in counter_data]
         # TextFormatter expected result
         valid_result = (
-            b'# HELP counter_test A counter.\n'
-            b'# TYPE counter_test counter\n'
-            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n')
+            b"# HELP counter_test A counter.\n"
+            b"# TYPE counter_test counter\n"
+            b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
+        )
         # BinaryFormatter expected result
         # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n'
         #                 b'\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample'
@@ -179,8 +167,6 @@ class TestPusher(asynctest.TestCase):
         resp = await p.delete(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(
-            expected_job_path(job_name),
-            self.server.test_results['path'])
-        self.assertEqual("DELETE", self.server.test_results['method'])
-        self.assertEqual(valid_result, self.server.test_results['body'])
+        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("DELETE", self.server.test_results["method"])
+        self.assertEqual(valid_result, self.server.test_results["body"])

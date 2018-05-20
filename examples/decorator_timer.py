@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-'''
+"""
 Usage:
 
 .. code-block:: python
@@ -19,7 +19,7 @@ The example script can be tested using ``curl``.
     request_processing_seconds{quantile="0.9"} 0.5016570091247559
     request_processing_seconds{quantile="0.99"} 0.6077709197998047
 
-'''
+"""
 
 import asyncio
 import random
@@ -28,14 +28,13 @@ from aioprometheus import Service, Summary, timer
 
 
 # Create a metric to track time spent and requests made.
-REQUEST_TIME = Summary(
-    'request_processing_seconds', 'Time spent processing request')
+REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
 
 
 # Decorate function with metric.
 @timer(REQUEST_TIME)
 async def handle_request(duration):
-    ''' A dummy function that takes some time '''
+    """ A dummy function that takes some time """
     await asyncio.sleep(duration)
 
 
@@ -47,7 +46,7 @@ async def handle_requests():
         await handle_request(random.random())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
 

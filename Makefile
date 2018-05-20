@@ -9,18 +9,17 @@
 # help: aioprometheus Makefile help
 # help:
 
-STYLE_EXCLUDE_LIST:=git status --porcelain --ignored | grep "!!" | grep ".py$$" | cut -d " " -f2 | tr "\n" ","
-STYLE_MAX_LINE_LENGTH:=160
-STYLE_CMD:=pycodestyle --exclude=.git,docs,$(shell $(STYLE_EXCLUDE_LIST)) --ignore=E309,E402,W504 --max-line-length=$(STYLE_MAX_LINE_LENGTH) src/aioprometheus tests examples
 VENVS_DIR := $(HOME)/.venvs
 VENV_DIR := $(VENVS_DIR)/vap
 
 # help: help                           - display this makefile's help information
+.PHONY: help
 help:
 	@grep "^# help\:" Makefile | grep -v grep | sed 's/\# help\: //' | sed 's/\# help\://'
 
 
 # help: venv                           - create a virtual environment for development
+.PHONY: venv
 venv:
 	@test -d "$(VENVS_DIR)" || mkdir -p "$(VENVS_DIR)"
 	@rm -Rf "$(VENV_DIR)"
@@ -31,26 +30,31 @@ venv:
 
 
 # help: clean                          - clean all files using .gitignore rules
+.PHONY: clean
 clean:
 	@git clean -X -f -d
 
 
 # help: clean.scrub                    - clean all files, even untracked files
+.PHONY: clean.scrub
 clean.scrub:
 	git clean -x -f -d
 
 
 # help: test                           - run tests
+.PHONY: test
 test:
 	@python -m unittest discover -s tests
 
 
 # help: test.verbose                   - run tests [verbosely]
+.PHONY: test.verbose
 test.verbose:
 	@python -m unittest discover -s tests -v
 
 
 # help: coverage                       - perform test coverage checks
+.PHONY: coverage
 coverage:
 	@coverage run -m unittest discover -s tests
 	@# produce html coverage report on modules
@@ -59,25 +63,20 @@ coverage:
 	@cd docs/coverage; mv index.html coverage.html
 
 
-# help: style                          - perform pep8 check
+# help: style                          - perform code format compliance check
+.PHONY: style
 style:
-	@$(STYLE_CMD)
-
-
-# help: style.fix                      - perform check with autopep8 fixes
-style.fix:
-	@# If there are no files to fix then autopep8 typically returns an error
-	@# because it did not get passed any files to work on. Use xargs -r to
-	@# avoid this problem.
-	@$(STYLE_CMD) -q  | xargs -r autopep8 -i --max-line-length=$(STYLE_MAX_LINE_LENGTH)
+	@black src/aioprometheus tests examples
 
 
 # help: check_types                    - check type hint annotations
+.PHONY: check_types
 check_types:
 	@cd src; MYPYPATH=$VIRTUAL_ENV/lib/python*/site-packages mypy -p aioprometheus --ignore-missing-imports
 
 
 # help: docs                           - generate project documentation
+.PHONY: docs
 docs: coverage
 	@cd docs; rm -rf api/aioprometheus*.rst api/modules.rst _build/*
 	@cd docs; sphinx-apidoc -o ./api ../src/aioprometheus
@@ -86,21 +85,25 @@ docs: coverage
 
 
 # help: docs.serve                     - serve HTML documentation
+.PHONY: docs.serve
 docs.serve:
 	@cd docs; python -m http.server
 
 
 # help: dist                           - create a wheel distribution package
+.PHONY: dist
 dist: clean
 	@python setup.py bdist_wheel
 
 
 # help: dist.test                      - test a wheel distribution package
+.PHONY: dist.test
 dist.test: dist
 	@cd dist && ../tests/test_dist.bash ./aioprometheus-*-py3-none-any.whl
 
 
 # help: dist.upload                    - upload a wheel distribution package
+.PHONY: dist.upload
 dist.upload:
 	@twine upload dist/aioprometheus-*-py3-none-any.whl
 
@@ -108,6 +111,3 @@ dist.upload:
 # Keep these lines at the end of the file to retain nice help
 # output formatting.
 # help:
-
-.PHONY: \
-	check_types clean clean.scrub coverage docs dist dist.test dist.upload help style style.fix test test.verbose

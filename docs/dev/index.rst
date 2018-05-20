@@ -100,6 +100,18 @@ package too.
     $ python -m unittest test_negotiate
 
 
+Code Style
+----------
+
+Adopting a consistent code style assists with maintenance. This project uses
+the Black code style formatter. A Makefile convenience rule to enforce code
+style compliance is available.
+
+.. code-block:: console
+
+    (venv) $ make style
+
+
 Type Annotations
 ----------------
 

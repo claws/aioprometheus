@@ -4,6 +4,9 @@
 .. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
 
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+  :target: https://github.com/ambv/black
+
 aioprometheus
 =============
 
