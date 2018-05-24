@@ -149,7 +149,9 @@ class Service(object):
 
         self._https = ssl is not None
         try:
-            self._site = aiohttp.web.TCPSite(self._runner, addr, port, ssl_context=ssl)
+            self._site = aiohttp.web.TCPSite(
+                self._runner, addr, port, ssl_context=ssl, shutdown_timeout=2.0
+            )
             await self._site.start()
         except Exception:
             logger.exception("error creating metrics server")
