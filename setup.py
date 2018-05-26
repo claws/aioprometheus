@@ -27,7 +27,7 @@ def parse_requirements(filename):
     with open(filename, 'r') as fd:
         lines = []
         for line in fd:
-            line.strip()
+            line = line.strip()
             if line and not line.startswith("#"):
                 lines.append(line)
     return lines
