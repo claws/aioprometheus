@@ -11,7 +11,7 @@ from aiohttp.hdrs import METH_GET as GET, ACCEPT
 
 from .negotiator import negotiate
 from .registry import Registry, CollectorsType
-from typing import Set
+from typing import Optional, Set
 
 # imports only used for type annotations
 from asyncio.base_events import BaseEventLoop, Server
@@ -51,9 +51,9 @@ class Service(object):
         self._site = None  # type: Server
         self._app = None  # type: aiohttp.web.Application
         self._runner = None  # type: aiohttp.web.RequestHandlerFactory
-        self._https = None  # type: bool
+        self._https = None  # type: Optional[bool]
         self._root_url = "/"
-        self._metrics_url = None  # type: str
+        self._metrics_url = None  # type: Optional[str]
 
     @property
     def base_url(self) -> str:

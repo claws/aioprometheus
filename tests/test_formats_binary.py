@@ -11,7 +11,6 @@ TEST_TIMESTAMP = 1515044377268
 
 
 class TestProtobufFormat(unittest.TestCase):
-
     def setUp(self):
 
         self.const_labels = {"app": "my_app"}
@@ -56,7 +55,7 @@ class TestProtobufFormat(unittest.TestCase):
         self.histogram_metric_data = (
             (
                 {"route": "/"},
-                {5.0: 2, 10.0: 1, 15.0: 1, POS_INF: 0, "sum": 25.2, "count": 4},
+                {5.0: 2, 10.0: 3, 15.0: 4, POS_INF: 4, "sum": 25.2, "count": 4},
             ),
         )
         self.histogram_metric_data_values = (({"route": "/"}, (3, 5.2, 13, 4)),)
@@ -599,9 +598,9 @@ class TestProtobufFormat(unittest.TestCase):
             b"\x0bh_subsample\x12\x01b\n\x11\n\x04type\x12\t"
             b"histogram:?\x08\x06\x11\x00\x00\x00\x00\x00\x00G@"
             b"\x1a\x0b\x08\x03\x11\x00\x00\x00\x00\x00\x00\x14@"
-            b"\x1a\x0b\x08\x02\x11\x00\x00\x00\x00\x00\x00$@\x1a"
-            b"\x0b\x08\x01\x11\x00\x00\x00\x00\x00\x00.@\x1a\x0b"
-            b"\x08\x00\x11\x00\x00\x00\x00\x00\x00\xf0\x7f"
+            b"\x1a\x0b\x08\x05\x11\x00\x00\x00\x00\x00\x00$@\x1a"
+            b"\x0b\x08\x06\x11\x00\x00\x00\x00\x00\x00.@\x1a\x0b"
+            b"\x08\x06\x11\x00\x00\x00\x00\x00\x00\xf0\x7f"
         )
 
         f = BinaryFormatter()

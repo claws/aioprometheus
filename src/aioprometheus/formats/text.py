@@ -38,7 +38,27 @@ TEXT_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8"
 
 
 class TextFormatter(IFormatter):
-    """ This formatter encodes into the Protocol Buffers binary format """
+    """ This formatter encodes into the Text format.
+
+    The histogram and summary types are difficult to represent in the text
+    format. The following conventions apply:
+
+      - The sample sum for a summary or histogram named x is given as a
+        separate sample named x_sum.
+      - The sample count for a summary or histogram named x is given as a
+        separate sample named x_count.
+      - Each quantile of a summary named x is given as a separate sample line
+        with the same name x and a label {quantile="y"}.
+      - Each bucket count of a histogram named x is given as a separate sample
+        line with the name x_bucket and a label {le="y"} (where y is the upper
+        bound of the bucket).
+      - A histogram must have a bucket with {le="+Inf"}. Its value must be
+        identical to the value of x_count.
+      - The buckets of a histogram and the quantiles of a summary must appear
+        in increasing numerical order of their label values (for the le or
+        the quantile label, respectively).
+
+    """
 
     def __init__(self, timestamp: bool = False) -> None:
         """ Initialise the text formatter.
@@ -140,7 +160,10 @@ class TextFormatter(IFormatter):
     def _format_histogram(
         self, histogram: MetricTupleType, name: str, const_labels: LabelsType
     ) -> List[str]:
-        """
+        """ Format a histogram into the text format.
+
+        Buckets must be sorted and +Inf should be last.
+
         :param histogram: a 2-tuple containing labels and a dict representing
           the histogram value. The dict contains keys for each bucket as
           well as the sum and count fields.
@@ -159,6 +182,7 @@ class TextFormatter(IFormatter):
             if histogram_labels:
                 labels = histogram_labels.copy()
 
+            v = float(v)
             # Buckets need labels and not special name (like sum and count)
             if type(k) is not float:
                 name_str = "{0}_{1}".format(name, k)
@@ -214,8 +238,7 @@ class TextFormatter(IFormatter):
         """
         Marshalls a collector into a string containing one or more lines
         """
-        # need sort?
-        result = sorted(self.marshall_lines(collector))
+        result = self.marshall_lines(collector)
         return LINE_SEPARATOR_FMT.join(result)
 
     def marshall(self, registry: CollectorRegistry) -> bytes:

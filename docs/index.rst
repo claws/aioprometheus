@@ -91,9 +91,9 @@ to read on the command line.
     $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
 The metrics service also responds to requests sent to its ``/`` route. The
-response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
-style health indicator as it does not incur any overhead within the service
-to serialize a full metrics response.
+response is simple HTML. This route can be useful as a Kubernetes health
+indicator as it does not incur any overhead within the service to
+serialize a full metrics response.
 
 .. code-block:: console
 

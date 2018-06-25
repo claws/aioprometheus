@@ -75,17 +75,14 @@ class Histogram(object):
     def observe(self, value: Union[float, int]) -> None:
         """ Observe the given amount.
 
-        Observing a value into the histogram will increment the count of
-        observations, add the value to the sum of all observations and
-        increment the appropriate bucket counter.
+        Observing a value into the histogram will cumulatively increment the
+        count of observations for the buckets that the observed values falls
+        within. It also adds the value to the sum of all observations.
 
         :param value: A metric value to add to the histogram.
         """
-        # The last bucket is +Inf, so we will always increment at least
-        # one bucket
         for upper_bound in self.buckets:
             if value <= upper_bound:
                 self.buckets[upper_bound] += 1
-                break
         self.sum += value
         self.observations += 1

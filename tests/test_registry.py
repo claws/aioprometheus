@@ -4,7 +4,6 @@ from aioprometheus import CollectorRegistry, Collector, Counter, Gauge, Summary
 
 
 class TestRegistry(unittest.TestCase):
-
     def setUp(self):
         self.data = {
             "name": "logged_users_total",

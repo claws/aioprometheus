@@ -6,7 +6,6 @@ from aioprometheus.formats import TextFormatter, TEXT_CONTENT_TYPE
 
 
 class TestTextFormat(unittest.TestCase):
-
     def test_headers(self):
         f = TextFormatter()
         expected_result = {"Content-Type": TEXT_CONTENT_TYPE}
@@ -547,11 +546,11 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
 
         valid_result = """# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
 # TYPE prometheus_target_interval_length_seconds summary
-prometheus_target_interval_length_seconds_count{interval="5s"} 4
-prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2
+prometheus_target_interval_length_seconds_count{interval="5s"} 4
+prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2"""
 
         s = Summary(**data)
 
@@ -652,11 +651,11 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2"""
 
         result_regex = r"""# HELP prometheus_target_interval_length_seconds Actual intervals between scrapes.
 # TYPE prometheus_target_interval_length_seconds summary
-prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
-prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.5"} 4.0 \d*(?:.\d*)?
 prometheus_target_interval_length_seconds{interval="5s",quantile="0.9"} 5.2 \d*(?:.\d*)?
-prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?$"""
+prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds_count{interval="5s"} 4 \d*(?:.\d*)?
+prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?$"""
 
         s = Summary(**data)
 
@@ -670,7 +669,7 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*
 
     def test_registry_marshall(self):
 
-        format_times = 10
+        format_times = 3
 
         counter_data = (
             ({"c_sample": "1"}, 100),
@@ -709,41 +708,42 @@ prometheus_target_interval_length_seconds{interval="5s",quantile="0.99"} 5.2 \d*
 
         valid_regex = r"""# HELP counter_test A counter.
 # TYPE counter_test counter
-counter_test{c_sample="1",c_subsample="b",type="counter"} 400
 counter_test{c_sample="1",type="counter"} 100
 counter_test{c_sample="2",type="counter"} 200
 counter_test{c_sample="3",type="counter"} 300
+counter_test{c_sample="1",c_subsample="b",type="counter"} 400
 # HELP gauge_test A gauge.
 # TYPE gauge_test gauge
-gauge_test{g_sample="1",g_subsample="b",type="gauge"} 800
 gauge_test{g_sample="1",type="gauge"} 500
 gauge_test{g_sample="2",type="gauge"} 600
 gauge_test{g_sample="3",type="gauge"} 700
+gauge_test{g_sample="1",g_subsample="b",type="gauge"} 800
 # HELP summary_test A summary.
 # TYPE summary_test summary
-summary_test_count{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="1",type="summary"} \d*(?:.\d*)?
 summary_test_count{s_sample="1",type="summary"} \d*(?:.\d*)?
-summary_test_count{s_sample="2",type="summary"} \d*(?:.\d*)?
-summary_test_count{s_sample="3",type="summary"} \d*(?:.\d*)?
-summary_test_sum{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
 summary_test_sum{s_sample="1",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="2",type="summary"} 2\d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="2",type="summary"} \d*(?:.\d*)?
 summary_test_sum{s_sample="2",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.5",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.9",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="3",type="summary"} \d*(?:.\d*)?
 summary_test_sum{s_sample="3",type="summary"} \d*(?:.\d*)?
 summary_test{quantile="0.5",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.5",s_sample="1",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.5",s_sample="2",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.5",s_sample="3",type="summary"} \d*(?:.\d*)?
 summary_test{quantile="0.9",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.9",s_sample="1",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.9",s_sample="2",type="summary"} 2\d*(?:.\d*)?
-summary_test{quantile="0.9",s_sample="3",type="summary"} \d*(?:.\d*)?
 summary_test{quantile="0.99",s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.99",s_sample="1",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.99",s_sample="2",type="summary"} \d*(?:.\d*)?
-summary_test{quantile="0.99",s_sample="3",type="summary"} \d*(?:.\d*)?
+summary_test_count{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
+summary_test_sum{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
 """
         f = TextFormatter()
         self.maxDiff = None
-        # Check multiple times to ensure multiple marshalling requests
+        # Check multiple times to ensure multiple calls to marshalling
+        # produce the same results
         for i in range(format_times):
             self.assertTrue(re.match(valid_regex, f.marshall(registry).decode()))

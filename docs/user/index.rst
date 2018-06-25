@@ -83,7 +83,19 @@ A summary metrics provides:
     from aioprometheus import Summary
 
     http_access =  Summary("http_access_time", "HTTP access time")
-    http_access.add({'time': '/static'}, 3.142)
+    http_access.observe({'time': '/static'}, 3.142)
+
+The default invariants ([(0.50, 0.05), (0.90, 0.01), (0.99, 0.001)])
+can be overridden by passing `invariants` keyword argument to Summary.
+
+.. code-block:: python
+
+    from aioprometheus import Summary
+
+    http_access =  Summary(
+        "http_access_time",
+        "HTTP access time",
+        invariants=[(0.50, 0.05), (0.99, 0.001)])
 
 
 Histogram
@@ -91,16 +103,29 @@ Histogram
 
 A Histogram tracks the size and number of events in buckets.
 
-You can use Histograms for aggregatable calculation of quantiles. The set
-of buckets used can be overridden by passing `buckets` keyword argument to
-``Histogram``.
+You can use Histograms for aggregatable calculation of quantiles.
+
 
 .. code-block:: python
 
     from aioprometheus import Histogram
 
     http_access =  Histogram("http_access_time", "HTTP access time")
-    http_access.add({'time': '/static'}, 3.142)
+    http_access.observe({'time': '/static'}, 3.142)
+
+The default buckets cover the range 0.005, 0.01, 0.025, 0.05, 0.1,
+0.25, 0.5, 1.0, 2.5, 5.0, 10.0. All bucket ranges will include a
++Inf bucket. The buckets can be overridden by passing `buckets` keyword
+argument to Histogram.
+
+.. code-block:: python
+
+    from aioprometheus import Histogram
+
+    http_access =  Histogram(
+        "http_access_time",
+        "HTTP access time",
+        buckets=[0.1, 0.5, 1.0, 5.0])
 
 
 Labels

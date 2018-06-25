@@ -3,9 +3,11 @@ import unittest
 
 from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
 
+POS_INF = float("inf")
+NEG_INF = float("-inf")
+
 
 class TestCollectorDict(unittest.TestCase):
-
     def setUp(self):
         self.data = {
             "name": "logged_users_total",
@@ -146,7 +148,6 @@ class TestCollectorDict(unittest.TestCase):
 
 
 class TestCounter(unittest.TestCase):
-
     def setUp(self):
         self.data = {
             "name": "logged_users_total",
@@ -223,7 +224,6 @@ class TestCounter(unittest.TestCase):
 
 
 class TestGauge(unittest.TestCase):
-
     def setUp(self):
         self.data = {
             "name": "hdd_disk_used",
@@ -330,7 +330,6 @@ class TestGauge(unittest.TestCase):
 
 
 class TestSummary(unittest.TestCase):
-
     def setUp(self):
         self.data = {
             "name": "http_request_duration_microseconds",
@@ -391,19 +390,64 @@ class TestSummary(unittest.TestCase):
 
 
 class TestHistogram(unittest.TestCase):
-
     def setUp(self):
-        self.data = {
-            "name": "http_request_duration_microseconds",
-            "doc": "Request duration per application",
-            "const_labels": {"app": "my_app"},
+        self.h = Histogram(
+            "h", "doc", const_labels={"app": "my_app"}, buckets=[5.0, 10.0, 15.0]
+        )
+        self.correct_data = {
+            "sum": 25.2,
+            "count": 4,
+            5.0: 2.0,
+            10.0: 3.0,
+            15.0: 4.0,
+            POS_INF: 4.0,
         }
-
-        self.h = Histogram(**self.data)
+        self.input_values = [3, 5.2, 13, 4]
 
     def test_wrong_labels(self):
-
         with self.assertRaises(ValueError) as context:
             self.h.set_value({"le": 2}, 1)
-
         self.assertEqual("Invalid label name: le", str(context.exception))
+
+    def test_expected_values(self):
+        labels = None
+        self.h.observe(labels, 7)
+        results = self.h.get(labels)
+        self.assertEqual(0, results[5.0])
+        self.assertEqual(1, results[10.0])
+        self.assertEqual(1, results[15.0])
+        self.assertEqual(1, results[POS_INF])
+        self.assertEqual(1, results["count"])
+        self.assertEqual(7.0, results["sum"])
+
+        self.h.observe(labels, 7.5)
+        results = self.h.get(labels)
+        self.assertEqual(0, results[5.0])
+        self.assertEqual(2, results[10.0])
+        self.assertEqual(2, results[15.0])
+        self.assertEqual(2, results[POS_INF])
+        self.assertEqual(2, results["count"])
+        self.assertEqual(14.5, results["sum"])
+
+        self.h.observe(labels, POS_INF)
+        results = self.h.get(labels)
+        self.assertEqual(0, results[5.0])
+        self.assertEqual(2, results[10.0])
+        self.assertEqual(2, results[15.0])
+        self.assertEqual(3, results[POS_INF])
+        self.assertEqual(3, results["count"])
+        self.assertEqual(POS_INF, results["sum"])
+
+    def test_get(self):
+        labels = {"path": "/"}
+        for i in self.input_values:
+            self.h.observe(labels, i)
+        data = self.h.get(labels)
+        self.assertEqual(self.correct_data, data)
+
+    def test_add_get_without_labels(self):
+        labels = None
+        for i in self.input_values:
+            self.h.observe(labels, i)
+        self.assertEqual(1, len(self.h.values))
+        self.assertEqual(self.correct_data, self.h.get(labels))

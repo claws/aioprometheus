@@ -39,7 +39,7 @@ commands are pointing at the correct tools.
     $ python -m venv myvenv
     $ cd myvenv
     $ source bin/activate
-    $ cd ..
+    (myvenv) $ cd ..
 
 To exit the virtual environment simply type ``deactivate``.
 
