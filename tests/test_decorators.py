@@ -12,7 +12,6 @@ from aioprometheus import (
 
 
 class TestDecorators(asynctest.TestCase):
-
     async def test_timer(self):
         m = Summary("metric_label", "metric help")
 
@@ -28,7 +27,6 @@ class TestDecorators(asynctest.TestCase):
 
         # decorator should work methods as well as functions
         class B(object):
-
             @timer(m, {"kind": "method"})
             async def b(self, arg1, arg2=None):
                 return arg1 == "b_arg", arg2 == "arg_2"
@@ -68,7 +66,6 @@ class TestDecorators(asynctest.TestCase):
 
         # decorator should work methods as well as functions
         class B(object):
-
             @inprogress(m, {"kind": "method"})
             async def b(self, arg1, arg2=None):
                 return arg1 == "b_arg", arg2 == "arg_2"
@@ -118,7 +115,6 @@ class TestDecorators(asynctest.TestCase):
 
         # decorator should work methods as well as functions
         class B(object):
-
             @count_exceptions(m, {"kind": "method"})
             async def b(self, arg1, arg2=None, raise_exc=False):
                 if raise_exc:

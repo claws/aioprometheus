@@ -6,7 +6,6 @@ from aioprometheus.formats import TextFormatter, BinaryFormatter
 
 
 class TestNegotiate(unittest.TestCase):
-
     def test_protobuffer(self):
         """ check that a protobuf formatter is returned """
         headers = (

@@ -56,7 +56,6 @@ def expected_job_path(job):
 
 
 class TestPusher(asynctest.TestCase):
-
     async def setUp(self):
         self.server = TestPusherServer(loop=self.loop)
         await self.server.start()

@@ -16,7 +16,6 @@ format_kinds = {TEXT: TEXT_CONTENT_TYPE, BINARY: BINARY_CONTENT_TYPE}
 
 
 class TestTextExporter(asynctest.TestCase):
-
     async def setUp(self):
         self.registry = Registry()
         self.server = Service(registry=self.registry)
@@ -210,11 +209,11 @@ test_gauge{data="3",test="test_gauge"} 300
 
         expected_data = """# HELP test_summary Test Summary.
 # TYPE test_summary summary
-test_summary_count{data="1",test="test_summary"} 4
-test_summary_sum{data="1",test="test_summary"} 25.2
 test_summary{data="1",quantile="0.5",test="test_summary"} 4.0
 test_summary{data="1",quantile="0.9",test="test_summary"} 5.2
 test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
+test_summary_count{data="1",test="test_summary"} 4
+test_summary_sum{data="1",test="test_summary"} 25.2
 """
 
         async with aiohttp.ClientSession() as session:
@@ -263,11 +262,11 @@ test_summary{data="1",quantile="0.99",test="test_summary"} 5.2
 
         expected_data = """# HELP histogram_test Test Histogram.
 # TYPE histogram_test histogram
-histogram_test_bucket{data="1",le="+Inf",type="test_histogram"} 0
-histogram_test_bucket{data="1",le="10.0",type="test_histogram"} 1
-histogram_test_bucket{data="1",le="15.0",type="test_histogram"} 1
-histogram_test_bucket{data="1",le="5.0",type="test_histogram"} 2
-histogram_test_count{data="1",type="test_histogram"} 4
+histogram_test_bucket{data="1",le="5.0",type="test_histogram"} 2.0
+histogram_test_bucket{data="1",le="10.0",type="test_histogram"} 3.0
+histogram_test_bucket{data="1",le="15.0",type="test_histogram"} 4.0
+histogram_test_bucket{data="1",le="+Inf",type="test_histogram"} 4.0
+histogram_test_count{data="1",type="test_histogram"} 4.0
 histogram_test_sum{data="1",type="test_histogram"} 25.2
 """
 
@@ -321,7 +320,7 @@ histogram_test_sum{data="1",type="test_histogram"} 25.2
         )
 
         histogram_data = (
-            ({"h_sample": "1"}, range(1, 20, 2)),
+            ({"h_sample": "1"}, [3, 14]),
             ({"h_sample": "2"}, range(1, 20, 2)),
             ({"h_sample": "3"}, range(1, 20, 2)),
             ({"h_sample": "1", "h_subsample": "b"}, range(1, 20, 2)),
@@ -346,68 +345,68 @@ histogram_test_sum{data="1",type="test_histogram"} 25.2
         [counter.set(c[0], c[1]) for c in counter_data]
         [gauge.set(g[0], g[1]) for g in gauge_data]
         [summary.add(i[0], s) for i in summary_data for s in i[1]]
-        [histogram.add(i[0], h) for i in histogram_data for h in i[1]]
+        [histogram.observe(i[0], h) for i in histogram_data for h in i[1]]
 
         expected_data = """# HELP counter_test A counter.
 # TYPE counter_test counter
-counter_test{c_sample="1",c_subsample="b",type="counter"} 400
 counter_test{c_sample="1",type="counter"} 100
 counter_test{c_sample="2",type="counter"} 200
 counter_test{c_sample="3",type="counter"} 300
+counter_test{c_sample="1",c_subsample="b",type="counter"} 400
 # HELP gauge_test A gauge.
 # TYPE gauge_test gauge
-gauge_test{g_sample="1",g_subsample="b",type="gauge"} 800
 gauge_test{g_sample="1",type="gauge"} 500
 gauge_test{g_sample="2",type="gauge"} 600
 gauge_test{g_sample="3",type="gauge"} 700
+gauge_test{g_sample="1",g_subsample="b",type="gauge"} 800
 # HELP histogram_test A histogram.
 # TYPE histogram_test histogram
-histogram_test_bucket{h_sample="1",h_subsample="b",le="+Inf",type="histogram"} 2
-histogram_test_bucket{h_sample="1",h_subsample="b",le="10.0",type="histogram"} 2
-histogram_test_bucket{h_sample="1",h_subsample="b",le="15.0",type="histogram"} 3
-histogram_test_bucket{h_sample="1",h_subsample="b",le="5.0",type="histogram"} 3
-histogram_test_bucket{h_sample="1",le="+Inf",type="histogram"} 2
-histogram_test_bucket{h_sample="1",le="10.0",type="histogram"} 2
-histogram_test_bucket{h_sample="1",le="15.0",type="histogram"} 3
-histogram_test_bucket{h_sample="1",le="5.0",type="histogram"} 3
-histogram_test_bucket{h_sample="2",le="+Inf",type="histogram"} 2
-histogram_test_bucket{h_sample="2",le="10.0",type="histogram"} 2
-histogram_test_bucket{h_sample="2",le="15.0",type="histogram"} 3
-histogram_test_bucket{h_sample="2",le="5.0",type="histogram"} 3
-histogram_test_bucket{h_sample="3",le="+Inf",type="histogram"} 2
-histogram_test_bucket{h_sample="3",le="10.0",type="histogram"} 2
-histogram_test_bucket{h_sample="3",le="15.0",type="histogram"} 3
-histogram_test_bucket{h_sample="3",le="5.0",type="histogram"} 3
-histogram_test_count{h_sample="1",h_subsample="b",type="histogram"} 10
-histogram_test_count{h_sample="1",type="histogram"} 10
-histogram_test_count{h_sample="2",type="histogram"} 10
-histogram_test_count{h_sample="3",type="histogram"} 10
-histogram_test_sum{h_sample="1",h_subsample="b",type="histogram"} 100.0
-histogram_test_sum{h_sample="1",type="histogram"} 100.0
+histogram_test_bucket{h_sample="1",le="5.0",type="histogram"} 1.0
+histogram_test_bucket{h_sample="1",le="10.0",type="histogram"} 1.0
+histogram_test_bucket{h_sample="1",le="15.0",type="histogram"} 2.0
+histogram_test_bucket{h_sample="1",le="+Inf",type="histogram"} 2.0
+histogram_test_count{h_sample="1",type="histogram"} 2.0
+histogram_test_sum{h_sample="1",type="histogram"} 17.0
+histogram_test_bucket{h_sample="2",le="5.0",type="histogram"} 3.0
+histogram_test_bucket{h_sample="2",le="10.0",type="histogram"} 5.0
+histogram_test_bucket{h_sample="2",le="15.0",type="histogram"} 8.0
+histogram_test_bucket{h_sample="2",le="+Inf",type="histogram"} 10.0
+histogram_test_count{h_sample="2",type="histogram"} 10.0
 histogram_test_sum{h_sample="2",type="histogram"} 100.0
+histogram_test_bucket{h_sample="3",le="5.0",type="histogram"} 3.0
+histogram_test_bucket{h_sample="3",le="10.0",type="histogram"} 5.0
+histogram_test_bucket{h_sample="3",le="15.0",type="histogram"} 8.0
+histogram_test_bucket{h_sample="3",le="+Inf",type="histogram"} 10.0
+histogram_test_count{h_sample="3",type="histogram"} 10.0
 histogram_test_sum{h_sample="3",type="histogram"} 100.0
+histogram_test_bucket{h_sample="1",h_subsample="b",le="5.0",type="histogram"} 3.0
+histogram_test_bucket{h_sample="1",h_subsample="b",le="10.0",type="histogram"} 5.0
+histogram_test_bucket{h_sample="1",h_subsample="b",le="15.0",type="histogram"} 8.0
+histogram_test_bucket{h_sample="1",h_subsample="b",le="+Inf",type="histogram"} 10.0
+histogram_test_count{h_sample="1",h_subsample="b",type="histogram"} 10.0
+histogram_test_sum{h_sample="1",h_subsample="b",type="histogram"} 100.0
 # HELP summary_test A summary.
 # TYPE summary_test summary
-summary_test_count{s_sample="1",s_subsample="b",type="summary"} 22
+summary_test{quantile="0.5",s_sample="1",type="summary"} 1272.0
+summary_test{quantile="0.9",s_sample="1",type="summary"} 1452.0
+summary_test{quantile="0.99",s_sample="1",type="summary"} 1496.0
 summary_test_count{s_sample="1",type="summary"} 250
-summary_test_count{s_sample="2",type="summary"} 50
-summary_test_count{s_sample="3",type="summary"} 77
-summary_test_sum{s_sample="1",s_subsample="b",type="summary"} 98857.0
 summary_test_sum{s_sample="1",type="summary"} 374500.0
+summary_test{quantile="0.5",s_sample="2",type="summary"} 2260.0
+summary_test{quantile="0.9",s_sample="2",type="summary"} 2440.0
+summary_test{quantile="0.99",s_sample="2",type="summary"} 2500.0
+summary_test_count{s_sample="2",type="summary"} 50
 summary_test_sum{s_sample="2",type="summary"} 124500.0
+summary_test{quantile="0.5",s_sample="3",type="summary"} 3260.0
+summary_test{quantile="0.9",s_sample="3",type="summary"} 3442.0
+summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
+summary_test_count{s_sample="3",type="summary"} 77
 summary_test_sum{s_sample="3",type="summary"} 269038.0
 summary_test{quantile="0.5",s_sample="1",s_subsample="b",type="summary"} 4235.0
-summary_test{quantile="0.5",s_sample="1",type="summary"} 1272.0
-summary_test{quantile="0.5",s_sample="2",type="summary"} 2260.0
-summary_test{quantile="0.5",s_sample="3",type="summary"} 3260.0
 summary_test{quantile="0.9",s_sample="1",s_subsample="b",type="summary"} 4470.0
-summary_test{quantile="0.9",s_sample="1",type="summary"} 1452.0
-summary_test{quantile="0.9",s_sample="2",type="summary"} 2440.0
-summary_test{quantile="0.9",s_sample="3",type="summary"} 3442.0
 summary_test{quantile="0.99",s_sample="1",s_subsample="b",type="summary"} 4517.0
-summary_test{quantile="0.99",s_sample="1",type="summary"} 1496.0
-summary_test{quantile="0.99",s_sample="2",type="summary"} 2500.0
-summary_test{quantile="0.99",s_sample="3",type="summary"} 3494.0
+summary_test_count{s_sample="1",s_subsample="b",type="summary"} 22
+summary_test_sum{s_sample="1",s_subsample="b",type="summary"} 98857.0
 """
 
         async with aiohttp.ClientSession() as session:

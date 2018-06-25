@@ -7,7 +7,6 @@ from aioprometheus.metricdict import MetricDict
 
 
 class TestMetricDict(unittest.TestCase):
-
     def setUp(self):
         pass
 

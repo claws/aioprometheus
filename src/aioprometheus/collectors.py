@@ -342,7 +342,9 @@ class Summary(Collector):
 
         :raises: KeyError if an item with matching labels is not present.
         """
-        return_data = {}  # type: Dict[Union[float, str], NumericValueType]
+        return_data = (
+            collections.OrderedDict()
+        )  # type: Dict[Union[float, str], NumericValueType]
 
         e = self.get_value(labels)
         e = cast(Any, e)  # typing check, no runtime behaviour.
@@ -353,15 +355,26 @@ class Summary(Collector):
             return_data[q] = e.query(q)  # type: ignore
 
         # Set sum and count
-        return_data[self.SUM_KEY] = e._sum  # type: ignore
         return_data[self.COUNT_KEY] = e._observations  # type: ignore
+        return_data[self.SUM_KEY] = e._sum  # type: ignore
 
         return return_data
 
 
 class Histogram(Collector):
     """
-    A Histogram metric tracks the size and number of events in buckets.
+    A histogram samples observations (usually things like request durations
+    or response sizes) and counts them in configurable buckets. It also
+    provides a sum of all observed values.
+
+    A histogram with a base metric name of <basename> exposes multiple time
+    series during a scrape:
+
+      - cumulative counters for the observation buckets, exposed as
+        <basename>_bucket{le="<upper inclusive bound>"}
+      - the total sum of all observed values, exposed as <basename>_sum
+      - the count of events that have been observed, exposed as
+        <basename>_count (identical to <basename>_bucket{le="+Inf"} above)
 
     Example use cases:
     - Response latency
@@ -426,7 +439,9 @@ class Histogram(Collector):
 
         :raises: KeyError if an item with matching labels is not present.
         """
-        return_data = {}  # type: Dict[Union[float, str], NumericValueType]
+        return_data = (
+            collections.OrderedDict()
+        )  # type: Dict[Union[float, str], NumericValueType]
 
         h = self.get_value(labels)
         h = cast(histogram.Histogram, h)  # typing check, no runtime behaviour.
@@ -435,7 +450,7 @@ class Histogram(Collector):
             return_data[upper_bound] = cumulative_count  # keys are floats
 
         # Set sum and count
-        return_data[self.SUM_KEY] = h.sum
         return_data[self.COUNT_KEY] = h.observations
+        return_data[self.SUM_KEY] = h.sum
 
         return return_data
