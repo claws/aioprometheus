@@ -35,6 +35,7 @@ NEG_INF = float("-inf")
 
 
 TEXT_CONTENT_TYPE = "text/plain; version=0.0.4; charset=utf-8"
+TEXT_ACCEPTS = set(TEXT_CONTENT_TYPE.split("; "))
 
 
 class TextFormatter(IFormatter):

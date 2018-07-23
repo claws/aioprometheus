@@ -9,7 +9,7 @@ import aiohttp.web
 
 from aiohttp.hdrs import METH_GET as GET, ACCEPT
 
-from .negotiator import negotiate
+from .renderer import render
 from .registry import Registry, CollectorsType
 from typing import Optional, Set
 
@@ -68,17 +68,11 @@ class Service(object):
                 "No URL available, Prometheus metrics server is not running"
             )
 
-        # IPv4 returns 2-tuple, IPv6 returns 4-tuple
-        host, port, *_ = self._site._server.sockets[0].getsockname()
+        # IPv4 address returns a 2-tuple, IPv6 returns a 4-tuple
+        host, port, *_ = self._runner.addresses[0]
         scheme = "http{}".format("s" if self._https else "")
-        url = "{scheme}://{host}:{port}".format(
-            scheme=scheme,
-            host=host if ":" not in host else "[{}]".format(host),
-            port=port,
-        )
-        #
-        # TODO: replace the above with self._site.name when aiohttp issue
-        # #3018 is resolved.
+        host = host if ":" not in host else f"[{host}]"
+        url = f"{scheme}://{host}:{port}"
         return url
 
     @property
@@ -107,7 +101,6 @@ class Service(object):
         port: int = 0,
         ssl: SSLContext = None,
         metrics_url: str = DEFAULT_METRICS_PATH,
-        discovery_agent=None,
     ) -> None:
         """ Start the prometheus metrics HTTP(S) server.
 
@@ -124,9 +117,6 @@ class Service(object):
 
         :param metrics_url: The name of the endpoint route to expose
           prometheus metrics on. Defaults to '/metrics'.
-
-        :param discovery_agent: an agent that can register the metrics
-          service with a service discovery mechanism.
 
         :raises: Exception if the server could not be started.
         """
@@ -159,29 +149,17 @@ class Service(object):
 
         logger.debug("Prometheus metrics server started on %s", self.metrics_url)
 
-        # register service with service discovery
-        if discovery_agent:
-            await discovery_agent.register(self)
-
-    async def stop(self, wait_duration: float = 1.0, discovery_agent=None) -> None:
+    async def stop(self, wait_duration: float = 1.0) -> None:
         """ Stop the prometheus metrics HTTP(S) server.
 
         :param wait_duration: the number of seconds to wait for connections to
           finish.
-
-        :param discovery_agent: an agent that can deregister the metrics
-          service from a service discovery mechanism.
-
         """
         logger.debug("Prometheus metrics server stopping")
 
         if self._site is None:
             logger.warning("Prometheus metrics server is already stopped")
             return
-
-        # de-register service with service discovery
-        if discovery_agent:
-            await discovery_agent.deregister(self)
 
         await self._runner.cleanup()
         self._site = None
@@ -213,19 +191,15 @@ class Service(object):
         The request is inspected and the most efficient response data format
         is chosen.
         """
-        Formatter = negotiate(self.accepts(request))
-        formatter = Formatter(False)
-
-        resp = aiohttp.web.Response()
-        resp.headers.update(formatter.get_headers())
-        resp.body = formatter.marshall(self.registry)
-        return resp
+        content, http_headers = render(
+            self.registry, request.headers.getall(ACCEPT, [])
+        )
+        return aiohttp.web.Response(body=content, headers=http_headers)
 
     def accepts(self, request: aiohttp.web.Request) -> Set[str]:
         """ Return a sequence of accepts items in the request headers """
         accepts = set()  # type: Set[str]
         accept_headers = request.headers.getall(ACCEPT, [])
-        logger.debug("accept: {}".format(accept_headers))
         for accept_items in accept_headers:
             if ";" in accept_items:
                 accept_items = [i.strip() for i in accept_items.split(";")]
@@ -240,11 +214,10 @@ class Service(object):
         Serves a trivial page with a link to the metrics.  Use this if ever
         you need to point a health check at your the service.
         """
+        metrics_url = request.app["metrics_url"]
         return aiohttp.web.Response(
             content_type="text/html",
-            text="<html><body><a href='{}'>metrics</a></body></html>".format(
-                request.app["metrics_url"]
-            ),
+            text=f"<html><body><a href='{metrics_url}'>metrics</a></body></html>",
         )
 
     async def handle_robots(self, request: aiohttp.web.Request) -> aiohttp.web.Response:

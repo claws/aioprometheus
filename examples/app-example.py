@@ -22,13 +22,25 @@ from asyncio.base_events import BaseEventLoop
 class ExampleApp(object):
     """
     An example application that demonstrates how ``aioprometheus`` can be
-    used within a Python async application.
+    integrated and used within a Python application built upon asyncio.
+
+    This application attempts to simulate a long running distributed system
+    process, say a socket relay or some kind of message adapter. It is
+    intentionally not hosting an existing web service in the application.
+
+    In this case the aioprometheus.Service object is used to provide a
+    new HTTP endpoint that can be used to expose Prometheus metrics on.
+
+    If this application was a web service (i.e. already had an existing web
+    interface) then the aioprometheus.Service object could be used as before
+    to add another web interface or a different approach could be used that
+    provides a metrics handler function for use with the existing web service.
     """
 
     def __init__(
         self,
         metrics_host="127.0.0.1",
-        metrics_port: int = 0,
+        metrics_port: int = 5000,
         loop: BaseEventLoop = None,
     ):
 
