@@ -33,40 +33,39 @@ and exposed via a HTTP endpoint.
 .. code-block:: python
 
     #!/usr/bin/env python
-    '''
+    """
     This example demonstrates how a single Counter metric collector can be created
     and exposed via a HTTP endpoint.
-    '''
+    """
     import asyncio
     import socket
     from aioprometheus import Counter, Service
 
 
-    if __name__ == '__main__':
+    if __name__ == "__main__":
+
+        async def main(svr: Service) -> None:
+
+            events_counter = Counter(
+                "events", "Number of events.", const_labels={"host": socket.gethostname()}
+            )
+            svr.register(events_counter)
+            await svr.start(addr="127.0.0.1", port=5000)
+            print(f"Serving prometheus metrics on: {svr.metrics_url}")
+
+            # Now start another coroutine to periodically update a metric to
+            # simulate the application making some progress.
+            async def updater(c: Counter):
+                while True:
+                    c.inc({"kind": "timer_expiry"})
+                    await asyncio.sleep(1.0)
+
+            await updater(events_counter)
 
         loop = asyncio.get_event_loop()
-
         svr = Service()
-
-        events_counter = Counter(
-            "events",
-            "Number of events.",
-            const_labels={'host': socket.gethostname()})
-
-        svr.register(events_counter)
-
-        loop.run_until_complete(svr.start(addr="127.0.0.1"))
-        print(f'Serving prometheus metrics on: {svr.metrics_url}')
-
-        async def updater(m: Counter):
-            # Periodically update the metric to simulate some progress
-            # happening in a real application.
-            while True:
-                m.inc({'kind': 'timer_expiry'})
-                await asyncio.sleep(1.0)
-
         try:
-            loop.run_until_complete(updater(events_counter))
+            loop.run_until_complete(main(svr))
         except KeyboardInterrupt:
             pass
         finally:
@@ -96,7 +95,7 @@ The example script can be run using:
 
     (venv) $ cd examples
     (venv) $ python simple-example.py
-    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
 
 In another terminal fetch the metrics using the ``curl`` command line tool
 to verify they can be retrieved by Prometheus server.
@@ -105,7 +104,7 @@ By default metrics will be returned in plan text format.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics
+    $ curl http://127.0.0.1:5000/metrics
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
@@ -115,7 +114,7 @@ to read on the command line.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+    $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
 The metrics service also responds to requests sent to its ``/`` route. The
 response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
@@ -124,15 +123,64 @@ to serialize a full metrics response.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/
+    $ curl http://127.0.0.1:5000/
     <html><body><a href='/metrics'>metrics</a></body></html>
 
-A number of convenience decorator functions are also available to assist with
-updating metrics.
+The aioprometheus package provides a number of convenience decorator
+functions that can assist with updating metrics.
 
-There are more examples in the ``examples`` directory. The ``app-example.py``
-file will likely be of interest as it provides a more representative
-application example.
+There ``examples`` directory contains many examples showing how to use the
+aioprometheus package. The ``app-example.py`` file will likely be of interest
+as it provides a more representative application example that the simple
+example shown above.
+
+Examples in the ``examples/frameworks`` directory show how aioprometheus can
+be used within existing aiohttp, quart and vibora applications instead of
+creating a separate aioprometheus.Service endpoint to handle metrics. The
+vibora example is shown below.
+
+.. code-block:: python
+
+    #!/usr/bin/env python
+    """
+    Sometimes you want to expose Prometheus metrics from within an existing web
+    service and don't want to start a separate Prometheus metrics server.
+
+    This example uses the aioprometheus package to add Prometheus instrumentation
+    to a Vibora application. In this example a registry and a counter metric is
+    instantiated. A '/metrics' route is added to the application and the render
+    function from aioprometheus is called to format the metrics into the
+    appropriate format.
+    """
+
+    from aioprometheus import render, Counter, Registry
+    from vibora import Vibora, Request, Response
+
+
+    app = Vibora(__name__)
+    app.registry = Registry()
+    app.events_counter = Counter("events", "Number of events.")
+    app.registry.register(app.events_counter)
+
+
+    @app.route("/")
+    async def hello(request: Request):
+        app.events_counter.inc({"path": "/"})
+        return Response(b"hello")
+
+
+    @app.route("/metrics")
+    async def handle_metrics(request: Request):
+        """
+        Negotiate a response format by inspecting the ACCEPTS headers and selecting
+        the most efficient format. Render metrics in the registry into the chosen
+        format and return a response.
+        """
+        content, http_headers = render(app.registry, [request.headers.get("accept")])
+        return Response(content, headers=http_headers)
+
+
+    app.run()
 
 
 License

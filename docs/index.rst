@@ -64,7 +64,7 @@ The example script can be run using:
 
     (venv) $ cd examples
     (venv) $ python simple-example.py
-    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
 
 In another terminal fetch the metrics using the ``curl`` command line tool
 to verify they can be retrieved by Prometheus server.
@@ -73,12 +73,12 @@ By default metrics will be returned in plan text format.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics
+    $ curl http://127.0.0.1:5000/metrics
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
 
-    $ curl http://127.0.0.1:50624/metrics -H 'Accept: text/plain; version=0.0.4'
+    $ curl http://127.0.0.1:5000/metrics -H 'Accept: text/plain; version=0.0.4'
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 36
@@ -88,7 +88,7 @@ to read on the command line.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+    $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
 The metrics service also responds to requests sent to its ``/`` route. The
 response is simple HTML. This route can be useful as a Kubernetes health
@@ -97,15 +97,24 @@ serialize a full metrics response.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/
+    $ curl http://127.0.0.1:5000/
     <html><body><a href='/metrics'>metrics</a></body></html>
 
-A number of convenience decorator functions are also available to assist with
-updating metrics.
+The aioprometheus package provides a number of convenience decorator
+functions that can assist with updating metrics.
 
-There are more examples in the ``examples`` directory. The ``app-example.py``
-file will likely be of interest as it provides a more representative
-application example.
+There ``examples`` directory contains many examples showing how to use the
+aioprometheus package. The ``app-example.py`` file will likely be of interest
+as it provides a more representative application example that the simple
+example shown above.
+
+Examples in the ``examples/frameworks`` directory show how aioprometheus can
+be used within existing aiohttp, quart and vibora applications instead of
+creating a separate aioprometheus.Service endpoint to handle metrics. The
+vibora example is shown below.
+
+.. literalinclude:: ../examples/frameworks/vibora-example.py
+    :language: python3
 
 
 License

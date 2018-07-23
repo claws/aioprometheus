@@ -30,6 +30,7 @@ BINARY_CONTENT_TYPE = (
     "proto=io.prometheus.client.MetricFamily; "
     "encoding=delimited"
 )
+BINARY_ACCEPTS = set(BINARY_CONTENT_TYPE.split("; "))
 
 
 class BinaryFormatter(IFormatter):

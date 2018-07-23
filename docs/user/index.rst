@@ -222,7 +222,7 @@ The example script can be run using:
 
     (venv) $ cd examples
     (venv) $ python simple-example.py
-    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
 
 In another terminal fetch the metrics using the ``curl`` command line tool
 to verify they can be retrieved by Prometheus server.
@@ -231,12 +231,12 @@ By default metrics will be returned in plan text format.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics
+    $ curl http://127.0.0.1:5000/metrics
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
 
-    $ curl http://127.0.0.1:50624/metrics -H 'Accept: text/plain; version=0.0.4'
+    $ curl http://127.0.0.1:5000/metrics -H 'Accept: text/plain; version=0.0.4'
     # HELP events Number of events.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 36
@@ -246,7 +246,7 @@ to read on the command line.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+    $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
 The metrics service also responds to requests sent to its ``/`` route. The
 response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
@@ -255,7 +255,7 @@ to serialize a full metrics response.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:50624/
+    $ curl http://127.0.0.1:5000/
     <html><body><a href='/metrics'>metrics</a></body></html>
 
 
@@ -274,10 +274,21 @@ The example can be run using
 .. code-block:: console
 
     (env) $ python app-example.py
-    Serving prometheus metrics on: http://127.0.0.1:50624/metrics
+    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
 
 You can use the ``curl`` command line tool to fetch metrics manually or use
 the helper script described in the next section.
+
+Frameworks Example
+++++++++++++++++++
+
+The aioprometheus package can also be used within other web framework based
+applications such as ``aiohttp``, ``quart`` and ``vibora`` applications.
+This usage approach removes the need to create a separate server endpoint
+to handle metrics. The vibora example is shown below.
+
+.. literalinclude:: ../../examples/frameworks/vibora-example.py
+    :language: python3
 
 
 Checking examples using helper script
@@ -307,7 +318,7 @@ Example:
 
 .. code-block:: console
 
-    $ python metrics-fetcher.py --url=http://127.0.0.1:50624/metrics --format=text --interval=2.0
+    $ python metrics-fetcher.py --url=http://127.0.0.1:5000/metrics --format=text --interval=2.0
 
 
 Checking Example using Prometheus
@@ -334,7 +345,7 @@ we can create a minimal configuration file to scrape the example application.
         scrape_timeout: 10s
 
         target_groups:
-          - targets: ['localhost:50624']
+          - targets: ['localhost:5000']
             labels:
               group: 'dev'
 
