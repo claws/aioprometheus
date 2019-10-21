@@ -1,4 +1,3 @@
-
 import unittest
 
 from aioprometheus.negotiator import negotiate

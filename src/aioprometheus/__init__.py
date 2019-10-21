@@ -1,4 +1,3 @@
-
 from .collectors import Collector, Counter, Gauge, Summary, Histogram
 from .decorators import count_exceptions, inprogress, timer
 from . import formats
@@ -9,4 +8,4 @@ from .service import Service
 from .renderer import render
 
 
-__version__ = "18.7.1"
+__version__ = "19.10.0"

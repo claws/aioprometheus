@@ -1,4 +1,3 @@
-
 import asynctest
 from aioprometheus import (
     Counter,

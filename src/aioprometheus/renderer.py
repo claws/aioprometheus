@@ -1,4 +1,3 @@
-
 from .formats import TextFormatter, BinaryFormatter
 from .registry import Registry
 from .negotiator import negotiate
