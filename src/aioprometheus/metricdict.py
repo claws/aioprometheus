@@ -1,7 +1,10 @@
-import collections
 import json
 import re
 
+try:
+    from collections.abc import MutableMapping
+except ImportError:
+    from collections import MutableMapping
 
 # Sometimes python will access by string for example iterating objects, and
 # it has this notation
@@ -9,7 +12,7 @@ regex = re.compile(r"\{.*:.*,?\}")
 
 
 # http://stackoverflow.com/questions/3387691/python-how-to-perfectly-override-a-dict
-class MetricDict(collections.MutableMapping):
+class MetricDict(MutableMapping):
     """
     MetricDict stores the data based on the labels so we need to generate
     custom hash keys based on the labels
