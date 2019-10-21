@@ -1,4 +1,3 @@
-
 import unittest
 
 from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary

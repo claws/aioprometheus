@@ -63,10 +63,16 @@ coverage:
 	@cd docs/coverage; mv index.html coverage.html
 
 
-# help: style                          - perform code format compliance check
+# help: style                          - perform code style format
 .PHONY: style
 style:
 	@black src/aioprometheus tests examples
+
+
+# help: check-style                    - check code format compliance
+.PHONY: check-style
+check-style:
+	@black --check src/aioprometheus tests examples
 
 
 # help: check_types                    - check type hint annotations
@@ -92,7 +98,8 @@ docs.serve:
 
 # help: dist                           - create a wheel distribution package
 .PHONY: dist
-dist: clean
+dist:
+	@rm -rf dist
 	@python setup.py bdist_wheel
 
 

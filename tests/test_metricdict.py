@@ -1,4 +1,3 @@
-
 # copied from prometheus-python
 
 import unittest
