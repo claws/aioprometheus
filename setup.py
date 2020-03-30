@@ -50,6 +50,9 @@ if __name__ == "__main__":
         package_dir={'': 'src'},
         packages=find_packages('src'),
         install_requires=requirements,
+        extras_require={
+            "aiohttp": ["aiohttp>=3.3.2"],
+        },
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",

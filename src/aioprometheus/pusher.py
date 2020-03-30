@@ -1,7 +1,10 @@
 import asyncio
 
-import aiohttp
-import aiohttp.web
+try:
+    import aiohttp
+    import aiohttp.web
+except ImportError as err:
+    aiohttp = None
 
 from urllib.parse import urljoin
 from .formats import TextFormatter
@@ -32,6 +35,12 @@ class Pusher(object):
         :param loop: The event loop instance to use. If no loop is specified
           then the default event loop will be used.
         """
+        if aiohttp is None:
+            raise RuntimeError(
+                "`aiohttp` could not be imported. Did you install `aioprometheus` "
+                "with the `aiohttp` extra?"
+            )
+
         self.job_name = job_name
         self.addr = addr
         self.loop = loop or asyncio.get_event_loop()
@@ -39,7 +48,7 @@ class Pusher(object):
         self.headers = self.formatter.get_headers()
         self.path = urljoin(self.addr, self.PATH.format(job_name))
 
-    async def add(self, registry: CollectorRegistry) -> aiohttp.web.Response:
+    async def add(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
         ``add`` works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
@@ -50,7 +59,7 @@ class Pusher(object):
         await resp.release()
         return resp
 
-    async def replace(self, registry: CollectorRegistry) -> aiohttp.web.Response:
+    async def replace(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
         ``replace`` pushes new values for a group of metrics to the push
         gateway.
@@ -67,7 +76,7 @@ class Pusher(object):
         await resp.release()
         return resp
 
-    async def delete(self, registry: CollectorRegistry) -> aiohttp.web.Response:
+    async def delete(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.

@@ -1,4 +1,3 @@
-aiohttp >= 3.3.2
 asynctest
 prometheus-metrics-proto >= 18.1.1
 quantile-python >= 1.1

@@ -4,10 +4,14 @@ This module implements an asynchronous Prometheus metrics service.
 
 import asyncio
 import logging
-import aiohttp
-import aiohttp.web
 
-from aiohttp.hdrs import METH_GET as GET, ACCEPT
+try:
+    import aiohttp
+    import aiohttp.web
+
+    from aiohttp.hdrs import METH_GET as GET, ACCEPT
+except ImportError:
+    aiohttp = None
 
 from .renderer import render
 from .registry import Registry, CollectorsType
@@ -44,6 +48,12 @@ class Service(object):
         :raises: Exception if the registry object is not an instance of the
           Registry type.
         """
+        if aiohttp is None:
+            raise RuntimeError(
+                "`aiohttp` could not be imported. Did you install `aioprometheus` "
+                "with the `aiohttp` extra?"
+            )
+
         self.loop = loop or asyncio.get_event_loop()
         if registry is not None and not isinstance(registry, Registry):
             raise Exception("registry must be a Registry, got: {}".format(registry))
@@ -184,8 +194,8 @@ class Service(object):
         self.registry.deregister(name)
 
     async def handle_metrics(
-        self, request: aiohttp.web.Request
-    ) -> aiohttp.web.Response:
+        self, request: "aiohttp.web.Request"
+    ) -> "aiohttp.web.Response":
         """ Handle a request to the metrics route.
 
         The request is inspected and the most efficient response data format
@@ -196,7 +206,7 @@ class Service(object):
         )
         return aiohttp.web.Response(body=content, headers=http_headers)
 
-    def accepts(self, request: aiohttp.web.Request) -> Set[str]:
+    def accepts(self, request: "aiohttp.web.Request") -> Set[str]:
         """ Return a sequence of accepts items in the request headers """
         accepts = set()  # type: Set[str]
         accept_headers = request.headers.getall(ACCEPT, [])
@@ -208,7 +218,7 @@ class Service(object):
             accepts.update(accept_items)
         return accepts
 
-    async def handle_root(self, request: aiohttp.web.Request) -> aiohttp.web.Response:
+    async def handle_root(self, request: "aiohttp.web.Request") -> "aiohttp.web.Response":
         """ Handle a request to the / route.
 
         Serves a trivial page with a link to the metrics.  Use this if ever
@@ -220,7 +230,7 @@ class Service(object):
             text=f"<html><body><a href='{metrics_url}'>metrics</a></body></html>",
         )
 
-    async def handle_robots(self, request: aiohttp.web.Request) -> aiohttp.web.Response:
+    async def handle_robots(self, request: "aiohttp.web.Request") -> "aiohttp.web.Response":
         """ Handle a request to /robots.txt
 
         If a robot ever stumbles on this server, discourage it from indexing.
