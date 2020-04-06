@@ -218,7 +218,9 @@ class Service(object):
             accepts.update(accept_items)
         return accepts
 
-    async def handle_root(self, request: "aiohttp.web.Request") -> "aiohttp.web.Response":
+    async def handle_root(
+        self, request: "aiohttp.web.Request"
+    ) -> "aiohttp.web.Response":
         """ Handle a request to the / route.
 
         Serves a trivial page with a link to the metrics.  Use this if ever
@@ -230,7 +232,9 @@ class Service(object):
             text=f"<html><body><a href='{metrics_url}'>metrics</a></body></html>",
         )
 
-    async def handle_robots(self, request: "aiohttp.web.Request") -> "aiohttp.web.Response":
+    async def handle_robots(
+        self, request: "aiohttp.web.Request"
+    ) -> "aiohttp.web.Response":
         """ Handle a request to /robots.txt
 
         If a robot ever stumbles on this server, discourage it from indexing.
