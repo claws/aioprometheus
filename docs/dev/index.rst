@@ -48,10 +48,14 @@ To exit the virtual environment simply type ``deactivate``.
     The following steps assume you are operating in a virtual environment.
 
 
-Install Dependencies
---------------------
+Install Development Environment
+-------------------------------
 
 Install the developmental dependencies using ``pip``.
+
+This will install all normal dependencies of `aioprometheus` plus the `aiohttp`
+extra dependency. `aioprometheus` itself will be installed in a way that allows
+you to edit the code after it is installed so that any changes take effect immediately.
 
 .. code-block:: console
 
@@ -59,19 +63,7 @@ Install the developmental dependencies using ``pip``.
     $ pip install -r requirements.dev.txt
 
 Some rules in the convenience Makefile only work if the dependencies have been
-installed, such as **dist**, **style**, etc.
-
-
-Install aioprometheus
----------------------
-
-Use ``pip`` to perform a development install of `aioprometheus`. This installs
-the package in a way that allows you to edit the code after its installed so
-that any changes take effect immediately.
-
-.. code-block:: console
-
-    $ pip install -e .
+installed, such as **dist**, **style**, **test**, etc.
 
 
 Test
