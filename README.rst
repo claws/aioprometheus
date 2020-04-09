@@ -23,6 +23,14 @@ Install
 
     $ pip install aioprometheus
 
+A Prometheus Push Gateway client and ASGI service are also provided, but the
+dependencies are not installed by default. You can install them alongside
+`aioprometheus` by running:
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp]
+
 
 Example
 -------
