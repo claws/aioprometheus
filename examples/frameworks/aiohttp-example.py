@@ -1,13 +1,20 @@
 #!/usr/bin/env python
 """
-Sometimes you want to expose Prometheus metrics from within an existing web
-service and don't want to start a separate Prometheus metrics server.
+Sometimes you may not want to expose Prometheus metrics from a dedicated
+Prometheus metrics server but instead want to use an existing web framework.
 
-This example uses the aioprometheus package to add Prometheus instrumentation
-to an aiohttp application. In this example a registry and a counter metric is
-instantiated. A '/metrics' route is added to the application and the render
-function from aioprometheus is called to format the metrics into the
+This example uses the registry from the aioprometheus package to add
+Prometheus instrumentation to a aiohttp application. In this example a registry
+and a counter metric is instantiated and gets updated whenever the "/" route
+is accessed. A '/metrics' route is added to the application using the standard
+web framework method. The metrics route renders Prometheus  metrics into the
 appropriate format.
+
+Run:
+
+  (venv) $ pip install aiohttp
+  (venv) $ python aiohttp-example.py
+
 """
 
 from aiohttp import web

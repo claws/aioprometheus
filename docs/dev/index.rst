@@ -9,7 +9,7 @@ If you have found a bug or have an idea for an enhancement that would
 improve the library, use the
 `bug tracker <https://github.com/claws/aioprometheus/issues>`_.
 
-To develop `aioprometheus` you'll need Python 3.6, some dependencies and
+To develop `aioprometheus` you'll need Python 3.6+, some dependencies and
 the source code.
 
 
@@ -19,6 +19,7 @@ Get the source
 .. code-block:: console
 
     $ git clone git@github.com:claws/aioprometheus.git
+    $ cd aioprometheus
 
 
 Setup
@@ -30,100 +31,108 @@ commands are pointing at the correct tools.
 
 .. note::
 
-    In the following example ``python`` is assumed to be the Python 3.6
-    executable. You may need to explicitly specify this (e.g. use ``python3``)
-    if you have multiple Python's available on your system.
+    You may need to explicitly specify which Python to use if you have
+    multiple Python's available on your system  (e.g. ``python3``,
+    ``python3.8``).
 
 .. code-block:: console
 
-    $ python -m venv myvenv
-    $ cd myvenv
-    $ source bin/activate
-    (myvenv) $ cd ..
-
-To exit the virtual environment simply type ``deactivate``.
+    $ python3 -m venv venv --prompt aioprom
+    $ source venv/bin/activate
+    (aioprom) $
+    (aioprom) $ pip install pip --upgrade
 
 .. note::
 
     The following steps assume you are operating in a virtual environment.
 
+To exit the virtual environment simply type ``deactivate``.
+
 
 Install Development Environment
 -------------------------------
 
-Install the developmental dependencies using ``pip``.
-
-This will install all normal dependencies of `aioprometheus` plus the `aiohttp`
-extra dependency. `aioprometheus` itself will be installed in a way that allows
-you to edit the code after it is installed so that any changes take effect immediately.
+Rules in the convenience Makefile depend on the development dependencies
+being installed. The development dependencies also include various web
+application frameworks to assist verifying integration methods. Install the
+developmental dependencies using ``pip``. Then install the `aioprometheus`
+package (and its normal dependencies). in a way that allows you to edit the
+code after it is installed so that any changes take effect immediately.
 
 .. code-block:: console
 
-    $ cd aioprometheus
-    $ pip install -r requirements.dev.txt
+    (aioprom) $ pip install -r requirements.dev.txt
+    (aioprom) $ pip install -e .
 
-Some rules in the convenience Makefile only work if the dependencies have been
-installed, such as **dist**, **style**, **test**, etc.
+
+Code Style
+----------
+
+This project uses the Black code style formatter for consistent code style.
+A Makefile convenience rule is available to apply code style compliance.
+
+.. code-block:: console
+
+    (aioprom) $ make style
+
+
+Type Annotations
+----------------
+
+The code base uses type annotations to provide helpful typing information
+that can improve code comprehension which can help with future enhancements.
+
+The type annotations checker ``mypy`` should run cleanly with no warnings.
+
+.. note::
+
+    There is still some work required to get mypy to run without warnings.
+    Until this rule is passing cleanly it can be ignored.
+
+Use the Makefile convenience rule to check no issues are reported.
+
+.. code-block:: console
+
+    (aioprom) $ make check_types
 
 
 Test
 ----
 
 The easiest method to run all of the unit tests is to run the ``make test``
-rule from the top level directory. This runs the standard library
-``unittest`` tool which discovers all the unit tests and runs them.
+rule from the top level directory. This runs the standard library ``unittest``
+tool which discovers all the unit tests and runs them.
 
 .. code-block:: console
 
-    $ make test
+    (aioprom) $ make test
 
 Or, you can call the standard library unittest module directly.
 
 .. code-block:: console
 
-    $ python -m unittest discover -s tests -v
+    (aioprom) $ python -m unittest discover -s tests -v
 
 Individual unit tests can be run using the standard library ``unittest``
 package too.
 
 .. code-block:: console
 
-    $ cd aioprometheus/tests
-    $ python -m unittest test_negotiate
-
-
-Code Style
-----------
-
-Adopting a consistent code style assists with maintenance. This project uses
-the Black code style formatter. A Makefile convenience rule to enforce code
-style compliance is available.
-
-.. code-block:: console
-
-    (venv) $ make style
-
-
-Type Annotations
-----------------
-
-The code base has been updated with type annotations. These provide helpful
-gradual typing information that can improve how easily the code is understood
-and which helps with any future enhancements.
-
-The type annotations checker ``mypy`` should run cleanly with no warnings.
-
-Use the Makefile convenience rule to check no issues are reported.
-
-.. code-block:: console
-
-    $ make check_types
+    (aioprom) $ cd aioprometheus/tests
+    (aioprom) $ python -m unittest test_negotiate
 
 
 Coverage
 --------
 
-The test code coverage report can be found `here <../coverage/coverage.html>`_
+A Makefile convenience rule is available to check how much of the code is
+covered by tests.
+
+.. code-block:: console
+
+    (aioprom) $ make coverage
+
+The test code coverage report can be found `here <../_static/coverage/index.html>`_
 
 
 Documentation
@@ -135,15 +144,15 @@ a new set of `sphinx <http://sphinx-doc.org/>`_ html content.
 
 .. code-block:: console
 
-    $ make docs
+    (aioprom) $ make docs
 
-To quickly view the rendered docs locally as you are working you can use the
-simple Python web server.
+To view the rendered docs locally as you are working you can use the simple
+Python web server.
 
 .. code-block:: console
 
-    $ cd docs
-    $ python -m http.server
+    (aioprom) $ cd docs
+    (aioprom) $ python -m http.server
 
 Then open a browser to the `docs <http://localhost:8000/_build/html/index.html>`_
 content.
@@ -178,7 +187,7 @@ The following steps are used to make a new software release:
 
   .. code-block:: console
 
-      make dist
+      (aioprom) $ make dist
 
 - Test distribution. This involves creating a virtual environment, installing
   the distribution in it and running the tests. These steps have been captured
@@ -186,21 +195,21 @@ The following steps are used to make a new software release:
 
   .. code-block:: console
 
-      make dist.test
+      (aioprom) $ make dist.test
 
 - Upload to PyPI using
 
   .. code-block:: console
 
-      make dist.upload
+      (aioprom) $ make dist.upload
 
 - Create and push a repo tag to Github.
 
   .. code-block:: console
 
-      git tag YY.MM.MICRO -m "A meaningful release tag comment"
-      git tag  # check release tag is in list
-      git push --tags origin master
+      $ git tag YY.MM.MICRO -m "A meaningful release tag comment"
+      $ git tag  # check release tag is in list
+      $ git push --tags origin master
 
   - Github will create a release tarball at:
 

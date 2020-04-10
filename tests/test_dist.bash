@@ -21,13 +21,15 @@ source test_venv/bin/activate
 echo "Upgrading pip"
 pip install pip --upgrade
 
+echo "Install test dependencies and extras to check integrations"
+pip install asynctest requests aiohttp fastapi quart
+
 echo "Installing $RELEASE_ARCHIVE"
 pip install $RELEASE_ARCHIVE
 
 echo "Running tests"
 cd ..
 make test
-
 
 echo "Exiting test virtual environment"
 deactivate

@@ -1,8 +1,13 @@
 -r requirements.txt
--e .[aiohttp]
+asynctest
 black
 sphinx
 coverage
 mypy
 twine
 wheel
+
+# web app frameworks are used in unit tests to verify integration
+aiohttp
+fastapi
+quart

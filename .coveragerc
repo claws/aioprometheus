@@ -1,0 +1,25 @@
+[run]
+branch = True
+source =
+    aioprometheus
+
+[paths]
+source =
+    src/aioprometheus
+    **/site-packages/aioprometheus
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug
+    raise AssertionError
+    raise NotImplentedError
+    if 0:
+    if __name__ == .__main__.:
+ignore_errors = True
+
+
+[html]
+title = aioprometheus Coverage Test Report
+directory = docs/_static/coverage
