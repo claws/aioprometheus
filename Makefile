@@ -56,11 +56,10 @@ test.verbose:
 # help: coverage                       - perform test coverage checks
 .PHONY: coverage
 coverage:
-	@coverage run -m unittest discover -s tests
-	@# produce html coverage report on modules
-	@coverage html -d docs/coverage --include="src/aioprometheus/*"
-	@# rename coverage html file for use with documentation
-	@cd docs/coverage; mv index.html coverage.html
+	@coverage erase
+	@PYTHONPATH=src coverage run -m unittest discover -s tests -v
+	@coverage html
+	@coverage report
 
 
 # help: style                          - perform code style format
@@ -85,9 +84,7 @@ check_types:
 .PHONY: docs
 docs: coverage
 	@cd docs; rm -rf api/aioprometheus*.rst api/modules.rst _build/*
-	@cd docs; sphinx-apidoc -o ./api ../src/aioprometheus
 	@cd docs; make html
-	@cd docs; cp -R coverage _build/html/.
 
 
 # help: docs.serve                     - serve HTML documentation

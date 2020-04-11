@@ -137,58 +137,59 @@ to serialize a full metrics response.
 The aioprometheus package provides a number of convenience decorator
 functions that can assist with updating metrics.
 
-There ``examples`` directory contains many examples showing how to use the
+The ``examples`` directory contains many examples showing how to use the
 aioprometheus package. The ``app-example.py`` file will likely be of interest
-as it provides a more representative application example that the simple
+as it provides a more representative application example than the simple
 example shown above.
 
 Examples in the ``examples/frameworks`` directory show how aioprometheus can
-be used within existing aiohttp, quart and vibora applications instead of
-creating a separate aioprometheus.Service endpoint to handle metrics. The
-vibora example is shown below.
+be used within various web application frameworks without needing to create a
+separate aioprometheus.Service endpoint to handle metrics. The FastAPI example
+is shown below.
 
 .. code-block:: python
 
     #!/usr/bin/env python
     """
-    Sometimes you want to expose Prometheus metrics from within an existing web
-    service and don't want to start a separate Prometheus metrics server.
+    Sometimes you may not want to expose Prometheus metrics from a dedicated
+    Prometheus metrics server but instead want to use an existing web framework.
 
-    This example uses the aioprometheus package to add Prometheus instrumentation
-    to a Vibora application. In this example a registry and a counter metric is
-    instantiated. A '/metrics' route is added to the application and the render
-    function from aioprometheus is called to format the metrics into the
+    This example uses the registry from the aioprometheus package to add
+    Prometheus instrumentation to a FastAPI application. In this example a registry
+    and a counter metric is instantiated and gets updated whenever the "/" route
+    is accessed. A '/metrics' route is added to the application using the standard
+    web framework method. The metrics route renders Prometheus metrics into the
     appropriate format.
+
+    Run:
+
+      $ pip install fastapi uvicorn
+      $ uvicorn fastapi_example:app
+
     """
 
     from aioprometheus import render, Counter, Registry
-    from vibora import Vibora, Request, Response
+    from fastapi import FastAPI, Header, Response
+    from typing import List
 
 
-    app = Vibora(__name__)
+    app = FastAPI()
     app.registry = Registry()
     app.events_counter = Counter("events", "Number of events.")
     app.registry.register(app.events_counter)
 
 
-    @app.route("/")
-    async def hello(request: Request):
+    @app.get("/")
+    async def hello():
         app.events_counter.inc({"path": "/"})
-        return Response(b"hello")
+        return "hello"
 
 
-    @app.route("/metrics")
-    async def handle_metrics(request: Request):
-        """
-        Negotiate a response format by inspecting the ACCEPTS headers and selecting
-        the most efficient format. Render metrics in the registry into the chosen
-        format and return a response.
-        """
-        content, http_headers = render(app.registry, [request.headers.get("accept")])
-        return Response(content, headers=http_headers)
+    @app.get("/metrics")
+    async def handle_metrics(response: Response, accept: List[str] = Header(None)):
+        content, http_headers = render(app.registry, accept)
+        return Response(content=content, media_type=http_headers["Content-Type"])
 
-
-    app.run()
 
 
 License
@@ -199,5 +200,5 @@ License
 `aioprometheus` originates from the (now deprecated)
 `prometheus python <https://github.com/slok/prometheus-python>`_ package which
 was released under the MIT license. `aioprometheus` continues to use the MIT
-license and contains a copy of the orignal MIT license from the
+license and contains a copy of the original MIT license from the
 `prometheus-python` project as instructed by the original license.

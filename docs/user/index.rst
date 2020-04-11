@@ -279,15 +279,16 @@ The example can be run using
 You can use the ``curl`` command line tool to fetch metrics manually or use
 the helper script described in the next section.
 
+
 Frameworks Example
 ++++++++++++++++++
 
-The aioprometheus package can also be used within other web framework based
-applications such as ``aiohttp``, ``quart`` and ``vibora`` applications.
-This usage approach removes the need to create a separate server endpoint
-to handle metrics. The vibora example is shown below.
+The aioprometheus package can also be used within other web application
+frameworks such as ``FastAPI``, ``aiohttp`` and ``Quart``. This usage
+approach removes the need to create a separate server endpoint to handle
+metrics. The FastAPI example is shown below.
 
-.. literalinclude:: ../../examples/frameworks/vibora-example.py
+.. literalinclude:: ../../examples/frameworks/fastapi_example.py
     :language: python3
 
 

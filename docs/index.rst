@@ -109,11 +109,11 @@ as it provides a more representative application example that the simple
 example shown above.
 
 Examples in the ``examples/frameworks`` directory show how aioprometheus can
-be used within existing aiohttp, quart and vibora applications instead of
+be used within an existing FastAPI, aiohttp or quart application instead of
 creating a separate aioprometheus.Service endpoint to handle metrics. The
-vibora example is shown below.
+FastAPI example is shown below.
 
-.. literalinclude:: ../examples/frameworks/vibora-example.py
+.. literalinclude:: ../examples/frameworks/fastapi_example.py
     :language: python3
 
 
