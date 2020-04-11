@@ -1,3 +1,7 @@
 div.sphinxsidebarwrapper h1.logo {
     font-size: 1.5em;
 }
+
+div[class^="highlight-"] {
+    font-size: 0.8em;
+}

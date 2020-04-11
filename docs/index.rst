@@ -1,5 +1,5 @@
-.. image:: https://travis-ci.org/claws/aioprometheus.svg?branch=master
-    :target: https://travis-ci.org/claws/aioprometheus
+.. image:: https://github.com/claws/aioprometheus/workflows/Python%20Package%20Workflow/badge.svg?branch=master
+    :target: https://github.com/claws/aioprometheus/actions?query=branch%3Amaster
 
 .. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
