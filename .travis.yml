@@ -13,7 +13,7 @@ before_install:
   - pip install -r requirements.dev.txt
 #  - if [[ $TRAVIS_PYTHON_VERSION != 'pypy' ]]; then pip install black; make check-style; fi
 install:
-  - pip install .
+  - pip install .[aiohttp,protoc]
 script:
   - make check-style
   - make test
