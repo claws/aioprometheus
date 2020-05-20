@@ -6,12 +6,12 @@ import aioprometheus
 import prometheus_metrics_proto as pmp
 
 from aioprometheus import Counter, Gauge, Histogram, Registry, Service, Summary
-from aioprometheus.formats import TEXT_CONTENT_TYPE, BINARY_CONTENT_TYPE
+from aioprometheus.formats import text, binary
 
 
 TEXT = "text"
 BINARY = "binary"
-format_kinds = {TEXT: TEXT_CONTENT_TYPE, BINARY: BINARY_CONTENT_TYPE}
+format_kinds = {TEXT: text.TEXT_CONTENT_TYPE, BINARY: binary.BINARY_CONTENT_TYPE}
 
 
 class TestTextExporter(asynctest.TestCase):
@@ -124,20 +124,22 @@ test_counter{data="3",test="test_counter"} 300
 
             # Fetch as text
             async with session.get(
-                self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: text.TEXT_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # Fetch as binary
             async with session.get(
-                self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: binary.BINARY_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(
+                    binary.BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE)
+                )
                 metrics = pmp.decode(content)
                 self.assertEqual(len(metrics), 1)
                 mf = metrics[0]
@@ -172,20 +174,22 @@ test_gauge{data="3",test="test_gauge"} 300
 
             # Fetch as text
             async with session.get(
-                self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: text.TEXT_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # Fetch as binary
             async with session.get(
-                self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: binary.BINARY_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(
+                    binary.BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE)
+                )
                 metrics = pmp.decode(content)
                 self.assertEqual(len(metrics), 1)
                 mf = metrics[0]
@@ -219,20 +223,22 @@ test_summary_sum{data="1",test="test_summary"} 25.2
 
             # Fetch as text
             async with session.get(
-                self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: text.TEXT_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # Fetch as binary
             async with session.get(
-                self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: binary.BINARY_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(
+                    binary.BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE)
+                )
                 metrics = pmp.decode(content)
                 self.assertEqual(len(metrics), 1)
                 mf = metrics[0]
@@ -273,20 +279,22 @@ histogram_test_sum{data="1",type="test_histogram"} 25.2
 
             # Fetch as text
             async with session.get(
-                self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: text.TEXT_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # Fetch as binary
             async with session.get(
-                self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: binary.BINARY_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(
+                    binary.BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE)
+                )
                 metrics = pmp.decode(content)
                 self.assertEqual(len(metrics), 1)
                 mf = metrics[0]
@@ -412,20 +420,22 @@ summary_test_sum{s_sample="1",s_subsample="b",type="summary"} 98857.0
 
             # Fetch as text
             async with session.get(
-                self.metrics_url, headers={ACCEPT: TEXT_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: text.TEXT_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # Fetch as binary
             async with session.get(
-                self.metrics_url, headers={ACCEPT: BINARY_CONTENT_TYPE}
+                self.metrics_url, headers={ACCEPT: binary.BINARY_CONTENT_TYPE}
             ) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(
+                    binary.BINARY_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE)
+                )
                 metrics = pmp.decode(content)
                 self.assertEqual(len(metrics), 4)
                 for mf in metrics:
@@ -463,7 +473,7 @@ test_counter{data="1",test="test_counter"} 100
             async with session.get(self.metrics_url) as resp:
                 self.assertEqual(resp.status, 200)
                 content = await resp.read()
-                self.assertEqual(TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
+                self.assertEqual(text.TEXT_CONTENT_TYPE, resp.headers.get(CONTENT_TYPE))
                 self.assertEqual(expected_data, content.decode())
 
             # TODO: Add another test here that includes the ACCEPT header

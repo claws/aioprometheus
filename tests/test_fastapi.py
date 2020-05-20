@@ -47,7 +47,7 @@ class TestFastAPIRender(unittest.TestCase):
         response = test_client.get("/metrics", headers={"accept": "*/*"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.TEXT_CONTENT_TYPE,
+            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
@@ -55,16 +55,17 @@ class TestFastAPIRender(unittest.TestCase):
         response = test_client.get("/metrics", headers={"accept": "text/plain;"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.TEXT_CONTENT_TYPE,
+            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
         # Get binary format
         response = test_client.get(
-            "/metrics", headers={"accept": aioprometheus.formats.BINARY_CONTENT_TYPE}
+            "/metrics",
+            headers={"accept": aioprometheus.formats.binary.BINARY_CONTENT_TYPE},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.BINARY_CONTENT_TYPE,
+            aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
             response.headers.get("content-type"),
         )

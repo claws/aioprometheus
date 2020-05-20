@@ -52,6 +52,7 @@ if __name__ == "__main__":
         install_requires=requirements,
         extras_require={
             "aiohttp": ["aiohttp>=3.3.2"],
+            "protoc": ["prometheus-metrics-proto>=18.1.1"],
         },
         classifiers=[
             "Development Status :: 4 - Beta",

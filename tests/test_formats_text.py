@@ -2,13 +2,13 @@ import re
 import unittest
 
 from aioprometheus import Collector, Counter, Gauge, Histogram, Summary, Registry
-from aioprometheus.formats import TextFormatter, TEXT_CONTENT_TYPE
+from aioprometheus.formats import text
 
 
 class TestTextFormat(unittest.TestCase):
     def test_headers(self):
-        f = TextFormatter()
-        expected_result = {"Content-Type": TEXT_CONTENT_TYPE}
+        f = text.TextFormatter()
+        expected_result = {"Content-Type": text.TEXT_CONTENT_TYPE}
         self.assertEqual(expected_result, f.get_headers())
 
     def test_wrong_format(self):
@@ -18,7 +18,7 @@ class TestTextFormat(unittest.TestCase):
             "const_labels": {"app": "my_app"},
         }
 
-        f = TextFormatter()
+        f = text.TextFormatter()
 
         c = Collector(**self.data)
 
@@ -73,7 +73,7 @@ class TestTextFormat(unittest.TestCase):
             c.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(c)
 
         result = sorted(result)
@@ -127,7 +127,7 @@ class TestTextFormat(unittest.TestCase):
             c.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(c)
 
         result = sorted(result)
@@ -225,7 +225,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
             c.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
 
         result = f.marshall_collector(c)
 
@@ -247,7 +247,7 @@ container_cpu_usage_seconds_total{id="cefa0b389a634a0b2f3c2f52ade668d71de75e5775
 # TYPE logged_users_total counter
 logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
-        f_with_ts = TextFormatter(True)
+        f_with_ts = text.TextFormatter(True)
         result = f_with_ts.marshall_collector(c)
 
         self.assertTrue(re.match(result_regex, result))
@@ -270,7 +270,7 @@ prometheus_dns_sd_lookups_total 10"""
             c.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
 
         result = f.marshall_collector(c)
 
@@ -322,7 +322,7 @@ prometheus_dns_sd_lookups_total 10"""
             g.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(g)
 
         result = sorted(result)
@@ -376,7 +376,7 @@ prometheus_dns_sd_lookups_total 10"""
             g.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(g)
 
         result = sorted(result)
@@ -450,7 +450,7 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
             g.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
 
         result = f.marshall_collector(g)
 
@@ -472,7 +472,7 @@ container_memory_max_usage_bytes{id="f835d921ffaf332f8d88ef5231ba149e389a2f37276
 # TYPE logged_users_total gauge
 logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
 
-        f_with_ts = TextFormatter(True)
+        f_with_ts = text.TextFormatter(True)
         result = f_with_ts.marshall_collector(g)
 
         self.assertTrue(re.match(result_regex, result))
@@ -495,7 +495,7 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
             g.set_value(i[0], i[1])
 
         # Select format
-        f = TextFormatter()
+        f = text.TextFormatter()
 
         result = f.marshall_collector(g)
 
@@ -526,7 +526,7 @@ prometheus_local_storage_indexing_queue_capacity 16384"""
         for i in values:
             s.add(labels, i)
 
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(s)
 
         result = sorted(result)
@@ -557,7 +557,7 @@ prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2"""
         for i in values:
             s.add(labels, i)
 
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_collector(s)
 
         self.assertEqual(valid_result, result)
@@ -601,7 +601,7 @@ prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2"""
             for j in i[1]:
                 s.add(i[0], j)
 
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(s)
 
         self.assertEqual(sorted(valid_result), sorted(result))
@@ -631,7 +631,7 @@ prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2"""
         for i in values:
             s.add(labels, i)
 
-        f = TextFormatter()
+        f = text.TextFormatter()
         result = f.marshall_lines(s)
 
         result = sorted(result)
@@ -662,7 +662,7 @@ prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?$"
         for i in values:
             s.add(labels, i)
 
-        f = TextFormatter(True)
+        f = text.TextFormatter(True)
         result = f.marshall_collector(s)
 
         self.assertTrue(re.match(result_regex, result))
@@ -741,7 +741,7 @@ summary_test{quantile="0.99",s_sample="1",s_subsample="b",type="summary"} \d*(?:
 summary_test_count{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
 summary_test_sum{s_sample="1",s_subsample="b",type="summary"} \d*(?:.\d*)?
 """
-        f = TextFormatter()
+        f = text.TextFormatter()
         self.maxDiff = None
         # Check multiple times to ensure multiple calls to marshalling
         # produce the same results

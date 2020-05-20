@@ -1,4 +1,4 @@
-from .formats import TextFormatter, BinaryFormatter
+from .formats import IFormatter
 from .registry import Registry
 from .negotiator import negotiate
 from typing import Sequence, Tuple, Union
@@ -29,7 +29,7 @@ def render(registry: Registry, accepts_headers: Sequence[str]) -> Tuple[bytes, d
         )
 
     Formatter = negotiate(accepts_headers)
-    formatter = Formatter()  # type: Union[TextFormatter, BinaryFormatter]
+    formatter = Formatter()  # type: IFormatter
 
     http_headers = formatter.get_headers()
     content = formatter.marshall(registry)
