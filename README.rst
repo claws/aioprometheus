@@ -33,6 +33,13 @@ dependencies are not installed by default. You can install them alongside
 
     $ pip install aioprometheus[aiohttp]
 
+Starting version 20.0.0 `prometheus-metrics-proto` support is optional:
+
+.. code-block:: console
+
+    $ pip install aioprometheus[protoc]
+
+
 
 Example
 -------
