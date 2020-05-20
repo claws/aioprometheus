@@ -27,7 +27,7 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
 
     if formats.binary is not None:
         if formats.binary.BINARY_ACCEPTS.issubset(accepts):
-            formatter = formats.BinaryFormatter  # type: ignore
+            formatter = formats.binary.BinaryFormatter  # type: ignore
 
     logger.debug(f"negotiating {accepts} resulted in choosing {formatter.__name__}")
 
