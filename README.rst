@@ -37,7 +37,7 @@ Starting version 20.0.0 `prometheus-metrics-proto` support is optional:
 
 .. code-block:: console
 
-    $ pip install aioprometheus[protoc]
+    $ pip install aioprometheus[binary]
 
 
 

@@ -39,7 +39,7 @@ jobs:
         make check-style
     - name: Install package
       run: |
-        pip install .[aiohttp,protoc]
+        pip install .[aiohttp,binary]
     - name: Run unit tests
       run: |
         make test
