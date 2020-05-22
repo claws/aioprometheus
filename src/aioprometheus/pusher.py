@@ -7,7 +7,7 @@ except ImportError as err:
     aiohttp = None
 
 from urllib.parse import urljoin
-from .formats import TextFormatter
+from .formats import text
 
 # imports only used for type annotations
 from asyncio.base_events import BaseEventLoop
@@ -44,7 +44,7 @@ class Pusher(object):
         self.job_name = job_name
         self.addr = addr
         self.loop = loop or asyncio.get_event_loop()
-        self.formatter = TextFormatter()
+        self.formatter = text.TextFormatter()
         self.headers = self.formatter.get_headers()
         self.path = urljoin(self.addr, self.PATH.format(job_name))
 
@@ -55,9 +55,10 @@ class Pusher(object):
         """
         async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
-            resp = await session.post(self.path, data=payload, headers=self.headers)
-        await resp.release()
-        return resp
+            async with session.post(
+                self.path, data=payload, headers=self.headers
+            ) as resp:
+                return resp
 
     async def replace(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
@@ -72,9 +73,10 @@ class Pusher(object):
         """
         async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
-            resp = await session.put(self.path, data=payload, headers=self.headers)
-        await resp.release()
-        return resp
+            async with session.put(
+                self.path, data=payload, headers=self.headers
+            ) as resp:
+                return resp
 
     async def delete(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
@@ -83,6 +85,7 @@ class Pusher(object):
         """
         async with aiohttp.ClientSession() as session:
             payload = self.formatter.marshall(registry)
-            resp = await session.delete(self.path, data=payload, headers=self.headers)
-        await resp.release()
-        return resp
+            async with session.delete(
+                self.path, data=payload, headers=self.headers
+            ) as resp:
+                return resp

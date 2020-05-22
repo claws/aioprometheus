@@ -24,7 +24,7 @@ class TestRenderer(asynctest.TestCase):
         registry = aioprometheus.Registry()
         content, http_headers = aioprometheus.render(registry, accepts_headers)
         self.assertEqual(
-            http_headers["Content-Type"], aioprometheus.formats.TEXT_CONTENT_TYPE
+            http_headers["Content-Type"], aioprometheus.formats.text.TEXT_CONTENT_TYPE
         )
 
     async def test_render_text(self):
@@ -33,14 +33,15 @@ class TestRenderer(asynctest.TestCase):
         registry = aioprometheus.Registry()
         content, http_headers = aioprometheus.render(registry, accepts_headers)
         self.assertEqual(
-            http_headers["Content-Type"], aioprometheus.formats.TEXT_CONTENT_TYPE
+            http_headers["Content-Type"], aioprometheus.formats.text.TEXT_CONTENT_TYPE
         )
 
     async def test_render_binary(self):
         """ check metrics can be rendered using binary format """
-        accepts_headers = (aioprometheus.formats.BINARY_CONTENT_TYPE,)
+        accepts_headers = (aioprometheus.formats.binary.BINARY_CONTENT_TYPE,)
         registry = aioprometheus.Registry()
         content, http_headers = aioprometheus.render(registry, accepts_headers)
         self.assertEqual(
-            http_headers["Content-Type"], aioprometheus.formats.BINARY_CONTENT_TYPE
+            http_headers["Content-Type"],
+            aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
         )

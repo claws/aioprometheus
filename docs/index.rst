@@ -88,6 +88,8 @@ to read on the command line.
 
 .. code-block:: console
 
+    $ pip install aioprometheus[binary]  # required
+
     $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
 The metrics service also responds to requests sent to its ``/`` route. The

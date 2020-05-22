@@ -10,10 +10,6 @@ logger = logging.getLogger(__name__)
 FormatterType = Callable[[bool], formats.IFormatter]
 
 
-ProtobufAccepts = formats.BINARY_ACCEPTS
-TextAccepts = formats.TEXT_ACCEPTS
-
-
 def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
     """ Negotiate a response format by scanning through a list of ACCEPTS
     headers and selecting the most efficient format.
@@ -27,10 +23,11 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
     """
     accepts = parse_accepts(accepts_headers)
 
-    formatter = formats.TextFormatter  # type: FormatterType
+    formatter = formats.text.TextFormatter  # type: formats.text.FormatterType
 
-    if ProtobufAccepts.issubset(accepts):
-        formatter = formats.BinaryFormatter  # type: ignore
+    if formats.binary is not None:
+        if formats.binary.BINARY_ACCEPTS.issubset(accepts):
+            formatter = formats.binary.BinaryFormatter  # type: ignore
 
     logger.debug(f"negotiating {accepts} resulted in choosing {formatter.__name__}")
 

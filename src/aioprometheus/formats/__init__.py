@@ -1,3 +1,7 @@
 from .base import IFormatter
-from .text import TextFormatter, TEXT_CONTENT_TYPE, TEXT_ACCEPTS
-from .binary import BinaryFormatter, BINARY_CONTENT_TYPE, BINARY_ACCEPTS
+from . import text
+
+try:
+    from . import binary
+except ImportError:
+    binary = None

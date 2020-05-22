@@ -3,7 +3,7 @@ import time
 import unittest
 import unittest.mock
 import prometheus_metrics_proto as pmp
-from aioprometheus.formats import BinaryFormatter, BINARY_CONTENT_TYPE
+from aioprometheus.formats import binary
 from aioprometheus import Collector, Counter, Gauge, Histogram, Summary, Registry
 
 
@@ -62,8 +62,8 @@ class TestProtobufFormat(unittest.TestCase):
 
     def test_headers_binary(self):
         """ check binary header info is provided """
-        f = BinaryFormatter()
-        expected_result = {"Content-Type": BINARY_CONTENT_TYPE}
+        f = binary.BinaryFormatter()
+        expected_result = {"Content-Type": binary.BINARY_CONTENT_TYPE}
         self.assertEqual(expected_result, f.get_headers())
 
     def test_no_metric_instances_present_binary(self):
@@ -75,7 +75,7 @@ class TestProtobufFormat(unittest.TestCase):
             const_labels=self.const_labels,
         )
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(c)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -97,7 +97,7 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, value in self.counter_metric_data:
             c.set_value(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(c)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -123,7 +123,7 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, value in self.counter_metric_data:
             c.set_value(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(c)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -152,7 +152,7 @@ class TestProtobufFormat(unittest.TestCase):
             for labels, value in self.counter_metric_data:
                 c.set_value(labels, value)
 
-            f = BinaryFormatter(timestamp=True)
+            f = binary.BinaryFormatter(timestamp=True)
 
             result = f.marshall_collector(c)
             self.assertIsInstance(result, pmp.MetricFamily)
@@ -176,7 +176,7 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, values in self.gauge_metric_data:
             g.set_value(labels, values)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(g)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -202,7 +202,7 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, values in self.gauge_metric_data:
             g.set_value(labels, values)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(g)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -231,7 +231,7 @@ class TestProtobufFormat(unittest.TestCase):
             for labels, values in self.gauge_metric_data:
                 g.set_value(labels, values)
 
-            f = BinaryFormatter(timestamp=True)
+            f = binary.BinaryFormatter(timestamp=True)
 
             result = f.marshall_collector(g)
             self.assertIsInstance(result, pmp.MetricFamily)
@@ -256,7 +256,7 @@ class TestProtobufFormat(unittest.TestCase):
             for value in values:
                 s.add(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(s)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -284,7 +284,7 @@ class TestProtobufFormat(unittest.TestCase):
             for value in values:
                 s.add(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(s)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -315,7 +315,7 @@ class TestProtobufFormat(unittest.TestCase):
                 for value in values:
                     s.add(labels, value)
 
-            f = BinaryFormatter(timestamp=True)
+            f = binary.BinaryFormatter(timestamp=True)
 
             result = f.marshall_collector(s)
             self.assertIsInstance(result, pmp.MetricFamily)
@@ -370,7 +370,7 @@ class TestProtobufFormat(unittest.TestCase):
             for value in values:
                 s.add(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(s)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -397,7 +397,7 @@ class TestProtobufFormat(unittest.TestCase):
             for value in values:
                 h.add(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(h)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -428,7 +428,7 @@ class TestProtobufFormat(unittest.TestCase):
             for value in values:
                 h.add(labels, value)
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         result = f.marshall_collector(h)
         self.assertIsInstance(result, pmp.MetricFamily)
@@ -463,7 +463,7 @@ class TestProtobufFormat(unittest.TestCase):
                 for value in values:
                     h.add(labels, value)
 
-            f = BinaryFormatter(timestamp=True)
+            f = binary.BinaryFormatter(timestamp=True)
 
             result = f.marshall_collector(h)
             self.assertIsInstance(result, pmp.MetricFamily)
@@ -500,7 +500,7 @@ class TestProtobufFormat(unittest.TestCase):
             b"\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00\x00"
             b"\x00\x00\x00\x00y@"
         )
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         self.assertEqual(valid_result, f.marshall(registry))
 
@@ -523,7 +523,7 @@ class TestProtobufFormat(unittest.TestCase):
             b"\x00\x00\x00\x00\x00\x89@"
         )
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         self.assertEqual(valid_result, f.marshall(registry))
 
@@ -559,7 +559,7 @@ class TestProtobufFormat(unittest.TestCase):
             b"\x00\x00\xa5\xb1@"
         )
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         self.assertEqual(valid_result, f.marshall(registry))
 
@@ -603,6 +603,6 @@ class TestProtobufFormat(unittest.TestCase):
             b"\x08\x06\x11\x00\x00\x00\x00\x00\x00\xf0\x7f"
         )
 
-        f = BinaryFormatter()
+        f = binary.BinaryFormatter()
 
         self.assertEqual(valid_result, f.marshall(registry))

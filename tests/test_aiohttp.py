@@ -60,7 +60,7 @@ class TestAiohttpRender(asynctest.TestCase):
             ) as response:
                 self.assertEqual(response.status, 200)
                 self.assertIn(
-                    aioprometheus.formats.TEXT_CONTENT_TYPE,
+                    aioprometheus.formats.text.TEXT_CONTENT_TYPE,
                     response.headers.get("content-type"),
                 )
                 # content = await response.read()
@@ -71,7 +71,7 @@ class TestAiohttpRender(asynctest.TestCase):
             ) as response:
                 self.assertEqual(response.status, 200)
                 self.assertIn(
-                    aioprometheus.formats.TEXT_CONTENT_TYPE,
+                    aioprometheus.formats.text.TEXT_CONTENT_TYPE,
                     response.headers.get("content-type"),
                 )
 
@@ -79,12 +79,12 @@ class TestAiohttpRender(asynctest.TestCase):
             async with session.get(
                 metrics_url,
                 headers={
-                    aiohttp.hdrs.ACCEPT: aioprometheus.formats.BINARY_CONTENT_TYPE
+                    aiohttp.hdrs.ACCEPT: aioprometheus.formats.binary.BINARY_CONTENT_TYPE
                 },
             ) as response:
                 self.assertEqual(response.status, 200)
                 self.assertIn(
-                    aioprometheus.formats.BINARY_CONTENT_TYPE,
+                    aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
                     response.headers.get("content-type"),
                 )
 

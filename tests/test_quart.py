@@ -48,7 +48,7 @@ class TestQuartRender(asynctest.TestCase):
         response = await test_client.get("/metrics", headers={"accept": "*/*"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.TEXT_CONTENT_TYPE,
+            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
         # payload = await response.get_data()
@@ -57,16 +57,17 @@ class TestQuartRender(asynctest.TestCase):
         response = await test_client.get("/metrics", headers={"accept": "text/plain;"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.TEXT_CONTENT_TYPE,
+            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
         # Get binary format
         response = await test_client.get(
-            "/metrics", headers={"accept": aioprometheus.formats.BINARY_CONTENT_TYPE}
+            "/metrics",
+            headers={"accept": aioprometheus.formats.binary.BINARY_CONTENT_TYPE},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.BINARY_CONTENT_TYPE,
+            aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
             response.headers.get("content-type"),
         )

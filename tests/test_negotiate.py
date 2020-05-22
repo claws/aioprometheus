@@ -1,7 +1,7 @@
 import unittest
 
 from aioprometheus.negotiator import negotiate
-from aioprometheus.formats import TextFormatter, BinaryFormatter
+from aioprometheus.formats import text, binary
 
 
 class TestNegotiate(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestNegotiate(unittest.TestCase):
         )
 
         for accept in headers:
-            self.assertEqual(BinaryFormatter, negotiate(set(accept.split(";"))))
+            self.assertEqual(binary.BinaryFormatter, negotiate(set(accept.split(";"))))
 
     def test_text_004(self):
         """ check that a text formatter is returned for version 0.0.4 """
@@ -25,23 +25,23 @@ class TestNegotiate(unittest.TestCase):
         )
 
         for accept in headers:
-            self.assertEqual(TextFormatter, negotiate(set(accept.split(";"))))
+            self.assertEqual(text.TextFormatter, negotiate(set(accept.split(";"))))
 
     def test_text_default(self):
         """ check that a text formatter is returned for plain text """
         headers = ("text/plain;",)
 
         for accept in headers:
-            self.assertEqual(TextFormatter, negotiate(set(accept.split(";"))))
+            self.assertEqual(text.TextFormatter, negotiate(set(accept.split(";"))))
 
     def test_default(self):
         """ check that a text formatter is returned if no matches """
         headers = ("application/json", "*/*", "application/nothing")
 
         for accept in headers:
-            self.assertEqual(TextFormatter, negotiate(set(accept.split(";"))))
+            self.assertEqual(text.TextFormatter, negotiate(set(accept.split(";"))))
 
     def test_no_accept_header(self):
         """ check request with no accept header works """
-        self.assertEqual(TextFormatter, negotiate(set()))
-        self.assertEqual(TextFormatter, negotiate(set([""])))
+        self.assertEqual(text.TextFormatter, negotiate(set()))
+        self.assertEqual(text.TextFormatter, negotiate(set([""])))
