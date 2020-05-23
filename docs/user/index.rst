@@ -216,6 +216,12 @@ A counter metric is created and registered with the service. The service is
 started and then a coroutine is started to periodically update the metric
 to simulate progress.
 
+This example and demonstration requires some optional extra to be installed.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
+
 The example script can be run using:
 
 .. code-block:: console
@@ -241,12 +247,10 @@ By default metrics will be returned in plan text format.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 36
 
-Similarly, you can request metrics in binary format, though this will be hard
-to read on the command line.
+Similarly, you can request metrics in binary format, though the output will be
+hard to read on the command line.
 
 .. code-block:: console
-
-    $ pip install aioprometheus[binary]  # required
 
     $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 
@@ -301,6 +305,12 @@ There is a script in the examples directory that emulates Prometheus server
 scraping a metrics service endpoint. You can specify a particular format to
 use (e.g. text or binary). If no format is specified then it will randomly
 choose a format each time it requests metrics.
+
+This example script requires some optional extras to be installed.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
 
 .. code-block:: console
 
@@ -401,6 +411,12 @@ monitor components that can not be scraped directly. They might be behind a
 firewall or might be too short lived. The push gateway allows you to push
 time series data to it which ensures that data is always exposed reliably
 via the pull model.
+
+The pusher requires the `aiohttp` optional extra to be installed.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp]
 
 .. code-block:: python
 

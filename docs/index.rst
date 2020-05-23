@@ -4,6 +4,9 @@
 .. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
 
+.. image:: https://readthedocs.org/projects/aioprometheus/badge/?version=latest
+    :target: https://aioprometheus.readthedocs.io/en/latest
+
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
   :target: https://github.com/ambv/black
 
@@ -58,6 +61,12 @@ A counter metric is created and registered with the service. The service is
 started and then a coroutine is started to periodically update the metric
 to simulate progress.
 
+This example and demonstration requires some optional extra to be installed.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
+
 The example script can be run using:
 
 .. code-block:: console
@@ -87,8 +96,6 @@ Similarly, you can request metrics in binary format, though this will be hard
 to read on the command line.
 
 .. code-block:: console
-
-    $ pip install aioprometheus[binary]  # required
 
     $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
 

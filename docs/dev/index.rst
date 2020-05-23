@@ -56,13 +56,13 @@ Rules in the convenience Makefile depend on the development dependencies
 being installed. The development dependencies also include various web
 application frameworks to assist verifying integration methods. Install the
 developmental dependencies using ``pip``. Then install the `aioprometheus`
-package (and its normal dependencies). in a way that allows you to edit the
+package (and its optional dependencies). in a way that allows you to edit the
 code after it is installed so that any changes take effect immediately.
 
 .. code-block:: console
 
     (aioprom) $ pip install -r requirements.dev.txt
-    (aioprom) $ pip install -e .
+    (aioprom) $ pip install -e .[aiohttp,binary]
 
 
 Code Style

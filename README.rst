@@ -4,6 +4,9 @@
 .. image:: https://img.shields.io/pypi/v/aioprometheus.svg
     :target: https://pypi.python.org/pypi/aioprometheus
 
+.. image:: https://readthedocs.org/projects/aioprometheus/badge/?version=latest 
+    :target: https://aioprometheus.readthedocs.io/en/latest 
+
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
   :target: https://github.com/ambv/black
 
@@ -25,7 +28,7 @@ Install
 
     $ pip install aioprometheus
 
-A Prometheus Push Gateway client and ASGI service are also provided, but the
+A Prometheus Push Gateway client and ASGI service are also included, but their
 dependencies are not installed by default. You can install them alongside
 `aioprometheus` by running:
 
@@ -33,19 +36,27 @@ dependencies are not installed by default. You can install them alongside
 
     $ pip install aioprometheus[aiohttp]
 
-Starting version 20.0.0 `prometheus-metrics-proto` support is optional:
+Prometheus 2.0 removed support for the binary protocol, so in version 20.0.0 the
+dependency on `prometheus-metrics-proto`, which provides binary support, is now 
+optional. If you want binary response support, for use with an older Prometheus, 
+you will need to specify the 'binary' optional extra:
 
 .. code-block:: console
 
     $ pip install aioprometheus[binary]
 
+Multiple optional dependencies can be listed at once, such as:
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
 
 
 Example
 -------
 
 The example below shows a single Counter metric collector being created
-and exposed via a HTTP endpoint.
+and exposed via the optional aiohttp service endpoint.
 
 .. code-block:: python
 
@@ -106,7 +117,13 @@ A counter metric is created and registered with the service. The service is
 started and then a coroutine is started to periodically update the metric
 to simulate progress.
 
-The example script can be run using:
+This example and demonstration requires some optional extra to be installed.
+
+.. code-block:: console
+ 
+    $ pip install aioprometheus[aiohttp,binary]
+
+The example script can then be run using:
 
 .. code-block:: console
 
@@ -126,8 +143,8 @@ By default metrics will be returned in plan text format.
     # TYPE events counter
     events{host="alpha",kind="timer_expiry"} 33
 
-Similarly, you can request metrics in binary format, though this will be hard
-to read on the command line.
+Similarly, you can request metrics in binary format, though the output will be 
+hard to read on the command line. 
 
 .. code-block:: console
 
