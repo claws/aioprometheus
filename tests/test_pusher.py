@@ -50,10 +50,6 @@ class TestPusherServer(object):
         self._runner = None
 
 
-def expected_job_path(job):
-    return pusher.Pusher.PATH.format(job)
-
-
 class TestPusher(asynctest.TestCase):
     async def setUp(self):
         self.server = TestPusherServer(loop=self.loop)
@@ -75,7 +71,7 @@ class TestPusher(asynctest.TestCase):
         resp = await p.replace(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
 
     async def test_push_add(self):
         job_name = "my-job"
@@ -103,7 +99,7 @@ class TestPusher(asynctest.TestCase):
         resp = await p.add(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
         self.assertEqual("POST", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
 
@@ -133,7 +129,7 @@ class TestPusher(asynctest.TestCase):
         resp = await p.replace(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
         self.assertEqual("PUT", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
 
@@ -163,6 +159,6 @@ class TestPusher(asynctest.TestCase):
         resp = await p.delete(registry)
         self.assertEqual(resp.status, 200)
 
-        self.assertEqual(expected_job_path(job_name), self.server.test_results["path"])
+        self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
         self.assertEqual("DELETE", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
