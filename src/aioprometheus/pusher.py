@@ -6,7 +6,8 @@ try:
 except ImportError as err:
     aiohttp = None
 
-from urllib.parse import urljoin
+import base64
+from urllib.parse import quote_plus, urljoin
 from .formats import text
 
 # imports only used for type annotations
@@ -21,9 +22,15 @@ class Pusher(object):
     to a push-gateway which can be scraped by Prometheus.
     """
 
-    PATH = "/metrics/job/{0}"
+    PATH = "/metrics"
 
-    def __init__(self, job_name: str, addr: str, loop: BaseEventLoop = None) -> None:
+    def __init__(
+        self,
+        job_name: str,
+        addr: str,
+        grouping_key: dict = None,
+        loop: BaseEventLoop = None,
+    ) -> None:
         """
 
         :param job_name: The name of the job.
@@ -31,6 +38,9 @@ class Pusher(object):
         :param addr: The address of the push gateway. The default port the
           push gateway listens on is 9091 so the address will typically be
           something like this ``http://hostname:9091``.
+
+        :param grouping_key: Specifies the grouping key of created metrics
+          in key-value pairs.
 
         :param loop: The event loop instance to use. If no loop is specified
           then the default event loop will be used.
@@ -42,11 +52,21 @@ class Pusher(object):
             )
 
         self.job_name = job_name
+
+        if grouping_key is None:
+            grouping_key = {}
+        self.grouping_key = grouping_key
+
         self.addr = addr
         self.loop = loop or asyncio.get_event_loop()
         self.formatter = text.TextFormatter()
         self.headers = self.formatter.get_headers()
-        self.path = urljoin(self.addr, self.PATH.format(job_name))
+
+        path = self.PATH + "".join(
+            _escape_grouping_key(str(k), str(v))
+            for k, v in [("job", job_name)] + sorted(grouping_key.items())
+        )
+        self.path = urljoin(self.addr, path)
 
     async def add(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
         """
@@ -89,3 +109,18 @@ class Pusher(object):
                 self.path, data=payload, headers=self.headers
             ) as resp:
                 return resp
+
+
+def _escape_grouping_key(k, v):
+    if v == "":
+        # To encode the empty label with base64, you have to use at least one
+        # `=` padding character to avoid a `//` or a trailing `/`.
+        return f"/{k}@base64/="
+    elif "/" in v:
+        # The plain (or even URI-encoded) `/` would otherwise be interpreted as
+        # a path separator.
+        v = base64.urlsafe_b64encode(v.encode("utf-8")).decode()
+        return f"/{k}@base64/{v}"
+    else:
+        v = quote_plus(v)
+        return f"/{k}/{v}"
