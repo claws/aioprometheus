@@ -30,7 +30,7 @@ class TestPusherServer(object):
 
     async def start(self, addr="127.0.0.1", port=None):
         self._app = aiohttp.web.Application()
-        self._app.router.add_route("*", "/metrics/job/{job}", self.handler)
+        self._app.router.add_route("*", "/metrics/job/{job}{tail:(/.+)?}", self.handler)
         self._runner = aiohttp.web.AppRunner(self._app)
         await self._runner.setup()
         self._site = aiohttp.web.TCPSite(self._runner, addr, port)
@@ -72,6 +72,29 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
+
+    async def test_grouping_key(self):
+        job_name = "my-job"
+        p = pusher.Pusher(
+            job_name,
+            self.server.url,
+            grouping_key={"instance": "127.0.0.1:1234"},
+            loop=self.loop,
+        )
+        registry = Registry()
+        c = Counter("total_requests", "Total requests.", {})
+        registry.register(c)
+
+        c.inc({"url": "/p/user"})
+
+        # Push to the pushgateway
+        resp = await p.replace(registry)
+        self.assertEqual(resp.status, 200)
+
+        self.assertEqual(
+            "/metrics/job/my-job/instance/127.0.0.1:1234",
+            self.server.test_results["path"],
+        )
 
     async def test_push_add(self):
         job_name = "my-job"
