@@ -13,8 +13,7 @@ class TestPusherServer(object):
     test_results attribute which is later checked in tests.
     """
 
-    def __init__(self, loop=None):
-        self.loop = loop or asyncio.get_event_loop()
+    def __init__(self):
         self.test_results = None
 
     async def handler(self, request):
@@ -52,7 +51,7 @@ class TestPusherServer(object):
 
 class TestPusher(asynctest.TestCase):
     async def setUp(self):
-        self.server = TestPusherServer(loop=self.loop)
+        self.server = TestPusherServer()
         await self.server.start()
 
     async def tearDown(self):
@@ -60,7 +59,7 @@ class TestPusher(asynctest.TestCase):
 
     async def test_push_job_ping(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, self.server.url, loop=self.loop)
+        p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {})
         registry.register(c)
@@ -74,18 +73,17 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
 
     async def test_grouping_key(self):
+        # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
+        # for encoding rules.
         job_name = "my-job"
         p = pusher.Pusher(
-            job_name,
-            self.server.url,
-            grouping_key={"instance": "127.0.0.1:1234"},
-            loop=self.loop,
+            job_name, self.server.url, grouping_key={"instance": "127.0.0.1:1234"},
         )
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {})
         registry.register(c)
 
-        c.inc({"url": "/p/user"})
+        c.inc({})
 
         # Push to the pushgateway
         resp = await p.replace(registry)
@@ -93,6 +91,49 @@ class TestPusher(asynctest.TestCase):
 
         self.assertEqual(
             "/metrics/job/my-job/instance/127.0.0.1:1234",
+            self.server.test_results["path"],
+        )
+
+    async def test_grouping_key_with_empty_value(self):
+        # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
+        # for encoding rules.
+        job_name = "example"
+        p = pusher.Pusher(
+            job_name, self.server.url, grouping_key={"first": "", "second": "foo"},
+        )
+        registry = Registry()
+        c = Counter("example_total", "Total examples", {})
+        registry.register(c)
+
+        c.inc({})
+
+        # Push to the pushgateway
+        resp = await p.replace(registry)
+        self.assertEqual(resp.status, 200)
+
+        self.assertEqual(
+            "/metrics/job/example/first@base64/=/second/foo",
+            self.server.test_results["path"],
+        )
+
+    async def test_grouping_key_with_value_containing_slash(self):
+        # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
+        # for encoding rules.
+        job_name = "directory_cleaner"
+        p = pusher.Pusher(job_name, self.server.url, grouping_key={"path": "/var/tmp"},)
+        registry = Registry()
+        c = Counter("exec_total", "Total executions", {})
+        registry.register(c)
+
+        c.inc({})
+
+        # Push to the pushgateway
+        resp = await p.replace(registry)
+        self.assertEqual(resp.status, 200)
+
+        # Generated base64 content include '=' as padding.
+        self.assertEqual(
+            "/metrics/job/directory_cleaner/path@base64/L3Zhci90bXA=",
             self.server.test_results["path"],
         )
 

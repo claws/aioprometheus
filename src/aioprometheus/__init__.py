@@ -8,4 +8,4 @@ from .service import Service
 from .renderer import render
 
 
-__version__ = "20.0.0"
+__version__ = "20.0.1"

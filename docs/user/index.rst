@@ -216,7 +216,7 @@ A counter metric is created and registered with the service. The service is
 started and then a coroutine is started to periodically update the metric
 to simulate progress.
 
-This example and demonstration requires some optional extra to be installed.
+This example and demonstration requires some optional extras to be installed.
 
 .. code-block:: console
 
@@ -403,16 +403,25 @@ used to track the number of exceptions that occur in a function block.
 Push Gateway
 ------------
 
-Another method of exposing metrics is to push them to a gateway that will
-get scraped by Prometheus.
+Another method of exposing metrics is to push them to an intermediary that will
+get scraped by Prometheus. The Prometheus PushGateway exists for this purpose.
 
-Prometheus provides a push gateway intermediary that can be used to help
-monitor components that can not be scraped directly. They might be behind a
-firewall or might be too short lived. The push gateway allows you to push
-time series data to it which ensures that data is always exposed reliably
-via the pull model.
+This strategy can be useful to obtain metrics from components that can not be
+scraped directly. They might be behind a firewall or might be too short lived.
 
-The pusher requires the `aiohttp` optional extra to be installed.
+The Prometheus Push Gateway allows you to push time series data to it which
+ensures that data is always exposed reliably via the pull model.
+
+The aioprometheus package provides a Pusher object that can be used within
+your application to push metrics to a Prometheus Push Gateway. The Pusher
+allows you to specify a job name as well as additional grouping keys.
+
+The grouping keys get added to the Push Gateway URL using the rules described
+`here <https://github.com/prometheus/pushgateway/blob/master/README.md#url>`_.
+See `here <https://github.com/prometheus/pushgateway/blob/master/README.md#about-the-job-and-instance-labels>`_
+for how to configure Prometheus to best scrape metrics from the Push Gateway.
+
+The Pusher requires the `aiohttp` optional extra to be installed.
 
 .. code-block:: console
 
@@ -422,7 +431,8 @@ The pusher requires the `aiohttp` optional extra to be installed.
 
     from aioprometheus import Counter, Pusher, Registry
 
-    p = Pusher("my-job", "http://127.0.0.1:61423", loop=self.loop)
+    PUSH_GATEWAY_ADDR = "http://127.0.0.1:61423"
+    p = Pusher("my-job", PUSH_GATEWAY_ADDR, grouping_key={"instance": "127.0.0.1:1234"})
     registry = Registry()
     c = Counter("total_requests", "Total requests.", {})
     registry.register(c)
