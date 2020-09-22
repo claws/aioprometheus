@@ -1,11 +1,12 @@
-from .collectors import Collector, Counter, Gauge, Histogram, Summary
 from typing import Dict, List, Union
+
+from .collectors import Collector, Counter, Gauge, Histogram, Summary
 
 CollectorsType = Union[Counter, Gauge, Histogram, Summary]
 
 
 class CollectorRegistry(object):
-    """ This class implements the metrics collector registry.
+    """This class implements the metrics collector registry.
 
     Collectors in the registry must comply with the Collector interface
     which means that they inherit from the base Collector object and implement
@@ -17,7 +18,7 @@ class CollectorRegistry(object):
         self.collectors = {}  # type: Dict[str, CollectorsType]
 
     def register(self, collector: CollectorsType) -> None:
-        """ Register a collector.
+        """Register a collector.
 
         This will allow the collector metrics to be emitted.
 
@@ -39,7 +40,7 @@ class CollectorRegistry(object):
         self.collectors[collector.name] = collector
 
     def deregister(self, name: str) -> None:
-        """ Deregister a collector.
+        """Deregister a collector.
 
         This will stop the collector metrics from being emitted.
 
@@ -50,7 +51,7 @@ class CollectorRegistry(object):
         del self.collectors[name]
 
     def get(self, name: str) -> CollectorsType:
-        """ Get a collector by name.
+        """Get a collector by name.
 
         :param name: The name of the collector to fetch.
 

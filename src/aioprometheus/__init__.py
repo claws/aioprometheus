@@ -1,11 +1,9 @@
-from .collectors import Collector, Counter, Gauge, Summary, Histogram
+from . import formats, pusher
+from .collectors import Collector, Counter, Gauge, Histogram, Summary
 from .decorators import count_exceptions, inprogress, timer
-from . import formats
-from . import pusher
 from .negotiator import negotiate
-from .registry import Registry, CollectorRegistry
-from .service import Service
+from .registry import CollectorRegistry, Registry
 from .renderer import render
+from .service import Service
 
-
-__version__ = "20.0.1"
+__version__ = "20.0.2"

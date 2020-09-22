@@ -1,12 +1,13 @@
 import asynctest
+
 from aioprometheus import (
     Counter,
     Gauge,
     Histogram,
     Summary,
-    timer,
-    inprogress,
     count_exceptions,
+    inprogress,
+    timer,
 )
 
 

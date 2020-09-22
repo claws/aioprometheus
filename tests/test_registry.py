@@ -1,6 +1,6 @@
 import unittest
 
-from aioprometheus import CollectorRegistry, Collector, Counter, Gauge, Summary
+from aioprometheus import Collector, CollectorRegistry, Counter, Gauge, Summary
 
 
 class TestRegistry(unittest.TestCase):

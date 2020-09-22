@@ -2,10 +2,11 @@ import datetime
 import time
 import unittest
 import unittest.mock
-import prometheus_metrics_proto as pmp
-from aioprometheus.formats import binary
-from aioprometheus import Collector, Counter, Gauge, Histogram, Summary, Registry
 
+import prometheus_metrics_proto as pmp
+
+from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
+from aioprometheus.formats import binary
 
 TEST_TIMESTAMP = 1515044377268
 

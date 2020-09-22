@@ -1,7 +1,7 @@
 import re
 import unittest
 
-from aioprometheus import Collector, Counter, Gauge, Histogram, Summary, Registry
+from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
 from aioprometheus.formats import text
 
 

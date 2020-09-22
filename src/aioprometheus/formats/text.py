@@ -1,13 +1,13 @@
 """ This module implements a Prometheus metrics text formatter """
 
 import collections
+from typing import Callable, Dict, List, Tuple, Union, cast
 
-from .base import IFormatter
-from ..collectors import Counter, Gauge, Summary, Histogram
-from typing import cast, Callable, Dict, List, Tuple, Union
+from ..collectors import Counter, Gauge, Histogram, Summary
 
 # imports only used for type annotations
 from ..registry import CollectorRegistry
+from .base import IFormatter
 
 # typing aliases
 LabelsType = Dict[str, str]
@@ -39,7 +39,7 @@ TEXT_ACCEPTS = set(TEXT_CONTENT_TYPE.split("; "))
 
 
 class TextFormatter(IFormatter):
-    """ This formatter encodes into the Text format.
+    """This formatter encodes into the Text format.
 
     The histogram and summary types are difficult to represent in the text
     format. The following conventions apply:
@@ -62,7 +62,7 @@ class TextFormatter(IFormatter):
     """
 
     def __init__(self, timestamp: bool = False) -> None:
-        """ Initialise the text formatter.
+        """Initialise the text formatter.
 
         timestamp is a boolean, if you want timestamp in each metric.
         """
@@ -161,7 +161,7 @@ class TextFormatter(IFormatter):
     def _format_histogram(
         self, histogram: MetricTupleType, name: str, const_labels: LabelsType
     ) -> List[str]:
-        """ Format a histogram into the text format.
+        """Format a histogram into the text format.
 
         Buckets must be sorted and +Inf should be last.
 
@@ -243,8 +243,8 @@ class TextFormatter(IFormatter):
         return LINE_SEPARATOR_FMT.join(result)
 
     def marshall(self, registry: CollectorRegistry) -> bytes:
-        """ Marshalls a registry (containing collectors) into a bytes
-        object """
+        """Marshalls a registry (containing collectors) into a bytes
+        object"""
 
         blocks = []
         for i in registry.get_all():

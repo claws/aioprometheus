@@ -1,7 +1,6 @@
 import abc
 import collections
 import datetime
-
 from typing import Dict
 
 # typing aliases
@@ -67,7 +66,7 @@ class IFormatter(abc.ABC):
 
     @abc.abstractmethod
     def marshall(self, registry) -> bytes:
-        """ Marshalls a registry (containing many collectors) into a
+        """Marshalls a registry (containing many collectors) into a
         specific format.
 
         :returns: bytes

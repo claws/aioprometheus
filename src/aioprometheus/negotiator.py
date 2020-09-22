@@ -1,8 +1,7 @@
 import logging
-
-from . import formats
 from typing import Callable, Sequence, Set
 
+from . import formats
 
 logger = logging.getLogger(__name__)
 
@@ -11,7 +10,7 @@ FormatterType = Callable[[bool], formats.IFormatter]
 
 
 def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
-    """ Negotiate a response format by scanning through a list of ACCEPTS
+    """Negotiate a response format by scanning through a list of ACCEPTS
     headers and selecting the most efficient format.
 
     The formatter returned by this function is used to render a response.

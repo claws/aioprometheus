@@ -1,11 +1,12 @@
-from .formats import IFormatter
-from .registry import Registry
-from .negotiator import negotiate
 from typing import Sequence, Tuple, Union
+
+from .formats import IFormatter
+from .negotiator import negotiate
+from .registry import Registry
 
 
 def render(registry: Registry, accepts_headers: Sequence[str]) -> Tuple[bytes, dict]:
-    """ Render the metrics in this registry to a specific format.
+    """Render the metrics in this registry to a specific format.
 
     The format chosen is determined by scanning through the ACCEPTS headers
     and selecting the most efficient format. If no accepts headers

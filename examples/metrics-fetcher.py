@@ -12,16 +12,17 @@ Usage:
 
 """
 
-import aiohttp
-import aioprometheus
 import argparse
 import asyncio
 import logging
-import prometheus_metrics_proto
 import random
-from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
 from asyncio.base_events import BaseEventLoop
 
+import aiohttp
+import prometheus_metrics_proto
+from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
+
+import aioprometheus
 
 TEXT = "text"
 BINARY = "binary"
@@ -34,7 +35,7 @@ header_kinds = {
 async def fetch_metrics(
     url: str, fmt: str = None, interval: float = 1.0, loop: BaseEventLoop = None
 ):
-    """ Fetch metrics from the service endpoint using different formats.
+    """Fetch metrics from the service endpoint using different formats.
 
     This coroutine runs 'n' times, with a brief interval in between, before
     exiting.

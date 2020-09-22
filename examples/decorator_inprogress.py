@@ -19,8 +19,7 @@ The example script can be tested using ``curl``.
 import asyncio
 import random
 
-from aioprometheus import Service, Gauge, inprogress
-
+from aioprometheus import Gauge, Service, inprogress
 
 # Create a metric to track requests currently in progress.
 REQUESTS = Gauge("request_in_progress", "Number of requests in progress")

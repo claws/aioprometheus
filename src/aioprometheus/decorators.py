@@ -4,10 +4,10 @@ This module provides some convenience decorators for metrics
 
 import asyncio
 import time
-
-from .collectors import Counter, Gauge, Summary
 from functools import wraps
 from typing import Any, Callable, Dict
+
+from .collectors import Counter, Gauge, Summary
 
 
 def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:

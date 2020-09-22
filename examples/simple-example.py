@@ -14,8 +14,8 @@ to verify they can be retrieved by Prometheus server.
 
 import asyncio
 import socket
-from aioprometheus import Counter, Service
 
+from aioprometheus import Counter, Service
 
 if __name__ == "__main__":
 

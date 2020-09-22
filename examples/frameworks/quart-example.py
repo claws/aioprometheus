@@ -17,9 +17,9 @@ Run:
 
 """
 
-from aioprometheus import render, Counter, Registry
 from quart import Quart, request
 
+from aioprometheus import Counter, Registry, render
 
 app = Quart(__name__)
 app.registry = Registry()
