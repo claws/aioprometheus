@@ -1,8 +1,10 @@
-import asynctest
+import unittest
+
 import aiohttp
 import aiohttp.hdrs
 import aiohttp.web
-import unittest
+import asynctest
+
 import aioprometheus
 
 

@@ -1,6 +1,7 @@
 import unittest
-import aioprometheus
 from typing import List
+
+import aioprometheus
 
 try:
     from fastapi import FastAPI, Header, Response

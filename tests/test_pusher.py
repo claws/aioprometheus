@@ -1,13 +1,13 @@
-import asynctest
 import asyncio
 
 import aiohttp
+import asynctest
 
-from aioprometheus import Counter, pusher, Registry
+from aioprometheus import Counter, Registry, pusher
 
 
 class TestPusherServer(object):
-    """ This fixture class acts as the Push Gateway.
+    """This fixture class acts as the Push Gateway.
 
     It handles requests and stores various request attributes in the
     test_results attribute which is later checked in tests.
@@ -77,7 +77,9 @@ class TestPusher(asynctest.TestCase):
         # for encoding rules.
         job_name = "my-job"
         p = pusher.Pusher(
-            job_name, self.server.url, grouping_key={"instance": "127.0.0.1:1234"},
+            job_name,
+            self.server.url,
+            grouping_key={"instance": "127.0.0.1:1234"},
         )
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {})
@@ -99,7 +101,9 @@ class TestPusher(asynctest.TestCase):
         # for encoding rules.
         job_name = "example"
         p = pusher.Pusher(
-            job_name, self.server.url, grouping_key={"first": "", "second": "foo"},
+            job_name,
+            self.server.url,
+            grouping_key={"first": "", "second": "foo"},
         )
         registry = Registry()
         c = Counter("example_total", "Total examples", {})
@@ -120,7 +124,11 @@ class TestPusher(asynctest.TestCase):
         # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
         # for encoding rules.
         job_name = "directory_cleaner"
-        p = pusher.Pusher(job_name, self.server.url, grouping_key={"path": "/var/tmp"},)
+        p = pusher.Pusher(
+            job_name,
+            self.server.url,
+            grouping_key={"path": "/var/tmp"},
+        )
         registry = Registry()
         c = Counter("exec_total", "Total executions", {})
         registry.register(c)

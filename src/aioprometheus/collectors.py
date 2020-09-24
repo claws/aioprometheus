@@ -2,12 +2,12 @@ import collections
 import enum
 import json
 import re
+from typing import Any, Dict, List, Sequence, Tuple, Union, cast
 
 import quantile
 
 from . import histogram
 from .metricdict import MetricDict
-from typing import cast, Any, Dict, List, Sequence, Tuple, Union
 
 # Used to return the value ordered (not necessary but for consistency useful)
 # type annotations are not correct for this package yet.
@@ -37,7 +37,7 @@ class MetricsTypes(enum.Enum):
 
 
 class Collector(object):
-    """ Base class for all collectors.
+    """Base class for all collectors.
 
     **Metric names and labels**
 
@@ -104,14 +104,14 @@ class Collector(object):
         self.values[labels] = value
 
     def get_value(self, labels: LabelsType) -> NumericValueType:
-        """  Gets a value in the container.
+        """Gets a value in the container.
 
         :raises: KeyError if an item with matching labels is not present.
         """
         return self.values[labels]
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        """ Gets a value in the container.
+        """Gets a value in the container.
 
         Handy alias for `get_value`.
 
@@ -120,7 +120,7 @@ class Collector(object):
         return self.get_value(labels)
 
     def _label_names_correct(self, labels: LabelsType) -> bool:
-        """ Check validity of label names.
+        """Check validity of label names.
 
         :raises: ValueError if labels are invalid
         """
@@ -185,7 +185,7 @@ class Counter(Collector):
     kind = MetricsTypes.counter
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        """ Get the Counter value matching an arbitrary group of labels.
+        """Get the Counter value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
         """
@@ -200,7 +200,7 @@ class Counter(Collector):
         self.add(labels, 1)
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Add the given value to the counter.
+        """Add the given value to the counter.
 
         :raises: ValueError if the value is negative. Counters can only
           increase.
@@ -242,7 +242,7 @@ class Gauge(Collector):
         self.set_value(labels, value)
 
     def get(self, labels: LabelsType) -> NumericValueType:
-        """ Get the gauge value matching an arbitrary group of labels.
+        """Get the gauge value matching an arbitrary group of labels.
 
         :raises: KeyError if an item with matching labels is not present.
         """
@@ -257,7 +257,7 @@ class Gauge(Collector):
         self.add(labels, -1)
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Add the given value to the Gauge.
+        """Add the given value to the Gauge.
 
         The value can be negative, resulting in a decrease of the gauge.
         """
@@ -274,7 +274,7 @@ class Gauge(Collector):
         self.set_value(labels, current + value)
 
     def sub(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Subtract the given value from the Gauge.
+        """Subtract the given value from the Gauge.
 
         The value can be negative, resulting in an increase of the gauge.
         """

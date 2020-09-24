@@ -1,5 +1,7 @@
-import asynctest
 import unittest
+
+import asynctest
+
 import aioprometheus
 
 try:

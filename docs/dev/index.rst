@@ -68,8 +68,9 @@ code after it is installed so that any changes take effect immediately.
 Code Style
 ----------
 
-This project uses the Black code style formatter for consistent code style.
-A Makefile convenience rule is available to apply code style compliance.
+This project uses the Black code style formatter and isort to sort imports
+for consistent code style. A Makefile convenience rule is available to apply
+code style compliance.
 
 .. code-block:: console
 

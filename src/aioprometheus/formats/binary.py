@@ -3,14 +3,15 @@ This module implements a formatter that emits metrics in a binary (Google
 Protocol Buffers) format.
 """
 
-import prometheus_metrics_proto as pmp
+from typing import Callable, Dict, List, Tuple, Union, cast
 
-from .base import IFormatter
-from ..collectors import Counter, Gauge, Summary, Histogram
-from typing import cast, Callable, Dict, List, Tuple, Union
+import prometheus_metrics_proto as pmp
 
 # imports only used for type annotations
 from aioprometheus.registry import CollectorRegistry
+
+from ..collectors import Counter, Gauge, Histogram, Summary
+from .base import IFormatter
 
 # typing aliases
 LabelsType = Dict[str, str]
@@ -50,7 +51,7 @@ class BinaryFormatter(IFormatter):
     def _format_counter(
         self, counter: MetricTupleType, name: str, const_labels: LabelsType
     ) -> pmp.Metric:
-        """ Create a Counter metric instance.
+        """Create a Counter metric instance.
 
         :param counter: a 2-tuple containing labels and the counter value.
         :param name: the metric name.
@@ -72,7 +73,7 @@ class BinaryFormatter(IFormatter):
     def _format_gauge(
         self, gauge: MetricTupleType, name: str, const_labels: LabelsType
     ) -> pmp.Metric:
-        """ Create a Gauge metric instance.
+        """Create a Gauge metric instance.
 
         :param gauge: a 2-tuple containing labels and the gauge value.
         :param name: the metric name.
@@ -94,7 +95,7 @@ class BinaryFormatter(IFormatter):
     def _format_summary(
         self, summary: MetricTupleType, name: str, const_labels: LabelsType
     ) -> pmp.Metric:
-        """ Create a Summary metric instance.
+        """Create a Summary metric instance.
 
         :param summary: a 2-tuple containing labels and a dict representing
           the summary value. The dict contains keys for each quantile as
@@ -183,7 +184,7 @@ class BinaryFormatter(IFormatter):
         return mf
 
     def marshall(self, registry: CollectorRegistry) -> bytes:
-        """ Marshall the collectors in the registry into binary protocol
+        """Marshall the collectors in the registry into binary protocol
         buffer format.
 
         The Prometheus metrics parser expects each metric (MetricFamily) to

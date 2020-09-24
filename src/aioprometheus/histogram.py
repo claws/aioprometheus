@@ -11,7 +11,7 @@ BucketType = float
 def linearBuckets(
     start: Union[float, int], width: Union[int, float], count: int
 ) -> List[BucketType]:
-    """ Returns buckets that are spaced linearly.
+    """Returns buckets that are spaced linearly.
 
     Returns ``count`` buckets, each ``width`` wide, where the lowest bucket
     has an upper bound of ``start``. There is no +Inf bucket is included in
@@ -27,7 +27,7 @@ def linearBuckets(
 def exponentialBuckets(
     start: Union[float, int], factor: Union[float, int], count: int
 ) -> List[BucketType]:
-    """ Returns buckets that are spaced exponentially.
+    """Returns buckets that are spaced exponentially.
 
     Returns ``count`` buckets, where the lowest bucket has an upper bound of
     ``start`` and each following bucket's upper bound is ``factor`` times the
@@ -72,7 +72,7 @@ class Histogram(object):
         self.sum = 0.0  # type: float
 
     def observe(self, value: Union[float, int]) -> None:
-        """ Observe the given amount.
+        """Observe the given amount.
 
         Observing a value into the histogram will cumulatively increment the
         count of observations for the buckets that the observed values falls

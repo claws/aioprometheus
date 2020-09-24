@@ -17,10 +17,11 @@ Run:
 
 """
 
-from aioprometheus import render, Counter, Registry
-from fastapi import FastAPI, Header, Response
 from typing import List
 
+from fastapi import FastAPI, Header, Response
+
+from aioprometheus import Counter, Registry, render
 
 app = FastAPI()
 app.registry = Registry()

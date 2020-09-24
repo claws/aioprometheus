@@ -1,7 +1,7 @@
 import unittest
 
+from aioprometheus.formats import binary, text
 from aioprometheus.negotiator import negotiate
-from aioprometheus.formats import text, binary
 
 
 class TestNegotiate(unittest.TestCase):

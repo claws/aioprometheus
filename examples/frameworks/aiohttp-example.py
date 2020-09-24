@@ -19,8 +19,8 @@ Run:
 
 from aiohttp import web
 from aiohttp.hdrs import ACCEPT
-from aioprometheus import render, Counter, Registry
 
+from aioprometheus import Counter, Registry, render
 
 app = web.Application()
 app.registry = Registry()

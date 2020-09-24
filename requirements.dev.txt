@@ -3,6 +3,7 @@ asynctest
 black
 sphinx
 coverage
+isort[requirements_deprecated_finder]
 mypy
 twine
 wheel

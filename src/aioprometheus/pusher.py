@@ -7,11 +7,12 @@ except ImportError as err:
     aiohttp = None
 
 import base64
-from urllib.parse import quote_plus, urljoin
-from .formats import text
 
 # imports only used for type annotations
 from asyncio.base_events import BaseEventLoop
+from urllib.parse import quote_plus, urljoin
+
+from .formats import text
 from .registry import CollectorRegistry
 
 

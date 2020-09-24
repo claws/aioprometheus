@@ -9,14 +9,14 @@ using ``pip install psutil``.
 
 import asyncio
 import logging
-import psutil
 import random
 import socket
 import uuid
+from asyncio.base_events import BaseEventLoop
+
+import psutil
 
 from aioprometheus import Counter, Gauge, Histogram, Service, Summary, formats
-
-from asyncio.base_events import BaseEventLoop
 
 
 class ExampleApp(object):

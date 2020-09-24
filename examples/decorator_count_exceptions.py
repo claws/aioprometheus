@@ -21,8 +21,7 @@ You may need to Ctrl+C twice to exit the example script.
 import asyncio
 import random
 
-from aioprometheus import Service, Counter, count_exceptions
-
+from aioprometheus import Counter, Service, count_exceptions
 
 # Create a metric to track requests currently in progress.
 REQUESTS = Counter("request_handler_exceptions", "Number of exceptions in requests")

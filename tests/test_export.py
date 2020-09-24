@@ -1,13 +1,13 @@
-import asynctest
-import aiohttp
 import unittest.mock
-from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
-import aioprometheus
+
+import aiohttp
+import asynctest
 import prometheus_metrics_proto as pmp
+from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
 
+import aioprometheus
 from aioprometheus import Counter, Gauge, Histogram, Registry, Service, Summary
-from aioprometheus.formats import text, binary
-
+from aioprometheus.formats import binary, text
 
 TEXT = "text"
 BINARY = "binary"

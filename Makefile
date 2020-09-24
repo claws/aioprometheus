@@ -64,13 +64,23 @@ coverage:
 
 # help: style                          - perform code style format
 .PHONY: style
-style:
-	@black src/aioprometheus tests examples
+style: sort-imports format
 
 
 # help: check-style                    - check code format compliance
 .PHONY: check-style
-check-style:
+check-style: check-sort-imports check-format
+
+
+# help: format                          - perform code style format
+.PHONY: format
+format:
+	@black src/aioprometheus tests examples
+
+
+# help: check-format                    - check code format compliance
+.PHONY: check-format
+check-format:
 	@black --check src/aioprometheus tests examples
 
 
@@ -78,6 +88,18 @@ check-style:
 .PHONY: check_types
 check_types:
 	@cd src; MYPYPATH=$VIRTUAL_ENV/lib/python*/site-packages mypy -p aioprometheus --ignore-missing-imports
+
+
+# help: sort-imports                   - apply import sort ordering
+.PHONY: sort-imports
+sort-imports:
+	@isort . --profile black
+
+
+# help: check-sort-imports             - check imports are sorted
+.PHONY: check-sort-imports
+check-sort-imports:
+	@isort . --check-only --profile black
 
 
 # help: docs                           - generate project documentation

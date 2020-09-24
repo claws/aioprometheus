@@ -8,19 +8,18 @@ import logging
 try:
     import aiohttp
     import aiohttp.web
-
-    from aiohttp.hdrs import METH_GET as GET, ACCEPT
+    from aiohttp.hdrs import ACCEPT
+    from aiohttp.hdrs import METH_GET as GET
 except ImportError:
     aiohttp = None
-
-from .renderer import render
-from .registry import Registry, CollectorsType
-from typing import Optional, Set
 
 # imports only used for type annotations
 from asyncio.base_events import BaseEventLoop, Server
 from ssl import SSLContext
+from typing import Optional, Set
 
+from .registry import CollectorsType, Registry
+from .renderer import render
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +66,7 @@ class Service(object):
 
     @property
     def base_url(self) -> str:
-        """ Return the base service url
+        """Return the base service url
 
         :raises: Exception if the server has not been started.
 
@@ -87,7 +86,7 @@ class Service(object):
 
     @property
     def root_url(self) -> str:
-        """ Return the root service url
+        """Return the root service url
 
         :raises: Exception if the server has not been started.
 
@@ -97,7 +96,7 @@ class Service(object):
 
     @property
     def metrics_url(self) -> str:
-        """ Return the Prometheus metrics url
+        """Return the Prometheus metrics url
 
         :raises: Exception if the server has not been started.
 
@@ -112,7 +111,7 @@ class Service(object):
         ssl: SSLContext = None,
         metrics_url: str = DEFAULT_METRICS_PATH,
     ) -> None:
-        """ Start the prometheus metrics HTTP(S) server.
+        """Start the prometheus metrics HTTP(S) server.
 
         :param addr: the address to bind the server on. By default this is
           set to an empty string so that the service becomes available on
@@ -160,7 +159,7 @@ class Service(object):
         logger.debug("Prometheus metrics server started on %s", self.metrics_url)
 
     async def stop(self, wait_duration: float = 1.0) -> None:
-        """ Stop the prometheus metrics HTTP(S) server.
+        """Stop the prometheus metrics HTTP(S) server.
 
         :param wait_duration: the number of seconds to wait for connections to
           finish.
@@ -178,7 +177,7 @@ class Service(object):
         logger.debug("Prometheus metrics server stopped")
 
     def register(self, collector: CollectorsType) -> None:
-        """ Register a collector.
+        """Register a collector.
 
         :raises: TypeError if collector is not an instance of
           :class:`Collector`.
@@ -187,7 +186,7 @@ class Service(object):
         self.registry.register(collector)
 
     def deregister(self, name: str) -> None:
-        """ Deregister a collector.
+        """Deregister a collector.
 
         :param name: A collector name to deregister.
         """
@@ -196,7 +195,7 @@ class Service(object):
     async def handle_metrics(
         self, request: "aiohttp.web.Request"
     ) -> "aiohttp.web.Response":
-        """ Handle a request to the metrics route.
+        """Handle a request to the metrics route.
 
         The request is inspected and the most efficient response data format
         is chosen.
@@ -221,7 +220,7 @@ class Service(object):
     async def handle_root(
         self, request: "aiohttp.web.Request"
     ) -> "aiohttp.web.Response":
-        """ Handle a request to the / route.
+        """Handle a request to the / route.
 
         Serves a trivial page with a link to the metrics.  Use this if ever
         you need to point a health check at your the service.
@@ -235,7 +234,7 @@ class Service(object):
     async def handle_robots(
         self, request: "aiohttp.web.Request"
     ) -> "aiohttp.web.Response":
-        """ Handle a request to /robots.txt
+        """Handle a request to /robots.txt
 
         If a robot ever stumbles on this server, discourage it from indexing.
         """
