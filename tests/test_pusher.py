@@ -30,6 +30,7 @@ class TestPusherServer(object):
     async def start(self, addr="127.0.0.1", port=None):
         self._app = aiohttp.web.Application()
         self._app.router.add_route("*", "/metrics/job/{job}{tail:(/.+)?}", self.handler)
+        self._app.router.add_route("*", "/api/v1/import/prometheus", self.handler)
         self._runner = aiohttp.web.AppRunner(self._app)
         await self._runner.setup()
         self._site = aiohttp.web.TCPSite(self._runner, addr, port)
@@ -56,6 +57,23 @@ class TestPusher(asynctest.TestCase):
 
     async def tearDown(self):
         await self.server.stop()
+
+    async def test_push_job_ping_victoriametrics(self):
+        job_name = "my-job"
+
+        # Create a pusher with the path for VictoriaMetrics
+        p = pusher.Pusher(job_name, self.server.url, path="/api/v1/import/prometheus")
+        registry = Registry()
+        c = Counter("total_requests", "Total requests.", {})
+        registry.register(c)
+
+        c.inc({"url": "/p/user"})
+
+        # Push to the pushgateway
+        resp = await p.replace(registry)
+        self.assertEqual(resp.status, 200)
+
+        self.assertEqual("/api/v1/import/prometheus", self.server.test_results["path"])
 
     async def test_push_job_ping(self):
         job_name = "my-job"

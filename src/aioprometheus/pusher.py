@@ -23,7 +23,7 @@ class Pusher(object):
     to a push-gateway which can be scraped by Prometheus.
     """
 
-    PATH = "/metrics"
+    PROMETHEUS_PATH = "/metrics"
 
     def __init__(
         self,
@@ -31,6 +31,7 @@ class Pusher(object):
         addr: str,
         grouping_key: dict = None,
         loop: BaseEventLoop = None,
+        path: str = "/metrics",
     ) -> None:
         """
 
@@ -45,6 +46,10 @@ class Pusher(object):
 
         :param loop: The event loop instance to use. If no loop is specified
           then the default event loop will be used.
+
+        :param path: The path to use, by default this will be /metrics for
+           prometheus but can be optionally specified to work with other
+           platforms such as VictoriaMetrics.
         """
         if aiohttp is None:
             raise RuntimeError(
@@ -63,10 +68,12 @@ class Pusher(object):
         self.formatter = text.TextFormatter()
         self.headers = self.formatter.get_headers()
 
-        path = self.PATH + "".join(
-            _escape_grouping_key(str(k), str(v))
-            for k, v in [("job", job_name)] + sorted(grouping_key.items())
-        )
+        if path == self.PROMETHEUS_PATH:
+            path = path + "".join(
+                _escape_grouping_key(str(k), str(v))
+                for k, v in [("job", job_name)] + sorted(grouping_key.items())
+            )
+
         self.path = urljoin(self.addr, path)
 
     async def add(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
