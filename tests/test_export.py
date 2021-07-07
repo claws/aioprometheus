@@ -26,7 +26,7 @@ class TestTextExporter(asynctest.TestCase):
         await self.server.stop()
 
     async def test_invalid_registry(self):
-        """ check only valid registry can be provided """
+        """check only valid registry can be provided"""
         for invalid_registry in ["nope", dict(), list()]:
             with self.assertRaises(Exception) as cm:
                 Service(registry=invalid_registry)
@@ -35,7 +35,7 @@ class TestTextExporter(asynctest.TestCase):
         Service(registry=Registry())
 
     def test_fetch_url_before_starting_server(self):
-        """ check accessing a URL property raises expection if not available """
+        """check accessing a URL property raises expection if not available"""
         s = Service()
 
         with self.assertRaises(Exception) as cm:
@@ -53,7 +53,7 @@ class TestTextExporter(asynctest.TestCase):
         )
 
     def test_register_deregister(self):
-        """ check registering and deregistering metrics """
+        """check registering and deregistering metrics"""
         c = Counter("test_counter", "Test Counter.", {"test": "test_counter"})
         self.server.register(c)
 
@@ -70,7 +70,7 @@ class TestTextExporter(asynctest.TestCase):
             self.server.deregister("test_counter")
 
     async def test_start_started_server(self):
-        """ check starting a started server """
+        """check starting a started server"""
 
         with unittest.mock.patch.object(
             aioprometheus.service.logger, "warning"
@@ -82,7 +82,7 @@ class TestTextExporter(asynctest.TestCase):
             )
 
     async def test_stop_stopped_server(self):
-        """ check stopping a stopped server """
+        """check stopping a stopped server"""
 
         s = Service(registry=self.registry)
         await s.start(addr="127.0.0.1")
@@ -98,7 +98,7 @@ class TestTextExporter(asynctest.TestCase):
             )
 
     async def test_counter(self):
-        """ check counter metric export """
+        """check counter metric export"""
 
         # Add some metrics
         data = (
@@ -148,7 +148,7 @@ test_counter{data="3",test="test_counter"} 300
                 self.assertEqual(len(mf.metric), 3)
 
     async def test_gauge(self):
-        """ check gauge metric export """
+        """check gauge metric export"""
 
         # Add some metrics
         data = (
@@ -198,7 +198,7 @@ test_gauge{data="3",test="test_gauge"} 300
                 self.assertEqual(len(mf.metric), 3)
 
     async def test_summary(self):
-        """ check summary metric export """
+        """check summary metric export"""
 
         # Add some metrics
         data = [3, 5.2, 13, 4]
@@ -248,7 +248,7 @@ test_summary_sum{data="1",test="test_summary"} 25.2
                 self.assertEqual(len(mf.metric[0].summary.quantile), 3)
 
     async def test_histogram(self):
-        """ check histogram metric export """
+        """check histogram metric export"""
 
         # Add some metrics
         data = [3, 5.2, 13, 4]
@@ -452,7 +452,7 @@ summary_test_sum{s_sample="1",s_subsample="b",type="summary"} 98857.0
                         self.assertEqual(len(mf.metric[0].histogram.bucket), 4)
 
     async def test_no_accept_header(self):
-        """ check default format is used when no accept header is defined """
+        """check default format is used when no accept header is defined"""
 
         # Add some metrics
         data = (({"data": 1}, 100),)
@@ -482,14 +482,14 @@ test_counter{data="1",test="test_counter"} 100
             # is not permitted.
 
     async def test_root_route(self):
-        """ check root route returns content """
+        """check root route returns content"""
         async with aiohttp.ClientSession() as session:
             async with session.get(self.root_url) as resp:
                 self.assertEqual(resp.status, 200)
                 self.assertIn("text/html", resp.headers.get(CONTENT_TYPE))
 
     async def test_robots_route(self):
-        """ check robots route returns content """
+        """check robots route returns content"""
         async with aiohttp.ClientSession() as session:
             async with session.get(f"{self.root_url}robots.txt") as resp:
                 self.assertEqual(resp.status, 200)

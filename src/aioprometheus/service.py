@@ -206,7 +206,7 @@ class Service(object):
         return aiohttp.web.Response(body=content, headers=http_headers)
 
     def accepts(self, request: "aiohttp.web.Request") -> Set[str]:
-        """ Return a sequence of accepts items in the request headers """
+        """Return a sequence of accepts items in the request headers"""
         accepts = set()  # type: Set[str]
         accept_headers = request.headers.getall(ACCEPT, [])
         for accept_items in accept_headers:

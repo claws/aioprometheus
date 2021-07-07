@@ -67,7 +67,7 @@ coverage:
 style: sort-imports format
 
 
-# help: check-style                    - check code format compliance
+# help: check-style                    - check code style compliance
 .PHONY: check-style
 check-style: check-sort-imports check-format
 

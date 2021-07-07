@@ -20,7 +20,7 @@ class TestFastAPIRender(unittest.TestCase):
     """
 
     def test_render_in_fastapi_app(self):
-        """ check render usage in FastAPI app """
+        """check render usage in FastAPI app"""
 
         app = FastAPI()
         app.registry = aioprometheus.Registry()

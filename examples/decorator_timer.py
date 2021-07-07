@@ -33,7 +33,7 @@ REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing requ
 # Decorate function with metric.
 @timer(REQUEST_TIME)
 async def handle_request(duration):
-    """ A dummy function that takes some time """
+    """A dummy function that takes some time"""
     await asyncio.sleep(duration)
 
 

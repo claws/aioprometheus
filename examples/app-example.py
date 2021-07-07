@@ -102,7 +102,7 @@ class ExampleApp(object):
         self.msvr.register(self.latency_metric)
 
     async def start(self):
-        """ Start the application """
+        """Start the application"""
         await self.msvr.start(addr=self.metrics_host, port=self.metrics_port)
         logger.debug("Serving prometheus metrics on: %s", self.msvr.metrics_url)
 
@@ -113,14 +113,14 @@ class ExampleApp(object):
         self.timer = self.loop.call_later(1.0, self.on_timer_expiry)
 
     async def stop(self):
-        """ Stop the application """
+        """Stop the application"""
         await self.msvr.stop()
         if self.timer:
             self.timer.cancel()
         self.timer = None
 
     def on_timer_expiry(self):
-        """ Update application to simulate work """
+        """Update application to simulate work"""
 
         # Update memory metrics
         self.ram_metric.set({"type": "virtual"}, psutil.virtual_memory().used)
