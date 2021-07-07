@@ -30,7 +30,7 @@ REQUESTS = Counter("request_handler_exceptions", "Number of exceptions in reques
 # Decorate function with metric.
 @count_exceptions(REQUESTS, {"route": "/"})
 async def handle_request(duration):
-    """ A dummy function that occasionally raises an exception """
+    """A dummy function that occasionally raises an exception"""
     if duration < 0.3:
         raise Exception("Ooops")
     await asyncio.sleep(duration)

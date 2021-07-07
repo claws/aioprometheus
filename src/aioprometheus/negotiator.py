@@ -34,7 +34,7 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
 
 
 def parse_accepts(accept_headers: Sequence[str]) -> Set[str]:
-    """ Return a sequence of accepts items in the request headers """
+    """Return a sequence of accepts items in the request headers"""
     accepts = set()  # type: Set[str]
     for accept_items in accept_headers:
         if ";" in accept_items:

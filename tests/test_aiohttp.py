@@ -15,7 +15,7 @@ class TestAiohttpRender(asynctest.TestCase):
     """
 
     async def test_render_in_aiohttp_app(self):
-        """ check render usage in aiohttp app """
+        """check render usage in aiohttp app"""
 
         app = aiohttp.web.Application()
         app.registry = aioprometheus.Registry()

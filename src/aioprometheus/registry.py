@@ -60,7 +60,7 @@ class CollectorRegistry(object):
         return self.collectors[name]
 
     def get_all(self) -> List[CollectorsType]:
-        """ Return a list of all collectors """
+        """Return a list of all collectors"""
         return list(self.collectors.values())
 
 

@@ -20,7 +20,7 @@ class TestQuartRender(asynctest.TestCase):
     """
 
     async def test_render_in_quart_app(self):
-        """ check render usage in Quart app """
+        """check render usage in Quart app"""
 
         app = Quart(__name__)
         app.registry = aioprometheus.Registry()

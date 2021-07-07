@@ -98,7 +98,7 @@ class Collector(object):
         self.values = MetricDict()
 
     def set_value(self, labels: LabelsType, value: NumericValueType) -> None:
-        """  Sets a value in the container """
+        """Sets a value in the container"""
         if labels:
             self._label_names_correct(labels)
         self.values[labels] = value
@@ -192,11 +192,11 @@ class Counter(Collector):
         return self.get_value(labels)
 
     def set(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Set the counter to an arbitrary value. """
+        """Set the counter to an arbitrary value."""
         self.set_value(labels, value)
 
     def inc(self, labels: LabelsType) -> None:
-        """ Increments the counter by 1."""
+        """Increments the counter by 1."""
         self.add(labels, 1)
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
@@ -238,7 +238,7 @@ class Gauge(Collector):
     kind = MetricsTypes.gauge
 
     def set(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Set the gauge to an arbitrary value."""
+        """Set the gauge to an arbitrary value."""
         self.set_value(labels, value)
 
     def get(self, labels: LabelsType) -> NumericValueType:
@@ -249,11 +249,11 @@ class Gauge(Collector):
         return self.get_value(labels)
 
     def inc(self, labels: LabelsType) -> None:
-        """ Increments the gauge by 1."""
+        """Increments the gauge by 1."""
         self.add(labels, 1)
 
     def dec(self, labels: LabelsType) -> None:
-        """ Decrement the gauge by 1."""
+        """Decrement the gauge by 1."""
         self.add(labels, -1)
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
@@ -315,7 +315,7 @@ class Summary(Collector):
         self.invariants = invariants
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Add a single observation to the summary """
+        """Add a single observation to the summary"""
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):
@@ -411,7 +411,7 @@ class Histogram(Collector):
         self.upper_bounds = buckets
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
-        """ Add a single observation to the histogram """
+        """Add a single observation to the histogram"""
 
         value = cast(Union[float, int], value)  # typing check, no runtime behaviour.
         if type(value) not in (float, int):

@@ -35,7 +35,7 @@ BINARY_ACCEPTS = set(BINARY_CONTENT_TYPE.split("; "))
 
 
 class BinaryFormatter(IFormatter):
-    """ This formatter encodes into the Protocol Buffers binary format """
+    """This formatter encodes into the Protocol Buffers binary format"""
 
     def __init__(self, timestamp: bool = False) -> None:
         """

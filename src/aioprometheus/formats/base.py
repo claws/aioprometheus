@@ -8,11 +8,11 @@ LabelsType = Dict[str, str]
 
 
 class IFormatter(abc.ABC):
-    """ Formatter interface """
+    """Formatter interface"""
 
     @abc.abstractmethod
     def get_headers(self):
-        """ Returns a dict of headers for this response format """
+        """Returns a dict of headers for this response format"""
 
     @abc.abstractmethod
     def _format_counter(self, counter, name, const_labels):

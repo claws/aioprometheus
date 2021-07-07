@@ -62,13 +62,13 @@ class TestProtobufFormat(unittest.TestCase):
         self.histogram_metric_data_values = (({"route": "/"}, (3, 5.2, 13, 4)),)
 
     def test_headers_binary(self):
-        """ check binary header info is provided """
+        """check binary header info is provided"""
         f = binary.BinaryFormatter()
         expected_result = {"Content-Type": binary.BINARY_CONTENT_TYPE}
         self.assertEqual(expected_result, f.get_headers())
 
     def test_no_metric_instances_present_binary(self):
-        """ Check marshalling a collector with no metrics instances present """
+        """Check marshalling a collector with no metrics instances present"""
 
         c = Counter(
             name=self.counter_metric_name,
@@ -565,7 +565,7 @@ class TestProtobufFormat(unittest.TestCase):
         self.assertEqual(valid_result, f.marshall(registry))
 
     def test_registry_marshall_histogram(self):
-        """ check encode of histogram matches expected output """
+        """check encode of histogram matches expected output"""
 
         metric_name = "histogram_test"
         metric_help = "A histogram."

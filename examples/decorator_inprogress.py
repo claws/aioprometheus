@@ -28,7 +28,7 @@ REQUESTS = Gauge("request_in_progress", "Number of requests in progress")
 # Decorate function with metric.
 @inprogress(REQUESTS, {"route": "/"})
 async def handle_request(duration):
-    """ A dummy function that takes some time """
+    """A dummy function that takes some time"""
     await asyncio.sleep(duration)
 
 
