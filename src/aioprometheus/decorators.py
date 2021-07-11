@@ -42,14 +42,27 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
         """
 
         @wraps(func)
-        async def func_wrapper(*args, **kwds):
+        async def aiofunc_wrapper(*args, **kwds):
             start_time = time.monotonic()
             rv = func(*args, **kwds)
             if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
-                rv = await rv
-            metric.add(labels, time.monotonic() - start_time)
+                try:
+                    rv = await rv
+                finally:
+                    metric.add(labels, time.monotonic() - start_time)
             return rv
 
+        @wraps(func)
+        def func_wrapper(*args, **kwds):
+            start_time = time.monotonic()
+            try:
+                rv = func(*args, **kwds)
+            finally:
+                metric.add(labels, time.monotonic() - start_time)
+            return rv
+
+        if asyncio.iscoroutinefunction(func):
+            return aiofunc_wrapper
         return func_wrapper
 
     return measure

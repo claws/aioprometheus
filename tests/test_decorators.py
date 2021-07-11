@@ -38,6 +38,15 @@ class TestDecorators(asynctest.TestCase):
         m_method = m.get({"kind": "method"})
         self.assertEqual(m_method["count"], 1)
 
+        @timer(m, {"kind": "regular_function"})
+        def regular_f():
+            return
+
+        regular_f()
+
+        m_regular_function = m.get({"kind": "regular_function"})
+        self.assertEqual(m_regular_function["count"], 1)
+
         # Only Summary metric type can be used with @timer, others should
         # raise an exception.
         with self.assertRaises(Exception) as cm:
