@@ -376,10 +376,9 @@ Decorators
 ----------
 
 A number of different decorators are provided to help simplify the process of
-instrumenting your code. As the ``aioprometheus`` library is targeting use in
-long running ``asyncio`` based applications, the decorators return a
-coroutine object. However, the wrapped function does not have to be a
-coroutine.
+instrumenting your code. The decorators return a regular function if the
+wrapped function is a regular function or an awaitable if the wrapped function
+is a coroutine function.
 
 The example below demonstrates how the ``@timer`` decorator can be used to
 time how long it takes to run a function.
@@ -417,8 +416,8 @@ your application to push metrics to a Prometheus Push Gateway. The Pusher
 allows you to specify a job name as well as additional grouping keys.
 
 The grouping keys get added to the Push Gateway URL using the rules described
-`here <https://github.com/prometheus/pushgateway/blob/master/README.md#url>`_.
-See `here <https://github.com/prometheus/pushgateway/blob/master/README.md#about-the-job-and-instance-labels>`_
+`here <https://github.com/prometheus/pushgateway/blob/master/README.md#url>`__.
+See `here <https://github.com/prometheus/pushgateway/blob/master/README.md#about-the-job-and-instance-labels>`__
 for how to configure Prometheus to best scrape metrics from the Push Gateway.
 
 The Pusher requires the `aiohttp` optional extra to be installed.
