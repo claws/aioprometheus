@@ -12,19 +12,16 @@ from .collectors import Counter, Gauge, Summary
 
 def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
     """
-    This decorator provides a convenient way to time a callable.
-
-    This decorator function wraps a function with code to calculate how long
-    the wrapped function takes to execute and updates the metric with the
-    duration.
+    This decorator wraps a callable with code to calculate how long the
+    callable takes to execute and updates the metric with the duration.
 
     :param metric: a metric to update with the calculated function duration.
-      The metric object being updated is expected to be a Summary metric
-      object.
+      The metric object must be a Summary metric object.
 
     :param labels: a dict of extra labels to associate with the metric.
 
-    :return: a coroutine function that wraps the decortated function
+    :return: a callable wrapping the decorated function. The callable will
+      be awaitable if the wrapped function was a coroutine function.
     """
     if not isinstance(metric, Summary):
         raise Exception(
@@ -33,8 +30,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
 
     def measure(func):
         """
-        This function wraps a decorated callable with timing and metric
-        updating logic.
+        This function wraps the callable with timing and metric updating logic.
 
         :param func: the callable to be timed.
 
@@ -42,7 +38,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
         """
 
         @wraps(func)
-        async def aiofunc_wrapper(*args, **kwds):
+        async def async_func_wrapper(*args, **kwds):
             start_time = time.monotonic()
             rv = func(*args, **kwds)
             if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
@@ -62,7 +58,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
             return rv
 
         if asyncio.iscoroutinefunction(func):
-            return aiofunc_wrapper
+            return async_func_wrapper
         return func_wrapper
 
     return measure
@@ -70,21 +66,17 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
 
 def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., Any]:
     """
-    This decorator provides a convenient way to track in-progress requests
-    (or other things) in a callable.
-
-    This decorator function wraps a function with code to track how many
-    of the measured items are in progress.
-
-    The metric is incremented before calling the wrapped function and
-    decremented when the wrapped function is complete.
+    This decorator wraps a callables with code to track whether it is currently
+    in progress. The metric is incremented before calling the callable and is
+    decremented when the callable is complete.
 
     :param metric: a metric to increment and decrement. The metric object
-      being updated is expected to be a Gauge metric object.
+      must be a Gauge metric object.
 
     :param labels: a dict of extra labels to associate with the metric.
 
-    :return: a coroutine function that wraps the decortated function
+    :return: a callable wrapping the decorated function. The callable will
+      be awaitable if the wrapped function was a coroutine function.
     """
     if not isinstance(metric, Gauge):
         raise Exception(
@@ -93,8 +85,8 @@ def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., An
 
     def track(func):
         """
-        This function wraps a decorated callable with metric incremeting
-        and decrementing logic.
+        This function wraps the callable with metric incremeting and
+        decrementing logic.
 
         :param func: the callable to be tracked.
 
@@ -102,14 +94,27 @@ def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., An
         """
 
         @wraps(func)
-        async def func_wrapper(*args, **kwds):
+        async def async_func_wrapper(*args, **kwds):
             metric.inc(labels)
             rv = func(*args, **kwds)
             if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
-                rv = await rv
-            metric.dec(labels)
+                try:
+                    rv = await rv
+                finally:
+                    metric.dec(labels)
             return rv
 
+        @wraps(func)
+        def func_wrapper(*args, **kwds):
+            metric.inc(labels)
+            try:
+                rv = func(*args, **kwds)
+            finally:
+                metric.dec(labels)
+            return rv
+
+        if asyncio.iscoroutinefunction(func):
+            return async_func_wrapper
         return func_wrapper
 
     return track
@@ -119,18 +124,16 @@ def count_exceptions(
     metric: Counter, labels: Dict[str, str] = None
 ) -> Callable[..., Any]:
     """
-    This decorator provides a convenient way to track count exceptions
-    generated in a callable.
-
-    This decorator function wraps a function with code to track how many
-    exceptions occur.
+    This decorator wraps a callable with code to count how many times the
+    callable generates an exception.
 
     :param metric: a metric to increment when an exception is caught. The
-      metric object being updated is expected to be a Counter metric object.
+      metric object must be a Counter metric object.
 
     :param labels: a dict of extra labels to associate with the metric.
 
-    :return: a coroutine function that wraps the decortated function
+    :return: a callable wrapping the decorated function. The callable will
+      be awaitable if the wrapped function was a coroutine function.
     """
     if not isinstance(metric, Counter):
         raise Exception(
@@ -141,16 +144,15 @@ def count_exceptions(
 
     def track(func):
         """
-        This function wraps a decorated callable with metric incremeting
-        logic.
+        This function wraps the callable with metric incremeting logic.
 
-        :param func: the callable to be tracked.
+        :param func: the callable to be monitored for exceptions.
 
         :returns: the return value from the decorated callable.
         """
 
         @wraps(func)
-        async def func_wrapper(*args, **kwds):
+        async def async_func_wrapper(*args, **kwds):
             try:
                 rv = func(*args, **kwds)
                 if isinstance(rv, asyncio.Future) or asyncio.iscoroutine(rv):
@@ -160,6 +162,17 @@ def count_exceptions(
                 raise
             return rv
 
+        @wraps(func)
+        def func_wrapper(*args, **kwds):
+            try:
+                rv = func(*args, **kwds)
+            except Exception:
+                metric.inc(labels)
+                raise
+            return rv
+
+        if asyncio.iscoroutinefunction(func):
+            return async_func_wrapper
         return func_wrapper
 
     return track
