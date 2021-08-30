@@ -1,22 +1,18 @@
-import asyncio
-
 try:
     import aiohttp
-    import aiohttp.web
 except ImportError as err:
-    aiohttp = None
+    aiohttp = None  # type: ignore
 
 import base64
 
 # imports only used for type annotations
-from asyncio.base_events import BaseEventLoop
 from urllib.parse import quote_plus, urljoin
 
 from .formats import text
 from .registry import CollectorRegistry
 
 
-class Pusher(object):
+class Pusher:
     """
     This class can be used in applications that can't support the
     standard pull strategy. The pusher object pushes the metrics
@@ -30,7 +26,6 @@ class Pusher(object):
         job_name: str,
         addr: str,
         grouping_key: dict = None,
-        loop: BaseEventLoop = None,
         path: str = "/metrics",
     ) -> None:
         """
@@ -64,7 +59,6 @@ class Pusher(object):
         self.grouping_key = grouping_key
 
         self.addr = addr
-        self.loop = loop or asyncio.get_event_loop()
         self.formatter = text.TextFormatter()
         self.headers = self.formatter.get_headers()
 
@@ -76,7 +70,7 @@ class Pusher(object):
 
         self.path = urljoin(self.addr, path)
 
-    async def add(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
+    async def add(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
         """
         ``add`` works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
@@ -88,7 +82,7 @@ class Pusher(object):
             ) as resp:
                 return resp
 
-    async def replace(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
+    async def replace(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
         """
         ``replace`` pushes new values for a group of metrics to the push
         gateway.
@@ -106,7 +100,7 @@ class Pusher(object):
             ) as resp:
                 return resp
 
-    async def delete(self, registry: CollectorRegistry) -> "aiohttp.web.Response":
+    async def delete(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
         """
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.
@@ -123,12 +117,14 @@ def _escape_grouping_key(k, v):
     if v == "":
         # To encode the empty label with base64, you have to use at least one
         # `=` padding character to avoid a `//` or a trailing `/`.
-        return f"/{k}@base64/="
+        grouping_key = f"/{k}@base64/="
     elif "/" in v:
         # The plain (or even URI-encoded) `/` would otherwise be interpreted as
         # a path separator.
         v = base64.urlsafe_b64encode(v.encode("utf-8")).decode()
-        return f"/{k}@base64/{v}"
+        grouping_key = f"/{k}@base64/{v}"
     else:
         v = quote_plus(v)
-        return f"/{k}/{v}"
+        grouping_key = f"/{k}/{v}"
+
+    return grouping_key

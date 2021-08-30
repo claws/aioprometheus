@@ -24,9 +24,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
       be awaitable if the wrapped function was a coroutine function.
     """
     if not isinstance(metric, Summary):
-        raise Exception(
-            "timer decorator expects a Summary metric but got: {}".format(metric)
-        )
+        raise Exception(f"timer decorator expects a Summary metric but got: {metric}")
 
     def measure(func):
         """
@@ -79,9 +77,7 @@ def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., An
       be awaitable if the wrapped function was a coroutine function.
     """
     if not isinstance(metric, Gauge):
-        raise Exception(
-            "inprogess decorator expects a Gauge metric but got: {}".format(metric)
-        )
+        raise Exception(f"inprogess decorator expects a Gauge metric but got: {metric}")
 
     def track(func):
         """
@@ -137,9 +133,7 @@ def count_exceptions(
     """
     if not isinstance(metric, Counter):
         raise Exception(
-            "count_exceptions decorator expects a Counter metric but got: {}".format(
-                metric
-            )
+            f"count_exceptions decorator expects a Counter metric but got: {metric}"
         )
 
     def track(func):

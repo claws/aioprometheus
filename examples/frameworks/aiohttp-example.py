@@ -28,7 +28,9 @@ app.events_counter = Counter("events", "Number of events.")
 app.registry.register(app.events_counter)
 
 
-async def handle_root(request):
+async def handle_root(
+    request,  # pylint: disable=unused-argument
+):
     app.events_counter.inc({"path": "/"})
     text = "Hello aiohttp"
     return web.Response(text=text)

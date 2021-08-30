@@ -5,7 +5,7 @@ from .collectors import Collector, Counter, Gauge, Histogram, Summary
 CollectorsType = Union[Counter, Gauge, Histogram, Summary]
 
 
-class CollectorRegistry(object):
+class CollectorRegistry:
     """This class implements the metrics collector registry.
 
     Collectors in the registry must comply with the Collector interface
@@ -30,12 +30,10 @@ class CollectorRegistry(object):
         :raises: ValueError if collector is already registered.
         """
         if not isinstance(collector, Collector):
-            raise TypeError("Invalid collector type: {}".format(collector))
+            raise TypeError(f"Invalid collector type: {collector}")
 
         if collector.name in self.collectors:
-            raise ValueError(
-                "Collector {} is already registered".format(collector.name)
-            )
+            raise ValueError(f"Collector {collector.name} is already registered")
 
         self.collectors[collector.name] = collector
 

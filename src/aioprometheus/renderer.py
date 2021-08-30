@@ -1,4 +1,4 @@
-from typing import Sequence, Tuple, Union
+from typing import Sequence, Tuple
 
 from .formats import IFormatter
 from .negotiator import negotiate

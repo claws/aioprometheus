@@ -48,7 +48,7 @@ def exponentialBuckets(
     return [start * (i * factor) for i in range(count)]
 
 
-class Histogram(object):
+class Histogram:
     """
     A Histogram counts individual observations from an event into configurable
     buckets. This histogram implementation also provides a sum and count of

@@ -1,0 +1,54 @@
+[MASTER]
+
+# Use multiple processes to speed up Pylint.
+jobs=4
+
+# Pickle collected data for later comparisons.
+persistent=yes
+
+# When enabled, pylint would attempt to guess common misconfiguration and emit
+# user-friendly hints instead of false-positive error messages.
+suggestion-mode=yes
+
+
+[MESSAGES CONTROL]
+
+disable=invalid-name,
+        broad-except,
+        duplicate-code,
+        logging-fstring-interpolation,
+        missing-class-docstring,
+        missing-module-docstring,
+        missing-function-docstring,
+        no-self-use,
+        too-many-instance-attributes,
+        too-few-public-methods,
+
+
+[REPORTS]
+
+# Set the output format. Available formats are text, parseable, colorized, json
+# and msvs (visual studio). You can also give a reporter class, e.g.
+# mypackage.mymodule.MyReporterClass.
+output-format=text
+
+# Tells whether to display a full report or only the messages.
+reports=no
+
+# Activate the evaluation score.
+score=yes
+
+
+[LOGGING]
+
+logging-format-style=new
+
+# Logging modules to check that the string format arguments are in logging
+# function parameter format.
+logging-modules=logging
+
+
+[FORMAT]
+
+# Maximum number of characters on a single line.
+max-line-length=160

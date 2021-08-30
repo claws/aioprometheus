@@ -12,14 +12,13 @@ import logging
 import random
 import socket
 import uuid
-from asyncio.base_events import BaseEventLoop
 
 import psutil
 
-from aioprometheus import Counter, Gauge, Histogram, Service, Summary, formats
+from aioprometheus import Counter, Gauge, Histogram, Service, Summary
 
 
-class ExampleApp(object):
+class ExampleApp:
     """
     An example application that demonstrates how ``aioprometheus`` can be
     integrated and used within a Python application built upon asyncio.
@@ -41,12 +40,10 @@ class ExampleApp(object):
         self,
         metrics_host="127.0.0.1",
         metrics_port: int = 5000,
-        loop: BaseEventLoop = None,
     ):
 
         self.metrics_host = metrics_host
         self.metrics_port = metrics_port
-        self.loop = loop or asyncio.get_event_loop()
         self.timer = None  # type: asyncio.Handle
 
         ######################################################################
@@ -104,13 +101,13 @@ class ExampleApp(object):
     async def start(self):
         """Start the application"""
         await self.msvr.start(addr=self.metrics_host, port=self.metrics_port)
-        logger.debug("Serving prometheus metrics on: %s", self.msvr.metrics_url)
+        logger.debug(f"Serving prometheus metrics on: {self.msvr.metrics_url}")
 
         # Schedule a timer to update internal metrics. In a realistic
         # application metrics would be updated as needed. In this example
         # application a simple timer is used to emulate things happening,
         # which conveniently allows all metrics to be updated at once.
-        self.timer = self.loop.call_later(1.0, self.on_timer_expiry)
+        self.timer = asyncio.get_event_loop().call_later(1.0, self.on_timer_expiry)
 
     async def stop(self):
         """Stop the application"""
@@ -140,7 +137,7 @@ class ExampleApp(object):
         self.latency_metric.add({"path": "/data"}, random.random() * 5)
 
         # re-schedule another metrics update
-        self.timer = self.loop.call_later(1.0, self.on_timer_expiry)
+        self.timer = asyncio.get_event_loop().call_later(1.0, self.on_timer_expiry)
 
 
 if __name__ == "__main__":

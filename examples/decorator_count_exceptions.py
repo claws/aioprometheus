@@ -51,7 +51,7 @@ if __name__ == "__main__":
 
     loop = asyncio.get_event_loop()
 
-    svr = Service(loop=loop)
+    svr = Service()
     svr.register(REQUESTS)
 
     try:

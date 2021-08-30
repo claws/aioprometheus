@@ -6,4 +6,4 @@ from .registry import CollectorRegistry, Registry
 from .renderer import render
 from .service import Service
 
-__version__ = "21.7.0"
+__version__ = "21.8.0"

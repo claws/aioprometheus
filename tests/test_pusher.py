@@ -39,7 +39,7 @@ class TestPusherServer(object):
         _details = self._site._server.sockets[0].getsockname()
         _host, _port = _details[0:2]
         self.port = _port
-        self.url = "http://{host}:{port}".format(host=addr, port=_port)
+        self.url = f"http://{addr}:{_port}"
         # TODO: replace the above with url = self._site.name when aiohttp
         # issue #3018 is resolved.
 

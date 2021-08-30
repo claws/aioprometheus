@@ -3,26 +3,24 @@ This module implements a formatter that emits metrics in a binary (Google
 Protocol Buffers) format.
 """
 
-from typing import Callable, Dict, List, Tuple, Union, cast
+# imports only used for type annotations
+from typing import Callable, List, Optional, cast
 
 import prometheus_metrics_proto as pmp
 
-# imports only used for type annotations
+from aioprometheus.collectors import Counter, Gauge, Histogram, Summary
 from aioprometheus.registry import CollectorRegistry
 
-from ..collectors import Counter, Gauge, Histogram, Summary
 from .base import IFormatter
+from .mypy_types import (
+    CollectorsType,
+    HistogramDictType,
+    LabelsType,
+    MetricTupleType,
+    SummaryDictType,
+)
 
 # typing aliases
-LabelsType = Dict[str, str]
-NumericValueType = Union[int, float]
-SummaryDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
-SummaryDictType = Dict[SummaryDictKeyType, NumericValueType]
-HistogramDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
-HistogramDictType = Dict[HistogramDictKeyType, NumericValueType]
-CollectorsType = Union[Counter, Gauge, Histogram, Summary]
-MetricValueType = Union[float, SummaryDictType, HistogramDictType]
-MetricTupleType = Tuple[LabelsType, MetricValueType]
 FormatterFuncType = Callable[[MetricTupleType, str, LabelsType], pmp.Metric]
 
 
@@ -43,10 +41,10 @@ class BinaryFormatter(IFormatter):
           to metric.
         """
         self.timestamp = timestamp
-        self._headers = {"Content-Type": BINARY_CONTENT_TYPE}
 
-    def get_headers(self) -> Dict[str, str]:
-        return self._headers
+    def get_headers(self) -> LabelsType:
+        """Returns a dict of HTTP headers for this response format"""
+        return {"Content-Type": BINARY_CONTENT_TYPE}
 
     def _format_counter(
         self, counter: MetricTupleType, name: str, const_labels: LabelsType
@@ -155,7 +153,7 @@ class BinaryFormatter(IFormatter):
 
         :return: a :class:`MetricFamily` object
         """
-        exec_method = None  # type: FormatterFuncType
+        exec_method = None  # type: Optional[FormatterFuncType]
         if isinstance(collector, Counter):
             metric_type = pmp.COUNTER
             exec_method = self._format_counter
