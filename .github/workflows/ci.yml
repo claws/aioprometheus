@@ -9,20 +9,22 @@ on:
 jobs:
   build:
 
+    name: "Python ${{ matrix.python-version }}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.6", "3.7", "3.8", "3.9"]
 
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
+        python -m pip install wheel
         pip install -r requirements.dev.txt
         pip install -r requirements.txt
     - name: Cache pip dependencies
@@ -39,7 +41,7 @@ jobs:
         make check-style
     - name: Install package
       run: |
-        pip install .[aiohttp,binary]
+        pip install .[aiohttp,binary] --use-feature=in-tree-build
     - name: Run unit tests
       run: |
         make test

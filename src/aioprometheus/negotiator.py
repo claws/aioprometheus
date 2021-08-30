@@ -1,12 +1,12 @@
 import logging
-from typing import Callable, Sequence, Set
+from typing import Sequence, Set, Type
 
 from . import formats
 
 logger = logging.getLogger(__name__)
 
 # type aliases
-FormatterType = Callable[[bool], formats.IFormatter]
+FormatterType = Type[formats.IFormatter]
 
 
 def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
@@ -22,7 +22,7 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
     """
     accepts = parse_accepts(accepts_headers)
 
-    formatter = formats.text.TextFormatter  # type: formats.text.FormatterType
+    formatter = formats.text.TextFormatter  # type: FormatterType
 
     if formats.binary is not None:
         if formats.binary.BINARY_ACCEPTS.issubset(accepts):
@@ -36,10 +36,10 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
 def parse_accepts(accept_headers: Sequence[str]) -> Set[str]:
     """Return a sequence of accepts items in the request headers"""
     accepts = set()  # type: Set[str]
-    for accept_items in accept_headers:
-        if ";" in accept_items:
-            accept_items = [i.strip() for i in accept_items.split(";")]
+    for accept_header in accept_headers:
+        if ";" in accept_header:
+            accept_items = [i.strip() for i in accept_header.split(";")]
         else:
-            accept_items = [accept_items]
+            accept_items = [accept_header]
         accepts.update(accept_items)
     return accepts

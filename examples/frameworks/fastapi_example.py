@@ -19,23 +19,23 @@ Run:
 
 from typing import List
 
-from fastapi import FastAPI, Header, Response
+from fastapi import FastAPI, Header, Request, Response
 
 from aioprometheus import Counter, Registry, render
 
 app = FastAPI()
-app.registry = Registry()
-app.events_counter = Counter("events", "Number of events.")
-app.registry.register(app.events_counter)
+app.state.registry = Registry()
+app.state.events_counter = Counter("events", "Number of events.")
+app.state.registry.register(app.state.events_counter)
 
 
 @app.get("/")
-async def hello():
-    app.events_counter.inc({"path": "/"})
+async def hello(request: Request):
+    request.app.state.events_counter.inc({"path": "/"})
     return "hello"
 
 
 @app.get("/metrics")
-async def handle_metrics(response: Response, accept: List[str] = Header(None)):
-    content, http_headers = render(app.registry, accept)
+async def handle_metrics(request: Request, accept: List[str] = Header(None)):
+    content, http_headers = render(request.app.state.registry, accept)
     return Response(content=content, media_type=http_headers["Content-Type"])

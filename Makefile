@@ -57,7 +57,9 @@ test.verbose:
 .PHONY: coverage
 coverage:
 	@coverage erase
-	@PYTHONPATH=src coverage run -m unittest discover -s tests -v
+	@rm -f .coverage.unit
+	@COVERAGE_FILE=.coverage.unit coverage run -m unittest discover -s tests -v
+	@coverage combine
 	@coverage html
 	@coverage report
 
@@ -84,10 +86,15 @@ check-format:
 	@black --check src/aioprometheus tests examples
 
 
-# help: check_types             - check type hint annotations
-.PHONY: check_types
-check_types:
-	@cd src; MYPYPATH=$VIRTUAL_ENV/lib/python*/site-packages mypy -p aioprometheus --ignore-missing-imports
+# help: check-lint              - check linting
+.PHONY: check-lint
+check-lint:
+	@pylint --rcfile=.pylintrc aioprometheus setup.py ./examples
+
+# help: check-types             - check type hint annotations
+.PHONY: check-types
+check-types:
+	@cd src; mypy -p aioprometheus --ignore-missing-imports
 
 
 # help: sort-imports            - apply import sort ordering
@@ -102,17 +109,17 @@ check-sort-imports:
 	@isort . --check-only --profile black
 
 
-# help: docs                    - generate project documentation
+# help: docs                    - generate HTML documentation
 .PHONY: docs
 docs: coverage
 	@cd docs; rm -rf api/aioprometheus*.rst api/modules.rst _build/*
 	@cd docs; make html
 
 
-# help: docs.serve              - serve HTML documentation
-.PHONY: docs.serve
-docs.serve:
-	@cd docs; python -m http.server
+# help: serve-docs              - serve HTML documentation
+.PHONY: serve-docs
+serve-docs:
+	@cd docs/_build/html; python -m http.server
 
 
 # help: dist                    - create a wheel distribution package
@@ -122,15 +129,15 @@ dist:
 	@python setup.py bdist_wheel
 
 
-# help: dist.test               - test a wheel distribution package
-.PHONY: dist.test
-dist.test: dist
+# help: test-dist               - test a wheel distribution package
+.PHONY: test-dist
+test-dist: dist
 	@cd dist && ../tests/test_dist.bash ./aioprometheus-*-py3-none-any.whl
 
 
-# help: dist.upload             - upload a wheel distribution package
-.PHONY: dist.upload
-dist.upload:
+# help: upload-dist             - upload package wheel distribution
+.PHONY: upload-dist
+upload-dist:
 	@twine upload dist/aioprometheus-*-py3-none-any.whl
 
 

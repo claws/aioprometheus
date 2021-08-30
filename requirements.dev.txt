@@ -4,6 +4,7 @@ sphinx
 coverage
 isort[requirements_deprecated_finder]
 mypy
+pylint
 twine
 wheel
 

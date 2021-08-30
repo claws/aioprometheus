@@ -71,7 +71,7 @@ class TestCollectorDict(unittest.TestCase):
             del self.data["name"]
             self.c = Collector(**self.data)
 
-        self.assertEqual(
+        self.assertIn(
             "__init__() missing 1 required positional argument: 'name'",
             str(context.exception),
         )
@@ -81,7 +81,7 @@ class TestCollectorDict(unittest.TestCase):
             del self.data["doc"]
             self.c = Collector(**self.data)
 
-        self.assertEqual(
+        self.assertIn(
             "__init__() missing 1 required positional argument: 'doc'",
             str(context.exception),
         )

@@ -19,14 +19,14 @@ from aioprometheus import Counter, Service
 
 if __name__ == "__main__":
 
-    async def main(svr: Service) -> None:
+    async def main(svc: Service) -> None:
 
         events_counter = Counter(
             "events", "Number of events.", const_labels={"host": socket.gethostname()}
         )
-        svr.register(events_counter)
-        await svr.start(addr="127.0.0.1", port=5000)
-        print(f"Serving prometheus metrics on: {svr.metrics_url}")
+        svc.register(events_counter)
+        await svc.start(addr="127.0.0.1", port=5000)
+        print(f"Serving prometheus metrics on: {svc.metrics_url}")
 
         # Now start another coroutine to periodically update a metric to
         # simulate the application making some progress.
@@ -38,11 +38,11 @@ if __name__ == "__main__":
         await updater(events_counter)
 
     loop = asyncio.get_event_loop()
-    svr = Service()
+    service = Service()
     try:
-        loop.run_until_complete(main(svr))
+        loop.run_until_complete(main(service))
     except KeyboardInterrupt:
         pass
     finally:
-        loop.run_until_complete(svr.stop())
+        loop.run_until_complete(service.stop())
     loop.close()

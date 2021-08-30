@@ -36,7 +36,7 @@ with open(init_file, 'r') as f:
         version = match.group(1)
     else:
         raise RuntimeError(
-            'Cannot find __version__ in {}'.format(init_file))
+            f"Cannot find __version__ in {init_file}")
 
 
 # -- General configuration ------------------------------------------------

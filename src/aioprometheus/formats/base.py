@@ -1,18 +1,16 @@
 import abc
 import collections
 import datetime
-from typing import Dict
 
-# typing aliases
-LabelsType = Dict[str, str]
+from .mypy_types import LabelsType
 
 
 class IFormatter(abc.ABC):
-    """Formatter interface"""
+    """Metrics formatter interface"""
 
     @abc.abstractmethod
     def get_headers(self):
-        """Returns a dict of headers for this response format"""
+        """Returns a dict of HTTP headers for this response format"""
 
     @abc.abstractmethod
     def _format_counter(self, counter, name, const_labels):
@@ -81,8 +79,12 @@ class IFormatter(abc.ABC):
         are sorted by key.
 
         :param labels: a dict of labels for a metric.
+
         :param const_labels: a dict of constant labels to be associated with
           the metric.
+
+        :param ordered: A boolean that determines whether the metrics are
+          sorted alphabetically. Default value is False.
         """
         if const_labels:
             result = const_labels.copy()

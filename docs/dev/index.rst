@@ -2,7 +2,7 @@ Developers Guide
 ================
 
 The project is hosted on `GitHub <https://github.com/claws/aioprometheus>`_.
-and uses `Travis <https://travis-ci.org/claws/aioprometheus>`_ for
+and uses `GitHub Actions <https://github.com/claws/aioprometheus/actions>`_ for
 Continuous Integration.
 
 If you have found a bug or have an idea for an enhancement that would
@@ -77,6 +77,17 @@ code style compliance.
     (aioprom) $ make style
 
 
+Linting
+-------
+
+This project uses Pylint to perform static analysis. A Makefile convenience
+rule is available to check linting.
+
+.. code-block:: console
+
+    (aioprom) $ make check-lint
+
+
 Type Annotations
 ----------------
 
@@ -85,16 +96,11 @@ that can improve code comprehension which can help with future enhancements.
 
 The type annotations checker ``mypy`` should run cleanly with no warnings.
 
-.. note::
-
-    There is still some work required to get mypy to run without warnings.
-    Until this rule is passing cleanly it can be ignored.
-
 Use the Makefile convenience rule to check no issues are reported.
 
 .. code-block:: console
 
-    (aioprom) $ make check_types
+    (aioprom) $ make check-types
 
 
 Test
@@ -147,13 +153,12 @@ a new set of `sphinx <http://sphinx-doc.org/>`_ html content.
 
     (aioprom) $ make docs
 
-To view the rendered docs locally as you are working you can use the simple
-Python web server.
+To view the rendered docs locally run the ``serve-docs`` rule from the top level
+directory to start a simple Python web server.
 
 .. code-block:: console
 
-    (aioprom) $ cd docs
-    (aioprom) $ python -m http.server
+    (aioprom) $ make serve-docs
 
 Then open a browser to the `docs <http://localhost:8000/_build/html/index.html>`_
 content.
@@ -196,13 +201,13 @@ The following steps are used to make a new software release:
 
   .. code-block:: console
 
-      (aioprom) $ make dist.test
+      (aioprom) $ make test-dist
 
 - Upload to PyPI using
 
   .. code-block:: console
 
-      (aioprom) $ make dist.upload
+      (aioprom) $ make upload-dist
 
 - Create and push a repo tag to Github.
 

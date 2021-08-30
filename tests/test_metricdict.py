@@ -86,7 +86,7 @@ class TestMetricDict(unittest.TestCase):
         # Access ok but wrong key by order
         with self.assertRaises(KeyError) as context:
             metrics[bad_access_key]
-        self.assertEqual("'{0}'".format(bad_access_key), str(context.exception))
+        self.assertEqual(f"'{bad_access_key}'", str(context.exception))
 
     def test_empty_key(self):
         metrics = MetricDict()

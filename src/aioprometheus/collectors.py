@@ -1,17 +1,17 @@
-import collections
 import enum
 import json
 import re
-from typing import Any, Dict, List, Sequence, Tuple, Union, cast
+from collections import OrderedDict
+from typing import Dict, List, Sequence, Tuple, Union, cast
 
 import quantile
 
 from . import histogram
 from .metricdict import MetricDict
 
-# Used to return the value ordered (not necessary but for consistency useful)
-# type annotations are not correct for this package yet.
-decoder = json.JSONDecoder(object_pairs_hook=collections.OrderedDict)  # type: ignore
+# Used to return the ordered pairs (which is not necessary but is useful
+# for consistency).
+decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
 
 
 METRIC_NAME_RE = re.compile(r"^[a-zA-Z_:][a-zA-Z0-9_:]*$")
@@ -36,7 +36,7 @@ class MetricsTypes(enum.Enum):
     histogram = 4
 
 
-class Collector(object):
+class Collector:
     """Base class for all collectors.
 
     **Metric names and labels**
@@ -86,21 +86,22 @@ class Collector(object):
 
     def __init__(self, name: str, doc: str, const_labels: LabelsType = None) -> None:
         if not METRIC_NAME_RE.match(name):
-            raise ValueError("Invalid metric name: {}".format(name))
+            raise ValueError(f"Invalid metric name: {name}")
         self.name = name
         self.doc = doc
-        self.const_labels = const_labels
 
         if const_labels:
-            self._label_names_correct(const_labels)
+            self._check_labels(const_labels)
             self.const_labels = const_labels
+        else:
+            self.const_labels = {}
 
         self.values = MetricDict()
 
     def set_value(self, labels: LabelsType, value: NumericValueType) -> None:
         """Sets a value in the container"""
         if labels:
-            self._label_names_correct(labels)
+            self._check_labels(labels)
         self.values[labels] = value
 
     def get_value(self, labels: LabelsType) -> NumericValueType:
@@ -119,23 +120,23 @@ class Collector(object):
         """
         return self.get_value(labels)
 
-    def _label_names_correct(self, labels: LabelsType) -> bool:
+    def _check_labels(self, labels: LabelsType) -> bool:
         """Check validity of label names.
 
         :raises: ValueError if labels are invalid
         """
-        for k, v in labels.items():
+        for k, _v in labels.items():
             # Check reserved labels
             if k in RESTRICTED_LABELS_NAMES:
-                raise ValueError("Invalid label name: {}".format(k))
+                raise ValueError(f"Invalid label name: {k}")
 
             if self.kind == MetricsTypes.histogram:
                 if k in ("le",):
-                    raise ValueError("Invalid label name: {}".format(k))
+                    raise ValueError(f"Invalid label name: {k}")
 
             # Check prefixes
             if any(k.startswith(i) for i in RESTRICTED_LABELS_PREFIXES):
-                raise ValueError("Invalid label prefix: {}".format(k))
+                raise ValueError(f"Invalid label prefix: {k}")
 
         return True
 
@@ -148,10 +149,11 @@ class Collector(object):
         items = self.values.items()
 
         result = []
-        for k, v in items:
+        for k, _v in items:
+            key = {}  # type: LabelsType
             # Check if is a single value dict (custom empty key)
             if not k or k == MetricDict.EMPTY_KEY:
-                key = None
+                pass
             else:
                 key = decoder.decode(k)
             result.append((key, self.get(k)))
@@ -163,9 +165,8 @@ class Collector(object):
             isinstance(other, self.__class__)
             and self.name == other.name
             and self.doc == other.doc  # type: ignore
-            and type(self) == type(other)  # type: ignore
             and self.values == other.values  # type: ignore
-        )  # type: ignore
+        )
 
 
 class Counter(Collector):
@@ -300,7 +301,7 @@ class Summary(Collector):
     kind = MetricsTypes.summary
 
     REPR_STR = "summary"
-    DEFAULT_INVARIANTS = [(0.50, 0.05), (0.90, 0.01), (0.99, 0.001)]
+    DEFAULT_INVARIANTS = ((0.50, 0.05), (0.90, 0.01), (0.99, 0.001))
     SUM_KEY = "sum"
     COUNT_KEY = "count"
 
@@ -341,21 +342,20 @@ class Summary(Collector):
 
         :raises: KeyError if an item with matching labels is not present.
         """
-        return_data = (
-            collections.OrderedDict()
-        )  # type: Dict[Union[float, str], NumericValueType]
+        return_data = OrderedDict()  # type: Dict[Union[float, str], NumericValueType]
 
-        e = self.get_value(labels)
-        e = cast(Any, e)  # typing check, no runtime behaviour.
+        e = self.get_value(labels)  # type: quantile.Estimator
 
-        # Set invariants data (default to 0.50, 0.90 and 0.99)
-        for i in e._invariants:  # type: ignore
-            q = i._quantile
-            return_data[q] = e.query(q)  # type: ignore
+        # Get invariants data
+        for i in e._invariants:  # pylint: disable=protected-access
+            q = i._quantile  # pylint: disable=protected-access
+            return_data[q] = e.query(q)
 
         # Set sum and count
-        return_data[self.COUNT_KEY] = e._observations  # type: ignore
-        return_data[self.SUM_KEY] = e._sum  # type: ignore
+        return_data[
+            self.COUNT_KEY
+        ] = e._observations  # pylint: disable=protected-access
+        return_data[self.SUM_KEY] = e._sum  # pylint: disable=protected-access
 
         return return_data
 
@@ -438,9 +438,7 @@ class Histogram(Collector):
 
         :raises: KeyError if an item with matching labels is not present.
         """
-        return_data = (
-            collections.OrderedDict()
-        )  # type: Dict[Union[float, str], NumericValueType]
+        return_data = OrderedDict()  # type: Dict[Union[float, str], NumericValueType]
 
         h = self.get_value(labels)
         h = cast(histogram.Histogram, h)  # typing check, no runtime behaviour.

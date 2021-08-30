@@ -33,8 +33,9 @@ class TestRegistry(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             r.register(Collector(**self.data))
 
+        collector_name = self.data["name"]
         self.assertEqual(
-            "Collector {} is already registered".format(self.data["name"]),
+            f"Collector {collector_name} is already registered",
             str(context.exception),
         )
 

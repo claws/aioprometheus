@@ -9,21 +9,21 @@ regexp = re.compile(r'.*__version__ = [\'\"](.*?)[\'\"]', re.S)
 
 init_file = os.path.join(
     os.path.dirname(__file__), 'src', 'aioprometheus', '__init__.py')
-with open(init_file, 'r') as f:
+with open(init_file, 'rt') as f:  # pylint: disable=unspecified-encoding
     module_content = f.read()
     match = regexp.match(module_content)
     if match:
         version = match.group(1)
     else:
         raise RuntimeError(
-            'Cannot find __version__ in {}'.format(init_file))
+            f"Cannot find __version__ in {init_file}")
 
-with open('README.rst', 'r') as f:
+with open('README.rst', 'rt') as f:  # pylint: disable=unspecified-encoding
     readme = f.read()
 
 def parse_requirements(filename):
     ''' Load requirements from a pip requirements file '''
-    with open(filename, 'r') as fd:
+    with open(filename, 'rt') as fd:  # pylint: disable=unspecified-encoding
         lines = []
         for line in fd:
             line = line.strip()
