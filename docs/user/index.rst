@@ -1,3 +1,5 @@
+.. _user-guide-label:
+
 User Guide
 ==========
 
@@ -15,6 +17,65 @@ to install it.
 
     $ pip install aioprometheus
 
+A Prometheus Push Gateway client and a HTTP service are included, but their
+dependencies are not installed by default. You can install them alongside
+`aioprometheus` by adding optional extras to the install.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp]
+
+Prometheus 2.0 removed support for the binary protocol, so in version 20.0.0 the
+dependency on `prometheus-metrics-proto`, which provides binary support, is now
+optional. If you need binary response support, for use with an older Prometheus,
+you will need to specify the 'binary' optional extra:
+
+.. code-block:: console
+
+    $ pip install aioprometheus[binary]
+
+Multiple optional dependencies can be listed at once, such as:
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
+
+
+Usage
+-----
+
+There are two basic steps involved in using aioprometheus; the first is to
+instrument your software by creating metrics to monitor events and the second
+is to expose the metrics to a collector.
+
+Creating a new metric is easy. First, import the appropriate metric from
+aioprometheus. In the example below its a Counter metric. Next, instantiate
+the metric with a name and a help string. Finally, update the metric, which
+in this case is an increment.
+
+.. code-block:: python
+
+    from aioprometheus import Counter
+
+    events_counter = Counter(
+        "events_counter",
+        "Total number of events.",
+    )
+
+    events_counter.inc({"kind": "event A"})
+
+A number of convenience decorator functions are included in aioprometheus that
+can assist with automatically updating metrics. The ``examples`` directory
+contains various decorators examples.
+
+Once your software is instrumented with metrics you'll want to expose them to
+Prometheus or a compatible metrics collector. There are multiple strategies
+available for this and the right choice depends on the kind of thing being
+instrumented. See the exporting metrics section below.
+
+The following sections describe instrumenting, exposing metrics, decorators
+and the push gateway in more detail.
+
 
 Instrumenting
 -------------
@@ -29,6 +90,11 @@ your software:
 
 More details on the metrics types can be found
 `here <https://prometheus.io/docs/concepts/metric_types/>`_.
+
+By default, each metric gets registered into the default collector registry
+which is available at ``aioprometheus.REGISTRY``. Metrics accept a ``registry``
+keyword argument if you need to supply your own registry. The registry is
+important later when you want to expose your metrics to a collector.
 
 
 Counter
@@ -175,10 +241,9 @@ is the same as this one with const labels:
 
 .. code-block:: python
 
-    host = socket.gethostname()
     ram_metric = Gauge(
         "memory_usage_bytes", "Memory usage in bytes.",
-        const_labels={'host': host})
+        const_labels={'host': socket.gethostname()})
     ram_metric.set({'type': "virtual"}, 100)
     ram_metric.set({'type': "swap"}, 100)
 
@@ -186,73 +251,57 @@ is the same as this one with const labels:
 Exporting Metrics
 -----------------
 
-Metrics are exposed to the Prometheus server via a HTTP endpoint. The metrics
-can retrieved in two different formats; text and binary.
+Once you have instrumented your code with various metrics you'll want to
+expose them to Prometheus or a compatible metrics collector. Metrics are
+exposed to the Prometheus server via a HTTP endpoint. There are multiple
+strategies available for this and the right choice depends on the kind of
+application being instrumented.
 
 
-Simple Example
+Web Frameworks
 ++++++++++++++
 
-The example below shows a single Counter metric collector being created
-and exposed via a HTTP endpoint.
+The aioprometheus package can be used within web application frameworks
+such as ``Starlette``, ``FastAPI``, ``aiohttp`` and ``Quart``.
 
-.. literalinclude:: ../../examples/simple-example.py
+An example showing how aioprometheus can be used with FastAPI is shown
+below.
+
+.. literalinclude:: ../../examples/frameworks/fastapi_example.py
     :language: python3
 
-In this simple example the counter metric is tracking the number of
-while loop iterations executed by the updater coroutine. In a realistic
-application a metric might track the number of requests, etc.
+There are more examples in the ``examples/frameworks`` directory showing
+how aioprometheus can be used with other web application frameworks.
 
-Following typical ``asyncio`` usage, an event loop is instantiated first
-then a metrics service is instantiated. The metrics service is responsible
-for managing metric collectors and responding to metrics requests.
 
-The service accepts various arguments such as the interface and port to bind
-to. A collector registry is used within the service to hold metrics
-collectors that will be exposed by the service. The service will create a new
-collector registry if one is not passed in.
+Other Applications
+++++++++++++++++++
 
-A counter metric is created and registered with the service. The service is
-started and then a coroutine is started to periodically update the metric
-to simulate progress.
+Other applications such as long running distributed system processes like a
+socket relay or some kind of message adapter can embed the aioprometheus
+metrics Service to facilitate exporting metrics.
 
-This example and demonstration requires some optional extras to be installed.
+The example below shows a long running application that monitors various
+process metrics and exposes them using the Service endpoint.
 
-.. code-block:: console
+.. literalinclude:: ../../examples/app-example.py
+    :language: python3
 
-    $ pip install aioprometheus[aiohttp,binary]
-
-The example script can be run using:
+This example requires some optional extras to be installed.
 
 .. code-block:: console
 
-    (venv) $ cd examples
-    (venv) $ python simple-example.py
-    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
+    $ pip install aioprometheus[aiohttp]
 
-In another terminal fetch the metrics using the ``curl`` command line tool
-to verify they can be retrieved by Prometheus server.
-
-By default metrics will be returned in plan text format.
+The example can be run using
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:5000/metrics
-    # HELP events Number of events.
-    # TYPE events counter
-    events{host="alpha",kind="timer_expiry"} 33
+    (env) $ python app-example.py
+    Serving prometheus metrics on: http://127.0.0.1:8000/metrics
 
-    $ curl http://127.0.0.1:5000/metrics -H 'Accept: text/plain; version=0.0.4'
-    # HELP events Number of events.
-    # TYPE events counter
-    events{host="alpha",kind="timer_expiry"} 36
-
-Similarly, you can request metrics in binary format, though the output will be
-hard to read on the command line.
-
-.. code-block:: console
-
-    $ curl http://127.0.0.1:5000/metrics -H "ACCEPT: application/vnd.google.protobuf; proto=io.prometheus.client.MetricFamily; encoding=delimited"
+You can open the URL in a browser or use the ``curl`` command line tool to
+fetch metrics manually.
 
 The metrics service also responds to requests sent to its ``/`` route. The
 response is simple HTML. This route can be useful as a Kubernetes ``/healthz``
@@ -261,77 +310,50 @@ to serialize a full metrics response.
 
 .. code-block:: console
 
-    $ curl http://127.0.0.1:5000/
+    $ curl http://127.0.0.1:8000/
     <html><body><a href='/metrics'>metrics</a></body></html>
 
+The next example shows how to use the Service without any of the extra
+application complexity in the example above.
 
-Application Example
-+++++++++++++++++++
-
-A more representative example is shown below. It implements an application
-class that uses the ``aioprometheus`` package to collect application metrics
-and expose them on a service endpoint.
-
-.. literalinclude:: ../../examples/app-example.py
+.. literalinclude:: ../../examples/simple-example.py
     :language: python3
 
-The example can be run using
+In the example above the counter metric is tracking the number of while
+loop iterations executed by the updater coroutine.
+
+The Service is responsible for responding to metrics requests. The Service
+accepts various arguments such as the interface and port to bind to. The
+Service uses a collector registry when responding to requests for metrics.
+The service will use the default collector registry if one is not passed in.
+
+The Service is started and then a coroutine is started to periodically
+update the metric to simulate progress.
+
+This example requires some optional extras to be installed.
 
 .. code-block:: console
 
-    (env) $ python app-example.py
-    Serving prometheus metrics on: http://127.0.0.1:5000/metrics
+    $ pip install aioprometheus[aiohttp]
 
-You can use the ``curl`` command line tool to fetch metrics manually or use
-the helper script described in the next section.
-
-
-Frameworks Example
-++++++++++++++++++
-
-The aioprometheus package can also be used within other web application
-frameworks such as ``FastAPI``, ``aiohttp`` and ``Quart``. This usage
-approach removes the need to create a separate server endpoint to handle
-metrics. The FastAPI example is shown below.
-
-.. literalinclude:: ../../examples/frameworks/fastapi_example.py
-    :language: python3
-
-
-Checking examples using helper script
--------------------------------------
-
-There is a script in the examples directory that emulates Prometheus server
-scraping a metrics service endpoint. You can specify a particular format to
-use (e.g. text or binary). If no format is specified then it will randomly
-choose a format each time it requests metrics.
-
-This example script requires some optional extras to be installed.
+The script can be run using:
 
 .. code-block:: console
 
-    $ pip install aioprometheus[aiohttp,binary]
+    (venv) $ python simple-example.py
+    Serving prometheus metrics on: http://127.0.0.1:8000/metrics
+
+You can open the URL in a browser or use the ``curl`` command line tool to
+fetch metrics manually.
+
+By default metrics will be returned in plan text format.
 
 .. code-block:: console
 
-    usage: metrics-fetcher.py [-h] [--url URL] [--format FORMAT]
-                            [--interval INTERVAL] [--debug]
-
-    Metrics Fetcher
-
-    optional arguments:
-    -h, --help           show this help message and exit
-    --url URL            The metrics URL
-    --format FORMAT      Metrics response format (i.e. 'text' or 'binary'
-    --interval INTERVAL  The number of seconds between metrics requests
-    --debug              Show debug output
-
-
-Example:
-
-.. code-block:: console
-
-    $ python metrics-fetcher.py --url=http://127.0.0.1:5000/metrics --format=text --interval=2.0
+    $ curl http://127.0.0.1:8000/metrics
+    # HELP events Number of events.
+    # TYPE events counter
+    events{host="alpha",kind="timer_expiry"} 33
 
 
 Checking Example using Prometheus
@@ -358,7 +380,7 @@ we can create a minimal configuration file to scrape the example application.
         scrape_timeout: 10s
 
         target_groups:
-          - targets: ['localhost:5000']
+          - targets: ['localhost:8000']
             labels:
               group: 'dev'
 

@@ -1,9 +1,9 @@
-from . import formats, pusher
-from .collectors import Collector, Counter, Gauge, Histogram, Summary
+from .collectors import REGISTRY, Counter, Gauge, Histogram, Registry, Summary
 from .decorators import count_exceptions, inprogress, timer
 from .negotiator import negotiate
-from .registry import CollectorRegistry, Registry
 from .renderer import render
-from .service import Service
 
-__version__ = "21.8.0"
+# The 'pusher' and 'service'  modules must be explicitly imported by package
+# users as they depend on optional extras.
+
+__version__ = "21.9.0"

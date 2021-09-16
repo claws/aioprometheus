@@ -5,8 +5,15 @@ scraping a metrics service endpoint. The fetching function can randomly
 requests metrics in text or binary formats or you can specify a format to
 use.
 
+This example script requires some optional extras to be installed.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp,binary]
 
 Usage:
+
+.. code-block:: console
 
     $ python metrics-fetcher.py --url http://0.0.0.0:50123/metrics --format=text --interval=2.0
 
@@ -21,13 +28,13 @@ import aiohttp
 import prometheus_metrics_proto
 from aiohttp.hdrs import ACCEPT, CONTENT_TYPE
 
-import aioprometheus
+from aioprometheus import formats
 
 TEXT = "text"
 BINARY = "binary"
 header_kinds = {
-    TEXT: aioprometheus.formats.text.TEXT_CONTENT_TYPE,
-    BINARY: aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
+    TEXT: formats.text.TEXT_CONTENT_TYPE,
+    BINARY: formats.binary.BINARY_CONTENT_TYPE,
 }
 
 

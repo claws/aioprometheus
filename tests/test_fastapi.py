@@ -2,6 +2,7 @@ import unittest
 from typing import List
 
 import aioprometheus
+from aioprometheus import REGISTRY, formats
 
 try:
     from fastapi import FastAPI, Header, Response
@@ -19,13 +20,14 @@ class TestFastAPIRender(unittest.TestCase):
     service without starting a separate Prometheus metrics server.
     """
 
+    def tearDown(self):
+        REGISTRY.clear()
+
     def test_render_in_fastapi_app(self):
         """check render usage in FastAPI app"""
 
         app = FastAPI()
-        app.registry = aioprometheus.Registry()
         app.events_counter = aioprometheus.Counter("events", "Number of events.")
-        app.registry.register(app.events_counter)
 
         @app.get("/")
         async def hello():
@@ -34,7 +36,7 @@ class TestFastAPIRender(unittest.TestCase):
 
         @app.get("/metrics")
         async def handle_metrics(response: Response, accept: List[str] = Header(None)):
-            content, http_headers = aioprometheus.render(app.registry, accept)
+            content, http_headers = aioprometheus.render(REGISTRY, accept)
             return Response(content=content, media_type=http_headers["Content-Type"])
 
         # The test client also starts the web service
@@ -48,7 +50,7 @@ class TestFastAPIRender(unittest.TestCase):
         response = test_client.get("/metrics", headers={"accept": "*/*"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
+            formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
@@ -56,17 +58,17 @@ class TestFastAPIRender(unittest.TestCase):
         response = test_client.get("/metrics", headers={"accept": "text/plain;"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
+            formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
         # Get binary format
         response = test_client.get(
             "/metrics",
-            headers={"accept": aioprometheus.formats.binary.BINARY_CONTENT_TYPE},
+            headers={"accept": formats.binary.BINARY_CONTENT_TYPE},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
+            formats.binary.BINARY_CONTENT_TYPE,
             response.headers.get("content-type"),
         )

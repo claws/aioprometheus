@@ -1,5 +1,3 @@
-import unittest
-
 import aiohttp
 import aiohttp.hdrs
 import aiohttp.web

@@ -3,6 +3,7 @@ import asyncio
 import asynctest
 
 from aioprometheus import (
+    REGISTRY,
     Counter,
     Gauge,
     Histogram,
@@ -14,6 +15,9 @@ from aioprometheus import (
 
 
 class TestDecorators(asynctest.TestCase):
+    def tearDown(self):
+        REGISTRY.clear()
+
     async def test_timer(self):
         """check timer decorator behaviour"""
 

@@ -2,7 +2,7 @@ import abc
 import collections
 import datetime
 
-from .mypy_types import LabelsType
+from aioprometheus.mypy_types import LabelsType
 
 
 class IFormatter(abc.ABC):

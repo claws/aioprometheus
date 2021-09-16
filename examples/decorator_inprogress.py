@@ -19,16 +19,18 @@ The example script can be tested using ``curl``.
 import asyncio
 import random
 
-from aioprometheus import Gauge, Service, inprogress
+from aioprometheus import Counter, Gauge, inprogress
+from aioprometheus.service import Service
 
 # Create a metric to track requests currently in progress.
-REQUESTS = Gauge("request_in_progress", "Number of requests in progress")
-
+REQUESTS_IN_PROGRESS = Gauge("request_in_progress", "Number of requests in progress")
+REQUESTS = Counter("request_total", "Total number of requests")
 
 # Decorate function with metric.
-@inprogress(REQUESTS, {"route": "/"})
+@inprogress(REQUESTS_IN_PROGRESS, {"route": "/"})
 async def handle_request(duration):
     """A dummy function that takes some time"""
+    REQUESTS.inc({"route": "/"})
     await asyncio.sleep(duration)
 
 
@@ -45,7 +47,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     svr = Service()
-    svr.register(REQUESTS)
 
     try:
         loop.run_until_complete(handle_requests())

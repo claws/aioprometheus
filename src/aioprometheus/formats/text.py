@@ -2,18 +2,23 @@
 # imports only used for type annotations
 from typing import Callable, List, Optional, Union, cast
 
-from aioprometheus.collectors import Counter, Gauge, Histogram, Summary
-
-from ..registry import CollectorRegistry
-from .base import IFormatter
-from .mypy_types import (
-    CollectorsType,
+from aioprometheus.collectors import (
+    Collector,
+    Counter,
+    Gauge,
+    Histogram,
+    Registry,
+    Summary,
+)
+from aioprometheus.mypy_types import (
     HistogramDictType,
     LabelsType,
     MetricTupleType,
     NumericValueType,
     SummaryDictType,
 )
+
+from .base import IFormatter
 
 # typing aliases
 FormatterFuncType = Callable[[MetricTupleType, str, LabelsType], List[str]]
@@ -193,7 +198,7 @@ class TextFormatter(IFormatter):
 
         return results
 
-    def marshall_lines(self, collector: CollectorsType) -> List[str]:
+    def marshall_lines(self, collector: Collector) -> List[str]:
         """
         Marshalls a collector into a sequence of strings representing
         the metrics in the collector.
@@ -225,14 +230,14 @@ class TextFormatter(IFormatter):
 
         return lines
 
-    def marshall_collector(self, collector: CollectorsType) -> str:
+    def marshall_collector(self, collector: Collector) -> str:
         """
         Marshalls a collector into a string containing one or more lines
         """
         result = self.marshall_lines(collector)
         return LINE_SEPARATOR_FMT.join(result)
 
-    def marshall(self, registry: CollectorRegistry) -> bytes:
+    def marshall(self, registry: Registry) -> bytes:
         """Marshalls a registry (containing collectors) into a bytes
         object"""
 

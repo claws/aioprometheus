@@ -19,24 +19,25 @@ Run:
 
 from quart import Quart, request
 
-from aioprometheus import Counter, Registry, render
+from aioprometheus import REGISTRY, Counter, render
 
 app = Quart(__name__)
-app.registry = Registry()
 app.events_counter = Counter("events", "Number of events.")
-app.registry.register(app.events_counter)
 
 
 @app.route("/")
 async def hello():
     app.events_counter.inc({"path": "/"})
-    return "hello"
+    return "Quart Hello"
 
 
 @app.route("/metrics")
 async def handle_metrics():
-    content, http_headers = render(app.registry, request.headers.getlist("accept"))
+    content, http_headers = render(REGISTRY, request.headers.getlist("accept"))
     return content, http_headers
 
 
-app.run()
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app)

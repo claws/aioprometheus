@@ -6,6 +6,8 @@ from typing import Dict, List, Sequence, Tuple, Union, cast
 
 import quantile
 
+from aioprometheus.mypy_types import LabelsType, NumericValueType
+
 from . import histogram
 from .metricdict import MetricDict
 
@@ -20,12 +22,6 @@ RESTRICTED_LABELS_PREFIXES = ("__",)
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")
-
-# typing aliases
-LabelsType = Dict[str, str]
-NumericValueType = Union[int, float, histogram.Histogram, quantile.Estimator]
-ValueType = Union[str, NumericValueType]
-CollectorsType = Union["Counter", "Gauge", "Histogram", "Summary"]
 
 
 class MetricsTypes(enum.Enum):
@@ -84,7 +80,26 @@ class Collector:
 
     kind = MetricsTypes.untyped
 
-    def __init__(self, name: str, doc: str, const_labels: LabelsType = None) -> None:
+    def __init__(
+        self,
+        name: str,
+        doc: str,
+        const_labels: LabelsType = None,
+        registry: "Registry" = None,
+    ) -> None:
+        """
+        :param name: The name of the metric.
+
+        :param doc: A short description of the metric.
+
+        :param const_labels: Labels that should always be included with all
+          instances of this metric.
+
+        :param registry: A collector registry that is responsible for
+          rendering the metric into various formats. When a registry is
+          not supplied then the metric will be registered with the default
+          registry.
+        """
         if not METRIC_NAME_RE.match(name):
             raise ValueError(f"Invalid metric name: {name}")
         self.name = name
@@ -97,6 +112,11 @@ class Collector:
             self.const_labels = {}
 
         self.values = MetricDict()
+
+        # Register metric with a Registry or the default registry
+        if registry is None:
+            registry = get_registry()
+        registry.register(self)
 
     def set_value(self, labels: LabelsType, value: NumericValueType) -> None:
         """Sets a value in the container"""
@@ -310,9 +330,10 @@ class Summary(Collector):
         name: str,
         doc: str,
         const_labels: LabelsType = None,
+        registry: "Registry" = None,
         invariants: Sequence[Tuple[float, float]] = DEFAULT_INVARIANTS,
     ) -> None:
-        super().__init__(name, doc, const_labels=const_labels)
+        super().__init__(name, doc, const_labels=const_labels, registry=registry)
         self.invariants = invariants
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
@@ -405,9 +426,10 @@ class Histogram(Collector):
         name: str,
         doc: str,
         const_labels: LabelsType = None,
+        registry: "Registry" = None,
         buckets: Sequence[float] = DEFAULT_BUCKETS,
     ) -> None:
-        super().__init__(name, doc, const_labels=const_labels)
+        super().__init__(name, doc, const_labels=const_labels, registry=registry)
         self.upper_bounds = buckets
 
     def add(self, labels: LabelsType, value: NumericValueType) -> None:
@@ -451,3 +473,82 @@ class Histogram(Collector):
         return_data[self.SUM_KEY] = h.sum
 
         return return_data
+
+
+# The Registry class exists in this module as part of a strategy to avoid
+# circular imports (mostly caused by type annotations).
+
+
+class Registry:
+    """This class implements a container to hold metrics collectors.
+
+    Collectors in the registry must comply with the Collector interface
+    which means that they inherit from the base Collector object and implement
+    a no-argument method called 'get_all' that returns a list of Metric
+    instance objects.
+    """
+
+    def __init__(self) -> None:
+        self.collectors = {}  # type: Dict[str, Collector]
+
+    def register(self, collector: Collector) -> None:
+        """Register a collector into the container.
+
+        The registry provides a container that can be used to access all
+        metrics when exposing them into a specific format.
+
+        :param collector: A collector to register in the registry.
+
+        :raises: TypeError if collector is not an instance of
+          :class:`Collector`.
+
+        :raises: ValueError if collector is already registered.
+        """
+        if not isinstance(collector, Collector):
+            raise TypeError(f"Invalid collector type: {collector}")
+
+        if collector.name in self.collectors:
+            raise ValueError(f"A collector for {collector.name} is already registered")
+
+        self.collectors[collector.name] = collector
+
+    def deregister(self, name: str) -> None:
+        """Deregister a collector.
+
+        This will stop the collector metrics from being emitted.
+
+        :param name: The name of the collector to deregister.
+
+        :raises: KeyError if collector is not already registered.
+        """
+        del self.collectors[name]
+
+    def get(self, name: str) -> Collector:
+        """Get a collector by name.
+
+        :param name: The name of the collector to fetch.
+
+        :raises: KeyError if collector is not found.
+        """
+        return self.collectors[name]
+
+    def get_all(self) -> List[Collector]:
+        """Return a list of all collectors"""
+        return list(self.collectors.values())
+
+    def clear(self):
+        """Clear all registered collectors.
+
+        This function is mainly of use in tests to reset the default registry
+        which may be used in multiple tests.
+        """
+        for name in list(self.collectors.keys()):
+            self.deregister(name)
+
+
+REGISTRY = Registry()
+
+
+def get_registry() -> Registry:
+    """Return the default Registry"""
+    return REGISTRY

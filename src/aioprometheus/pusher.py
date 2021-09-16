@@ -1,15 +1,18 @@
-try:
-    import aiohttp
-except ImportError as err:
-    aiohttp = None  # type: ignore
-
 import base64
 
 # imports only used for type annotations
 from urllib.parse import quote_plus, urljoin
 
-from .formats import text
-from .registry import CollectorRegistry
+try:
+    import aiohttp
+except ImportError as exc:
+    raise ImportError(
+        "`aiohttp` could not be imported. Did you install `aioprometheus` "
+        "with the `aiohttp` extra?"
+    ) from exc
+
+from aioprometheus import REGISTRY, Registry
+from aioprometheus.formats import text
 
 
 class Pusher:
@@ -70,7 +73,7 @@ class Pusher:
 
         self.path = urljoin(self.addr, path)
 
-    async def add(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
+    async def add(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
         """
         ``add`` works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
@@ -82,7 +85,7 @@ class Pusher:
             ) as resp:
                 return resp
 
-    async def replace(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
+    async def replace(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
         """
         ``replace`` pushes new values for a group of metrics to the push
         gateway.
@@ -100,7 +103,7 @@ class Pusher:
             ) as resp:
                 return resp
 
-    async def delete(self, registry: CollectorRegistry) -> "aiohttp.ClientResponse":
+    async def delete(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
         """
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.

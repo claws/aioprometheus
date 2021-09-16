@@ -21,16 +21,20 @@ You may need to Ctrl+C twice to exit the example script.
 import asyncio
 import random
 
-from aioprometheus import Counter, Service, count_exceptions
+from aioprometheus import Counter, count_exceptions
+from aioprometheus.service import Service
 
 # Create a metric to track requests currently in progress.
-REQUESTS = Counter("request_handler_exceptions", "Number of exceptions in requests")
-
+REQUEST_EXCEPTIONS = Counter(
+    "request_handler_exceptions", "Number of exceptions in requests"
+)
+REQUESTS = Counter("request_total", "Total number of requests")
 
 # Decorate function with metric.
-@count_exceptions(REQUESTS, {"route": "/"})
+@count_exceptions(REQUEST_EXCEPTIONS, {"route": "/"})
 async def handle_request(duration):
     """A dummy function that occasionally raises an exception"""
+    REQUESTS.inc({"route": "/"})
     if duration < 0.3:
         raise Exception("Ooops")
     await asyncio.sleep(duration)
@@ -52,7 +56,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     svr = Service()
-    svr.register(REQUESTS)
 
     try:
         loop.run_until_complete(handle_requests())

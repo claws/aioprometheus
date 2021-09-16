@@ -1,23 +1,25 @@
 """
-This module implements an asynchronous Prometheus metrics service.
+This module implements an asynchronous Prometheus metrics export service.
 """
 
 import logging
 
 try:
     import aiohttp
-    import aiohttp.web
-    from aiohttp.hdrs import ACCEPT
-    from aiohttp.hdrs import METH_GET as GET
-except ImportError:
-    aiohttp = None  # type: ignore
-
+except ImportError as exc:
+    raise ImportError(
+        "`aiohttp` could not be imported. Did you install `aioprometheus` "
+        "with the `aiohttp` extra?"
+    ) from exc
 # imports only used for type annotations
 from ssl import SSLContext
 from typing import List, Optional, Set
 
-from .registry import CollectorsType, Registry
-from .renderer import render
+import aiohttp.web
+from aiohttp.hdrs import ACCEPT
+from aiohttp.hdrs import METH_GET as GET
+
+from aioprometheus import REGISTRY, Registry, render
 
 logger = logging.getLogger(__name__)
 
@@ -31,26 +33,20 @@ class Service:
     by the Prometheus.io server.
     """
 
-    def __init__(self, registry: Registry = None) -> None:
+    def __init__(self, registry: Registry = REGISTRY) -> None:
         """
         Initialise the Prometheus metrics service.
 
-        :param registry: A :class:`CollectorRegistry` instance that will
-          hold all the metrics for this service. If no registry if specified
-          then the default registry is used.
+        :param registry: The :class:`Registry` instance that holds all the
+          metrics that this service should expose. If no registry is specified
+          then the default registry will be used.
 
-        :raises: Exception if the registry object is not an instance of the
-          Registry type.
+        :raises: Exception if the registry object passed is not an instance of
+          the Registry type.
         """
-        if aiohttp is None:
-            raise RuntimeError(
-                "`aiohttp` could not be imported. Did you install `aioprometheus` "
-                "with the `aiohttp` extra?"
-            )
-
-        if registry is not None and not isinstance(registry, Registry):
+        if not isinstance(registry, Registry):
             raise Exception(f"registry must be a Registry, got: {registry}")
-        self.registry = registry or Registry()
+        self.registry = registry
         self._site = None  # type: Optional[aiohttp.web.TCPSite]
         self._app = None  # type: Optional[aiohttp.web.Application]
         self._runner = None  # type: Optional[aiohttp.web.AppRunner]
@@ -175,22 +171,6 @@ class Service:
         self._app = None
         self._runner = None
         logger.debug("Prometheus metrics server stopped")
-
-    def register(self, collector: CollectorsType) -> None:
-        """Register a collector.
-
-        :raises: TypeError if collector is not an instance of
-          :class:`Collector`.
-        :raises: ValueError if collector is already registered.
-        """
-        self.registry.register(collector)
-
-    def deregister(self, name: str) -> None:
-        """Deregister a collector.
-
-        :param name: A collector name to deregister.
-        """
-        self.registry.deregister(name)
 
     async def handle_metrics(
         self, request: "aiohttp.web.Request"

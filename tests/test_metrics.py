@@ -1,6 +1,13 @@
 import unittest
 
-from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
+from aioprometheus.collectors import (
+    REGISTRY,
+    Collector,
+    Counter,
+    Gauge,
+    Histogram,
+    Summary,
+)
 
 POS_INF = float("inf")
 NEG_INF = float("-inf")
@@ -8,20 +15,28 @@ NEG_INF = float("-inf")
 
 class TestCollectorDict(unittest.TestCase):
     def setUp(self):
-        self.data = {
+        self.default_data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
             "const_labels": {"app": "my_app"},
         }
 
-        self.c = Collector(**self.data)
+    def tearDown(self):
+        REGISTRY.clear()
 
     def test_initialization(self):
-        self.assertEqual(self.data["name"], self.c.name)
-        self.assertEqual(self.data["doc"], self.c.doc)
-        self.assertEqual(self.data["const_labels"], self.c.const_labels)
+        c = Collector(**self.default_data)
+        self.assertEqual(self.default_data["name"], c.name)
+        self.assertEqual(self.default_data["doc"], c.doc)
+        self.assertEqual(self.default_data["const_labels"], c.const_labels)
+
+        # check metrics automatically got registered
+        collector_name = self.default_data["name"]
+        self.assertIn(collector_name, REGISTRY.collectors)
 
     def test_set_value(self):
+        c = Collector(**self.default_data)
+
         data = (
             ({"country": "sp", "device": "desktop"}, 520),
             ({"country": "us", "device": "mobile"}, 654),
@@ -30,11 +45,13 @@ class TestCollectorDict(unittest.TestCase):
         )
 
         for m in data:
-            self.c.set_value(m[0], m[1])
+            c.set_value(m[0], m[1])
 
-        self.assertEqual(len(data), len(self.c.values))
+        self.assertEqual(len(data), len(c.values))
 
     def test_same_value(self):
+        c = Collector(**self.default_data)
+
         data = (
             ({"country": "sp", "device": "desktop", "ts": "GMT+1"}, 520),
             ({"ts": "GMT+1", "country": "sp", "device": "desktop"}, 521),
@@ -43,12 +60,13 @@ class TestCollectorDict(unittest.TestCase):
         )
 
         for m in data:
-            self.c.set_value(m[0], m[1])
+            c.set_value(m[0], m[1])
 
-        self.assertEqual(1, len(self.c.values))
-        self.assertEqual(523, self.c.values[data[0][0]])
+        self.assertEqual(1, len(c.values))
+        self.assertEqual(523, c.values[data[0][0]])
 
     def test_get_value(self):
+        c = Collector(**self.default_data)
         data = (
             ({"country": "sp", "device": "desktop"}, 520),
             ({"country": "us", "device": "mobile"}, 654),
@@ -57,19 +75,19 @@ class TestCollectorDict(unittest.TestCase):
         )
 
         for m in data:
-            self.c.set_value(m[0], m[1])
+            c.set_value(m[0], m[1])
 
         for m in data:
-            self.assertEqual(m[1], self.c.get_value(m[0]))
+            self.assertEqual(m[1], c.get_value(m[0]))
 
     def test_not_const_labels(self):
-        del self.data["const_labels"]
-        self.c = Collector(**self.data)
+        del self.default_data["const_labels"]
+        c = Collector(**self.default_data)
 
     def test_not_name(self):
         with self.assertRaises(TypeError) as context:
-            del self.data["name"]
-            self.c = Collector(**self.data)
+            del self.default_data["name"]
+            c = Collector(**self.default_data)
 
         self.assertIn(
             "__init__() missing 1 required positional argument: 'name'",
@@ -78,8 +96,8 @@ class TestCollectorDict(unittest.TestCase):
 
     def test_not_help_text(self):
         with self.assertRaises(TypeError) as context:
-            del self.data["doc"]
-            self.c = Collector(**self.data)
+            del self.default_data["doc"]
+            c = Collector(**self.default_data)
 
         self.assertIn(
             "__init__() missing 1 required positional argument: 'doc'",
@@ -87,24 +105,26 @@ class TestCollectorDict(unittest.TestCase):
         )
 
     def test_without_labels(self):
+        c = Collector(**self.default_data)
         data = (({}, 520), (None, 654), ("", 1001))
 
         for i in data:
-            self.c.set_value(i[0], i[1])
+            c.set_value(i[0], i[1])
 
-        self.assertEqual(1, len(self.c.values))
-        self.assertEqual((data)[len(data) - 1][1], self.c.values[data[0][0]])
+        self.assertEqual(1, len(c.values))
+        self.assertEqual((data)[len(data) - 1][1], c.values[data[0][0]])
 
     def test_wrong_labels(self):
+        c = Collector(**self.default_data)
 
         # Normal set
         with self.assertRaises(ValueError) as context:
-            self.c.set_value({"job": 1, "ok": 2}, 1)
+            c.set_value({"job": 1, "ok": 2}, 1)
 
         self.assertEqual("Invalid label name: job", str(context.exception))
 
         with self.assertRaises(ValueError) as context:
-            self.c.set_value({"__not_ok": 1, "ok": 2}, 1)
+            c.set_value({"__not_ok": 1, "ok": 2}, 1)
 
         self.assertEqual("Invalid label prefix: __not_ok", str(context.exception))
 
@@ -120,6 +140,7 @@ class TestCollectorDict(unittest.TestCase):
         self.assertEqual("Invalid label prefix: __not_ok", str(context.exception))
 
     def test_get_all(self):
+        c = Collector(**self.default_data)
         data = (
             ({"country": "sp", "device": "desktop"}, 520),
             ({"country": "us", "device": "mobile"}, 654),
@@ -136,27 +157,39 @@ class TestCollectorDict(unittest.TestCase):
         )
 
         for i in data:
-            self.c.set_value(i[0], i[1])
+            c.set_value(i[0], i[1])
 
         def country_fetcher(x):
             return x[0]["country"]
 
         sorted_data = sorted(data, key=country_fetcher)
-        sorted_result = sorted(self.c.get_all(), key=country_fetcher)
+        sorted_result = sorted(c.get_all(), key=country_fetcher)
         self.assertEqual(sorted_data, sorted_result)
 
 
 class TestCounter(unittest.TestCase):
     def setUp(self):
-        self.data = {
+        self.default_data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
             "const_labels": {"app": "my_app"},
         }
 
-        self.c = Counter(**self.data)
+    def tearDown(self):
+        REGISTRY.clear()
+
+    def test_initialization(self):
+        c = Counter(**self.default_data)
+        self.assertEqual(self.default_data["name"], c.name)
+        self.assertEqual(self.default_data["doc"], c.doc)
+        self.assertEqual(self.default_data["const_labels"], c.const_labels)
+
+        # check metrics automatically got registered
+        collector_name = self.default_data["name"]
+        self.assertIn(collector_name, REGISTRY.collectors)
 
     def test_set(self):
+        c = Counter(**self.default_data)
 
         data = (
             {"labels": {"country": "sp", "device": "desktop"}, "values": range(10)},
@@ -166,11 +199,12 @@ class TestCounter(unittest.TestCase):
 
         for i in data:
             for j in i["values"]:
-                self.c.set(i["labels"], j)
+                c.set(i["labels"], j)
 
-        self.assertEqual(len(data), len(self.c.values))
+        self.assertEqual(len(data), len(c.values))
 
     def test_get(self):
+        c = Counter(**self.default_data)
         data = (
             {"labels": {"country": "sp", "device": "desktop"}, "values": range(10)},
             {"labels": {"country": "us", "device": "mobile"}, "values": range(10, 20)},
@@ -179,60 +213,76 @@ class TestCounter(unittest.TestCase):
 
         for i in data:
             for j in i["values"]:
-                self.c.set(i["labels"], j)
-                self.assertEqual(j, self.c.get(i["labels"]))
+                c.set(i["labels"], j)
+                self.assertEqual(j, c.get(i["labels"]))
 
         # Last check
         for i in data:
-            self.assertEqual(max(i["values"]), self.c.get(i["labels"]))
+            self.assertEqual(max(i["values"]), c.get(i["labels"]))
 
     def test_set_get_without_labels(self):
+        c = Counter(**self.default_data)
         data = {"labels": {}, "values": range(100)}
 
         for i in data["values"]:
-            self.c.set(data["labels"], i)
+            c.set(data["labels"], i)
 
-        self.assertEqual(1, len(self.c.values))
+        self.assertEqual(1, len(c.values))
 
-        self.assertEqual(max(data["values"]), self.c.get(data["labels"]))
+        self.assertEqual(max(data["values"]), c.get(data["labels"]))
 
     def test_inc(self):
+        c = Counter(**self.default_data)
         iterations = 100
         labels = {"country": "sp", "device": "desktop"}
 
         for i in range(iterations):
-            self.c.inc(labels)
+            c.inc(labels)
 
-        self.assertEqual(iterations, self.c.get(labels))
+        self.assertEqual(iterations, c.get(labels))
 
     def test_add(self):
+        c = Counter(**self.default_data)
         labels = {"country": "sp", "device": "desktop"}
         iterations = 100
 
         for i in range(iterations):
-            self.c.add(labels, i)
+            c.add(labels, i)
 
-        self.assertEqual(sum(range(iterations)), self.c.get(labels))
+        self.assertEqual(sum(range(iterations)), c.get(labels))
 
     def test_negative_add(self):
+        c = Counter(**self.default_data)
         labels = {"country": "sp", "device": "desktop"}
 
         with self.assertRaises(ValueError) as context:
-            self.c.add(labels, -1)
+            c.add(labels, -1)
         self.assertEqual("Counters can't decrease", str(context.exception))
 
 
 class TestGauge(unittest.TestCase):
     def setUp(self):
-        self.data = {
+        self.default_data = {
             "name": "hdd_disk_used",
             "doc": "Disk space used",
             "const_labels": {"server": "1.db.production.my-app"},
         }
 
-        self.g = Gauge(**self.data)
+    def tearDown(self):
+        REGISTRY.clear()
+
+    def test_initialization(self):
+        g = Gauge(**self.default_data)
+        self.assertEqual(self.default_data["name"], g.name)
+        self.assertEqual(self.default_data["doc"], g.doc)
+        self.assertEqual(self.default_data["const_labels"], g.const_labels)
+
+        # check metrics automatically got registered
+        collector_name = self.default_data["name"]
+        self.assertIn(collector_name, REGISTRY.collectors)
 
     def test_set(self):
+        g = Gauge(**self.default_data)
         data = (
             {"labels": {"max": "500G", "dev": "sda"}, "values": range(0, 500, 50)},
             {"labels": {"max": "1T", "dev": "sdb"}, "values": range(0, 1000, 100)},
@@ -241,11 +291,12 @@ class TestGauge(unittest.TestCase):
 
         for i in data:
             for j in i["values"]:
-                self.g.set(i["labels"], j)
+                g.set(i["labels"], j)
 
-        self.assertEqual(len(data), len(self.g.values))
+        self.assertEqual(len(data), len(g.values))
 
     def test_get(self):
+        g = Gauge(**self.default_data)
         data = (
             {"labels": {"max": "500G", "dev": "sda"}, "values": range(0, 500, 50)},
             {"labels": {"max": "1T", "dev": "sdb"}, "values": range(0, 1000, 100)},
@@ -254,91 +305,110 @@ class TestGauge(unittest.TestCase):
 
         for i in data:
             for j in i["values"]:
-                self.g.set(i["labels"], j)
-                self.assertEqual(j, self.g.get(i["labels"]))
+                g.set(i["labels"], j)
+                self.assertEqual(j, g.get(i["labels"]))
 
         for i in data:
-            self.assertEqual(max(i["values"]), self.g.get(i["labels"]))
+            self.assertEqual(max(i["values"]), g.get(i["labels"]))
 
     def test_set_get_without_labels(self):
+        g = Gauge(**self.default_data)
         data = {"labels": {}, "values": range(100)}
 
         for i in data["values"]:
-            self.g.set(data["labels"], i)
+            g.set(data["labels"], i)
 
-        self.assertEqual(1, len(self.g.values))
+        self.assertEqual(1, len(g.values))
 
-        self.assertEqual(max(data["values"]), self.g.get(data["labels"]))
+        self.assertEqual(max(data["values"]), g.get(data["labels"]))
 
     def test_inc(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
 
         for i in range(iterations):
-            self.g.inc(labels)
-            self.assertEqual(i + 1, self.g.get(labels))
+            g.inc(labels)
+            self.assertEqual(i + 1, g.get(labels))
 
-        self.assertEqual(iterations, self.g.get(labels))
+        self.assertEqual(iterations, g.get(labels))
 
     def test_dec(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
-        self.g.set(labels, iterations)
+        g.set(labels, iterations)
 
         for i in range(iterations):
-            self.g.dec(labels)
-            self.assertEqual(iterations - (i + 1), self.g.get(labels))
+            g.dec(labels)
+            self.assertEqual(iterations - (i + 1), g.get(labels))
 
-        self.assertEqual(0, self.g.get(labels))
+        self.assertEqual(0, g.get(labels))
 
     def test_add(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
 
         for i in range(iterations):
-            self.g.add(labels, i)
+            g.add(labels, i)
 
-        self.assertEqual(sum(range(iterations)), self.g.get(labels))
+        self.assertEqual(sum(range(iterations)), g.get(labels))
 
     def test_add_negative(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
 
         for i in range(iterations):
-            self.g.add(labels, -i)
+            g.add(labels, -i)
 
-        self.assertEqual(sum(map(lambda x: -x, range(iterations))), self.g.get(labels))
+        self.assertEqual(sum(map(lambda x: -x, range(iterations))), g.get(labels))
 
     def test_sub(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
 
         for i in range(iterations):
-            self.g.sub(labels, i)
+            g.sub(labels, i)
 
-        self.assertEqual(sum(map(lambda x: -x, range(iterations))), self.g.get(labels))
+        self.assertEqual(sum(map(lambda x: -x, range(iterations))), g.get(labels))
 
     def test_sub_positive(self):
+        g = Gauge(**self.default_data)
         iterations = 100
         labels = {"max": "10T", "dev": "sdc"}
 
         for i in range(iterations):
-            self.g.sub(labels, -i)
+            g.sub(labels, -i)
 
-        self.assertEqual(sum(range(iterations)), self.g.get(labels))
+        self.assertEqual(sum(range(iterations)), g.get(labels))
 
 
 class TestSummary(unittest.TestCase):
     def setUp(self):
-        self.data = {
+        self.default_data = {
             "name": "http_request_duration_microseconds",
             "doc": "Request duration per application",
             "const_labels": {"app": "my_app"},
         }
 
-        self.s = Summary(**self.data)
+    def tearDown(self):
+        REGISTRY.clear()
+
+    def test_initialization(self):
+        s = Summary(**self.default_data)
+        self.assertEqual(self.default_data["name"], s.name)
+        self.assertEqual(self.default_data["doc"], s.doc)
+        self.assertEqual(self.default_data["const_labels"], s.const_labels)
+
+        # check metrics automatically got registered
+        collector_name = self.default_data["name"]
+        self.assertIn(collector_name, REGISTRY.collectors)
 
     def test_add(self):
+        s = Summary(**self.default_data)
         data = (
             {"labels": {"handler": "/static"}, "values": range(0, 500, 50)},
             {"labels": {"handler": "/p"}, "values": range(0, 1000, 100)},
@@ -347,42 +417,45 @@ class TestSummary(unittest.TestCase):
 
         for i in data:
             for j in i["values"]:
-                self.s.add(i["labels"], j)
+                s.add(i["labels"], j)
 
         for i in data:
-            self.assertEqual(len(i["values"]), self.s.values[i["labels"]]._observations)
+            self.assertEqual(len(i["values"]), s.values[i["labels"]]._observations)
 
     def test_get(self):
+        s = Summary(**self.default_data)
         labels = {"handler": "/static"}
         values = [3, 5.2, 13, 4]
 
         for i in values:
-            self.s.add(labels, i)
+            s.add(labels, i)
 
-        data = self.s.get(labels)
+        data = s.get(labels)
         correct_data = {"sum": 25.2, "count": 4, 0.50: 4.0, 0.90: 5.2, 0.99: 5.2}
 
         self.assertEqual(correct_data, data)
 
     def test_add_get_without_labels(self):
+        s = Summary(**self.default_data)
         labels = None
         values = [3, 5.2, 13, 4]
 
         for i in values:
-            self.s.add(labels, i)
+            s.add(labels, i)
 
-        self.assertEqual(1, len(self.s.values))
+        self.assertEqual(1, len(s.values))
 
         correct_data = {"sum": 25.2, "count": 4, 0.50: 4.0, 0.90: 5.2, 0.99: 5.2}
-        self.assertEqual(correct_data, self.s.get(labels))
+        self.assertEqual(correct_data, s.get(labels))
 
     def test_add_wrong_types(self):
+        s = Summary(**self.default_data)
         labels = None
         values = ["3", (1, 2), {"1": 2}, True]
 
         for i in values:
             with self.assertRaises(TypeError) as context:
-                self.s.add(labels, i)
+                s.add(labels, i)
         self.assertEqual(
             "Summary only works with digits (int, float)", str(context.exception)
         )
@@ -390,10 +463,14 @@ class TestSummary(unittest.TestCase):
 
 class TestHistogram(unittest.TestCase):
     def setUp(self):
-        self.h = Histogram(
-            "h", "doc", const_labels={"app": "my_app"}, buckets=[5.0, 10.0, 15.0]
-        )
-        self.correct_data = {
+        self.default_data = {
+            "name": "h",
+            "doc": "doc",
+            "const_labels": {"app": "my_app"},
+            "buckets": [5.0, 10.0, 15.0],
+        }
+
+        self.expected_data = {
             "sum": 25.2,
             "count": 4,
             5.0: 2.0,
@@ -403,15 +480,30 @@ class TestHistogram(unittest.TestCase):
         }
         self.input_values = [3, 5.2, 13, 4]
 
+    def tearDown(self):
+        REGISTRY.clear()
+
+    def test_initialization(self):
+        h = Histogram(**self.default_data)
+        self.assertEqual(self.default_data["name"], h.name)
+        self.assertEqual(self.default_data["doc"], h.doc)
+        self.assertEqual(self.default_data["const_labels"], h.const_labels)
+
+        # check metrics automatically got registered
+        collector_name = self.default_data["name"]
+        self.assertIn(collector_name, REGISTRY.collectors)
+
     def test_wrong_labels(self):
+        h = Histogram(**self.default_data)
         with self.assertRaises(ValueError) as context:
-            self.h.set_value({"le": 2}, 1)
+            h.set_value({"le": 2}, 1)
         self.assertEqual("Invalid label name: le", str(context.exception))
 
     def test_expected_values(self):
+        h = Histogram(**self.default_data)
         labels = None
-        self.h.observe(labels, 7)
-        results = self.h.get(labels)
+        h.observe(labels, 7)
+        results = h.get(labels)
         self.assertEqual(0, results[5.0])
         self.assertEqual(1, results[10.0])
         self.assertEqual(1, results[15.0])
@@ -419,8 +511,8 @@ class TestHistogram(unittest.TestCase):
         self.assertEqual(1, results["count"])
         self.assertEqual(7.0, results["sum"])
 
-        self.h.observe(labels, 7.5)
-        results = self.h.get(labels)
+        h.observe(labels, 7.5)
+        results = h.get(labels)
         self.assertEqual(0, results[5.0])
         self.assertEqual(2, results[10.0])
         self.assertEqual(2, results[15.0])
@@ -428,8 +520,8 @@ class TestHistogram(unittest.TestCase):
         self.assertEqual(2, results["count"])
         self.assertEqual(14.5, results["sum"])
 
-        self.h.observe(labels, POS_INF)
-        results = self.h.get(labels)
+        h.observe(labels, POS_INF)
+        results = h.get(labels)
         self.assertEqual(0, results[5.0])
         self.assertEqual(2, results[10.0])
         self.assertEqual(2, results[15.0])
@@ -438,15 +530,17 @@ class TestHistogram(unittest.TestCase):
         self.assertEqual(POS_INF, results["sum"])
 
     def test_get(self):
+        h = Histogram(**self.default_data)
         labels = {"path": "/"}
         for i in self.input_values:
-            self.h.observe(labels, i)
-        data = self.h.get(labels)
-        self.assertEqual(self.correct_data, data)
+            h.observe(labels, i)
+        data = h.get(labels)
+        self.assertEqual(self.expected_data, data)
 
     def test_add_get_without_labels(self):
+        h = Histogram(**self.default_data)
         labels = None
         for i in self.input_values:
-            self.h.observe(labels, i)
-        self.assertEqual(1, len(self.h.values))
-        self.assertEqual(self.correct_data, self.h.get(labels))
+            h.observe(labels, i)
+        self.assertEqual(1, len(h.values))
+        self.assertEqual(self.expected_data, h.get(labels))

@@ -2,7 +2,7 @@ import unittest
 
 import asynctest
 
-import aioprometheus
+from aioprometheus import REGISTRY, Counter, formats, render
 
 try:
     from quart import Quart, request
@@ -19,13 +19,14 @@ class TestQuartRender(asynctest.TestCase):
     service without starting a separate Prometheus metrics server.
     """
 
+    def tearDown(self):
+        REGISTRY.clear()
+
     async def test_render_in_quart_app(self):
         """check render usage in Quart app"""
 
         app = Quart(__name__)
-        app.registry = aioprometheus.Registry()
-        app.events_counter = aioprometheus.Counter("events", "Number of events.")
-        app.registry.register(app.events_counter)
+        app.events_counter = Counter("events", "Number of events.")
 
         @app.route("/")
         async def index():
@@ -34,9 +35,7 @@ class TestQuartRender(asynctest.TestCase):
 
         @app.route("/metrics")
         async def handle_metrics():
-            content, http_headers = aioprometheus.render(
-                app.registry, request.headers.getlist("accept")
-            )
+            content, http_headers = render(REGISTRY, request.headers.getlist("accept"))
             return content, http_headers
 
         # The test client also starts the web service
@@ -50,7 +49,7 @@ class TestQuartRender(asynctest.TestCase):
         response = await test_client.get("/metrics", headers={"accept": "*/*"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
+            formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
         # payload = await response.get_data()
@@ -59,17 +58,17 @@ class TestQuartRender(asynctest.TestCase):
         response = await test_client.get("/metrics", headers={"accept": "text/plain;"})
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.text.TEXT_CONTENT_TYPE,
+            formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
 
         # Get binary format
         response = await test_client.get(
             "/metrics",
-            headers={"accept": aioprometheus.formats.binary.BINARY_CONTENT_TYPE},
+            headers={"accept": formats.binary.BINARY_CONTENT_TYPE},
         )
         self.assertEqual(response.status_code, 200)
         self.assertIn(
-            aioprometheus.formats.binary.BINARY_CONTENT_TYPE,
+            formats.binary.BINARY_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
