@@ -1,6 +1,7 @@
 import unittest
 
-from aioprometheus import Collector, CollectorRegistry, Counter, Gauge, Summary
+from aioprometheus import REGISTRY, Counter, Gauge, Registry, Summary
+from aioprometheus.collectors import Collector
 
 
 class TestRegistry(unittest.TestCase):
@@ -11,89 +12,41 @@ class TestRegistry(unittest.TestCase):
             "const_labels": {"app": "my_app"},
         }
 
-    def test_register(self):
-        """check collectors can be registered"""
+    def tearDown(self):
+        REGISTRY.clear()
 
-        q = 100
-        collectors = [Collector("test" + str(i), "Test" + str(i)) for i in range(q)]
-
-        r = CollectorRegistry()
-
-        for i in collectors:
-            r.register(i)
-
-        self.assertEqual(q, len(r.collectors))
-
-    def test_register_sames(self):
-        """check registering same metrics raises exceptoion"""
-        r = CollectorRegistry()
-
-        r.register(Collector(**self.data))
+    def test_register_same_names(self):
+        """check registering same metrics raises exception"""
+        c1 = Collector(**self.data)
 
         with self.assertRaises(ValueError) as context:
-            r.register(Collector(**self.data))
+            c2 = Collector(**self.data)
 
         collector_name = self.data["name"]
         self.assertEqual(
-            f"Collector {collector_name} is already registered",
+            f"A collector for {collector_name} is already registered",
             str(context.exception),
         )
 
-    def test_register_counter(self):
-        """check registering a counter collector"""
-        r = CollectorRegistry()
-        r.register(Counter(**self.data))
-
-        self.assertEqual(1, len(r.collectors))
-
-    def test_register_gauge(self):
-        """check registering a gauge collector"""
-        r = CollectorRegistry()
-        r.register(Gauge(**self.data))
-
-        self.assertEqual(1, len(r.collectors))
-
-    def test_register_summary(self):
-        """check registering a summary collector"""
-        r = CollectorRegistry()
-        r.register(Summary(**self.data))
-
-        self.assertEqual(1, len(r.collectors))
-
     def test_register_wrong_type(self):
         """check registering an invalid collector raises an exception"""
-        r = CollectorRegistry()
-
         with self.assertRaises(TypeError) as context:
-            r.register("This will fail")
+            REGISTRY.register("This should fail")
         self.assertIn("Invalid collector type: ", str(context.exception))
 
     def test_deregister(self):
         """check collectors can be deregistered"""
-        r = CollectorRegistry()
-        r.register(Collector(**self.data))
-
-        r.deregister(self.data["name"])
-
-        self.assertEqual(0, len(r.collectors))
+        c = Collector(**self.data)
+        REGISTRY.deregister(self.data["name"])
+        self.assertEqual(0, len(REGISTRY.collectors))
 
     def test_get(self):
-        r = CollectorRegistry()
         c = Collector(**self.data)
-        r.register(c)
-
-        self.assertEqual(c, r.get(c.name))
+        self.assertEqual(c, REGISTRY.get(c.name))
 
     def test_get_all(self):
         q = 100
         collectors = [Collector("test" + str(i), "Test" + str(i)) for i in range(q)]
-
-        r = CollectorRegistry()
-
-        for i in collectors:
-            r.register(i)
-
-        result = r.get_all()
-
+        result = REGISTRY.get_all()
         self.assertTrue(isinstance(result, list))
         self.assertEqual(q, len(result))

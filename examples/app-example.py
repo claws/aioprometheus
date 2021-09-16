@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-This more complicated example implements an application that exposes
-application metrics obtained from the psutil package.
+This example implements an application that exposes application metrics
+obtained from the psutil package.
 
 This example requires the ``psutil`` package which can be installed
 using ``pip install psutil``.
@@ -11,35 +11,29 @@ import asyncio
 import logging
 import random
 import socket
-import uuid
 
 import psutil
 
-from aioprometheus import Counter, Gauge, Histogram, Service, Summary
+from aioprometheus import Counter, Gauge, Histogram, Summary
+from aioprometheus.service import Service
 
 
 class ExampleApp:
     """
-    An example application that demonstrates how ``aioprometheus`` can be
-    integrated and used within a Python application built upon asyncio.
+    This example application attempts to demonstrates how ``aioprometheus``
+    can be integrated within a Python application built upon asyncio.
 
     This application attempts to simulate a long running distributed system
-    process, say a socket relay or some kind of message adapter. It is
-    intentionally not hosting an existing web service in the application.
+    process. It is intentionally not a web service application.
 
-    In this case the aioprometheus.Service object is used to provide a
+    In this case the aioprometheus Service object is used to provide a
     new HTTP endpoint that can be used to expose Prometheus metrics on.
-
-    If this application was a web service (i.e. already had an existing web
-    interface) then the aioprometheus.Service object could be used as before
-    to add another web interface or a different approach could be used that
-    provides a metrics handler function for use with the existing web service.
     """
 
     def __init__(
         self,
         metrics_host="127.0.0.1",
-        metrics_port: int = 5000,
+        metrics_port: int = 8000,
     ):
 
         self.metrics_host = metrics_host
@@ -56,31 +50,26 @@ class ExampleApp:
         # Define some constant labels that need to be added to all metrics
         const_labels = {
             "host": socket.gethostname(),
-            "app": f"{self.__class__.__name__}-{uuid.uuid4().hex}",
+            "app": f"{self.__class__.__name__}",
         }
 
-        # Create metrics collectors
+        # Create metrics collectors. No registry is passed when creating the
+        # metrics so they get registered with the default registry.
 
-        # Create a counter metric to track requests
+        # Create a counter metric to track requests.
         self.requests_metric = Counter(
             "requests", "Number of requests.", const_labels=const_labels
         )
-
-        # Collectors must be registered with the registry before they
-        # get exposed.
-        self.msvr.register(self.requests_metric)
 
         # Create a gauge metrics to track memory usage.
         self.ram_metric = Gauge(
             "memory_usage_bytes", "Memory usage in bytes.", const_labels=const_labels
         )
-        self.msvr.register(self.ram_metric)
 
         # Create a gauge metrics to track CPU.
         self.cpu_metric = Gauge(
             "cpu_usage_percent", "CPU usage percent.", const_labels=const_labels
         )
-        self.msvr.register(self.cpu_metric)
 
         self.payload_metric = Summary(
             "request_payload_size_bytes",
@@ -88,7 +77,6 @@ class ExampleApp:
             const_labels=const_labels,
             invariants=[(0.50, 0.05), (0.99, 0.001)],
         )
-        self.msvr.register(self.payload_metric)
 
         self.latency_metric = Histogram(
             "request_latency_seconds",
@@ -96,17 +84,16 @@ class ExampleApp:
             const_labels=const_labels,
             buckets=[0.1, 0.5, 1.0, 5.0],
         )
-        self.msvr.register(self.latency_metric)
 
     async def start(self):
         """Start the application"""
         await self.msvr.start(addr=self.metrics_host, port=self.metrics_port)
         logger.debug(f"Serving prometheus metrics on: {self.msvr.metrics_url}")
 
-        # Schedule a timer to update internal metrics. In a realistic
-        # application metrics would be updated as needed. In this example
-        # application a simple timer is used to emulate things happening,
-        # which conveniently allows all metrics to be updated at once.
+        # Schedule a timer to update metrics. In a realistic application
+        # the metrics would be updated as needed. In this example, a simple
+        # timer is used to emulate things happening, which conveniently
+        # allows all metrics to be updated at once.
         self.timer = asyncio.get_event_loop().call_later(1.0, self.on_timer_expiry)
 
     async def stop(self):
@@ -151,8 +138,8 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     app = ExampleApp()
-    loop.run_until_complete(app.start())
 
+    loop.run_until_complete(app.start())
     try:
         loop.run_forever()
     except KeyboardInterrupt:

@@ -5,7 +5,7 @@ import unittest.mock
 
 import prometheus_metrics_proto as pmp
 
-from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
+from aioprometheus import REGISTRY, Counter, Gauge, Histogram, Summary
 from aioprometheus.formats import binary
 
 TEST_TIMESTAMP = 1515044377268
@@ -61,6 +61,9 @@ class TestProtobufFormat(unittest.TestCase):
         )
         self.histogram_metric_data_values = (({"route": "/"}, (3, 5.2, 13, 4)),)
 
+    def tearDown(self):
+        REGISTRY.clear()
+
     def test_headers_binary(self):
         """check binary header info is provided"""
         f = binary.BinaryFormatter()
@@ -111,6 +114,8 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        REGISTRY.clear()
+
         ######################################################################
 
         # Check metric with constant labels
@@ -139,6 +144,8 @@ class TestProtobufFormat(unittest.TestCase):
         )
 
         self.assertEqual(result, expected_result)
+
+        REGISTRY.clear()
 
         ######################################################################
 
@@ -190,6 +197,8 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        REGISTRY.clear()
+
         ######################################################################
 
         # Check metric with constant labels
@@ -218,6 +227,8 @@ class TestProtobufFormat(unittest.TestCase):
         )
 
         self.assertEqual(result, expected_result)
+
+        REGISTRY.clear()
 
         ######################################################################
 
@@ -271,6 +282,8 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        REGISTRY.clear()
+
         ######################################################################
 
         # Check metric with constant labels
@@ -302,6 +315,8 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        REGISTRY.clear()
+
         ######################################################################
 
         # Check metric with timestamps
@@ -332,6 +347,8 @@ class TestProtobufFormat(unittest.TestCase):
             )
 
         self.assertEqual(result, expected_result)
+
+        REGISTRY.clear()
 
         ######################################################################
 
@@ -414,6 +431,8 @@ class TestProtobufFormat(unittest.TestCase):
 
         self.assertEqual(result, expected_result)
 
+        REGISTRY.clear()
+
         ######################################################################
 
         # Check metric with constant labels
@@ -445,6 +464,8 @@ class TestProtobufFormat(unittest.TestCase):
         )
 
         self.assertEqual(result, expected_result)
+
+        REGISTRY.clear()
 
         ######################################################################
 
@@ -492,9 +513,6 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, value in counter_data:
             counter.set(labels, value)
 
-        registry = Registry()
-        registry.register(counter)
-
         valid_result = (
             b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
             b"\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12"
@@ -503,7 +521,7 @@ class TestProtobufFormat(unittest.TestCase):
         )
         f = binary.BinaryFormatter()
 
-        self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(REGISTRY))
 
     def test_registry_marshall_gauge(self):
 
@@ -514,9 +532,6 @@ class TestProtobufFormat(unittest.TestCase):
         for labels, value in gauge_data:
             gauge.set(labels, value)
 
-        registry = Registry()
-        registry.register(gauge)
-
         valid_result = (
             b'U\n\ngauge_test\x12\x08A gauge.\x18\x01";'
             b"\n\r\n\x08g_sample\x12\x011\n\x10\n\x0bg_subsample"
@@ -526,7 +541,7 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = binary.BinaryFormatter()
 
-        self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(REGISTRY))
 
     def test_registry_marshall_summary(self):
 
@@ -545,9 +560,6 @@ class TestProtobufFormat(unittest.TestCase):
             for v in values:
                 summary.add(labels, v)
 
-        registry = Registry()
-        registry.register(summary)
-
         valid_result = (
             b"\x99\x01\n\x0csummary_test\x12\nA summary."
             b'\x18\x02"{\n\r\n\x08s_sample\x12\x011\n\x10\n'
@@ -562,7 +574,7 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = binary.BinaryFormatter()
 
-        self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(REGISTRY))
 
     def test_registry_marshall_histogram(self):
         """check encode of histogram matches expected output"""
@@ -590,9 +602,6 @@ class TestProtobufFormat(unittest.TestCase):
             for v in values:
                 histogram.add(labels, v)
 
-        registry = Registry()
-        registry.register(histogram)
-
         valid_result = (
             b"\x97\x01\n\x0ehistogram_test\x12\x0cA histogram."
             b'\x18\x04"u\n\r\n\x08h_sample\x12\x011\n\x10\n'
@@ -606,4 +615,4 @@ class TestProtobufFormat(unittest.TestCase):
 
         f = binary.BinaryFormatter()
 
-        self.assertEqual(valid_result, f.marshall(registry))
+        self.assertEqual(valid_result, f.marshall(REGISTRY))

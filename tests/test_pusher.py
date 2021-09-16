@@ -1,12 +1,10 @@
-import asyncio
-
 import aiohttp
 import asynctest
 
-from aioprometheus import Counter, Registry, pusher
+from aioprometheus import REGISTRY, Counter, Registry, pusher
 
 
-class TestPusherServer(object):
+class TestPusherServer:
     """This fixture class acts as the Push Gateway.
 
     It handles requests and stores various request attributes in the
@@ -57,6 +55,7 @@ class TestPusher(asynctest.TestCase):
 
     async def tearDown(self):
         await self.server.stop()
+        REGISTRY.clear()
 
     async def test_push_job_ping_victoriametrics(self):
         job_name = "my-job"
@@ -64,8 +63,7 @@ class TestPusher(asynctest.TestCase):
         # Create a pusher with the path for VictoriaMetrics
         p = pusher.Pusher(job_name, self.server.url, path="/api/v1/import/prometheus")
         registry = Registry()
-        c = Counter("total_requests", "Total requests.", {})
-        registry.register(c)
+        c = Counter("total_requests", "Total requests.", {}, registry=registry)
 
         c.inc({"url": "/p/user"})
 
@@ -79,8 +77,7 @@ class TestPusher(asynctest.TestCase):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
         registry = Registry()
-        c = Counter("total_requests", "Total requests.", {})
-        registry.register(c)
+        c = Counter("total_requests", "Total requests.", {}, registry=registry)
 
         c.inc({"url": "/p/user"})
 
@@ -100,8 +97,7 @@ class TestPusher(asynctest.TestCase):
             grouping_key={"instance": "127.0.0.1:1234"},
         )
         registry = Registry()
-        c = Counter("total_requests", "Total requests.", {})
-        registry.register(c)
+        c = Counter("total_requests", "Total requests.", {}, registry=registry)
 
         c.inc({})
 
@@ -124,8 +120,7 @@ class TestPusher(asynctest.TestCase):
             grouping_key={"first": "", "second": "foo"},
         )
         registry = Registry()
-        c = Counter("example_total", "Total examples", {})
-        registry.register(c)
+        c = Counter("example_total", "Total examples", {}, registry=registry)
 
         c.inc({})
 
@@ -148,8 +143,7 @@ class TestPusher(asynctest.TestCase):
             grouping_key={"path": "/var/tmp"},
         )
         registry = Registry()
-        c = Counter("exec_total", "Total executions", {})
-        registry.register(c)
+        c = Counter("exec_total", "Total executions", {}, registry=registry)
 
         c.inc({})
 
@@ -166,9 +160,8 @@ class TestPusher(asynctest.TestCase):
     async def test_push_add(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
-        registry = Registry()
+
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
-        registry.register(counter)
 
         counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
@@ -186,7 +179,7 @@ class TestPusher(asynctest.TestCase):
         #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
-        resp = await p.add(registry)
+        resp = await p.add(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
@@ -196,9 +189,8 @@ class TestPusher(asynctest.TestCase):
     async def test_push_replace(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
-        registry = Registry()
+
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
-        registry.register(counter)
 
         counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
@@ -216,7 +208,7 @@ class TestPusher(asynctest.TestCase):
         #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
@@ -226,9 +218,8 @@ class TestPusher(asynctest.TestCase):
     async def test_push_delete(self):
         job_name = "my-job"
         p = pusher.Pusher(job_name, self.server.url)
-        registry = Registry()
+
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
-        registry.register(counter)
 
         counter_data = (({"c_sample": "1", "c_subsample": "b"}, 400),)
 
@@ -246,7 +237,7 @@ class TestPusher(asynctest.TestCase):
         #                 b'\x00\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
-        resp = await p.delete(registry)
+        resp = await p.delete(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])

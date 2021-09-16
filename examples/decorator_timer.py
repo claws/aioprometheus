@@ -24,16 +24,18 @@ The example script can be tested using ``curl``.
 import asyncio
 import random
 
-from aioprometheus import Service, Summary, timer
+from aioprometheus import Counter, Summary, timer
+from aioprometheus.service import Service
 
 # Create a metric to track time spent and requests made.
 REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
-
+REQUESTS = Counter("request_total", "Total number of requests")
 
 # Decorate function with metric.
 @timer(REQUEST_TIME)
 async def handle_request(duration):
     """A dummy function that takes some time"""
+    REQUESTS.inc({"route": "/"})
     await asyncio.sleep(duration)
 
 
@@ -50,7 +52,6 @@ if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
     svr = Service()
-    svr.register(REQUEST_TIME)
 
     try:
         loop.run_until_complete(handle_requests())

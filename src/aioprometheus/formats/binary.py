@@ -8,17 +8,22 @@ from typing import Callable, List, Optional, cast
 
 import prometheus_metrics_proto as pmp
 
-from aioprometheus.collectors import Counter, Gauge, Histogram, Summary
-from aioprometheus.registry import CollectorRegistry
-
-from .base import IFormatter
-from .mypy_types import (
-    CollectorsType,
+from aioprometheus.collectors import (
+    Collector,
+    Counter,
+    Gauge,
+    Histogram,
+    Registry,
+    Summary,
+)
+from aioprometheus.mypy_types import (
     HistogramDictType,
     LabelsType,
     MetricTupleType,
     SummaryDictType,
 )
+
+from .base import IFormatter
 
 # typing aliases
 FormatterFuncType = Callable[[MetricTupleType, str, LabelsType], pmp.Metric]
@@ -146,7 +151,7 @@ class BinaryFormatter(IFormatter):
 
         return metric
 
-    def marshall_collector(self, collector: CollectorsType) -> pmp.MetricFamily:
+    def marshall_collector(self, collector: Collector) -> pmp.MetricFamily:
         """
         Marshalls a collector into a :class:`MetricFamily` object representing
         the metrics in the collector.
@@ -181,7 +186,7 @@ class BinaryFormatter(IFormatter):
 
         return mf
 
-    def marshall(self, registry: CollectorRegistry) -> bytes:
+    def marshall(self, registry: Registry) -> bytes:
         """Marshall the collectors in the registry into binary protocol
         buffer format.
 

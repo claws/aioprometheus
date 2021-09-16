@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 """
-Sometimes you may not want to expose Prometheus metrics from a dedicated
-Prometheus metrics server but instead want to use an existing web framework.
-
-This example uses the registry from the aioprometheus package to add
-Prometheus instrumentation to a FastAPI application. In this example a registry
-and a counter metric is instantiated and gets updated whenever the "/" route
-is accessed. A '/metrics' route is added to the application using the standard
-web framework method. The metrics route renders Prometheus metrics into the
+This example uses adds some simple Prometheus instrumentation to a FastAPI
+application. In this example a counter metric is instantiated and gets
+updated whenever the "/" route is accessed. A '/metrics' route is added to
+the application using the standard web framework method. The metrics route
+renders Prometheus metrics from the default collector registry into the
 appropriate format.
 
 Run:
 
   (venv) $ pip install fastapi uvicorn
-  (venv) $ uvicorn fastapi_example:app
+  (venv) $ python fastapi_example.py
 
 """
 
@@ -21,21 +18,28 @@ from typing import List
 
 from fastapi import FastAPI, Header, Request, Response
 
-from aioprometheus import Counter, Registry, render
+from aioprometheus import REGISTRY, Counter, render
 
 app = FastAPI()
-app.state.registry = Registry()
 app.state.events_counter = Counter("events", "Number of events.")
-app.state.registry.register(app.state.events_counter)
 
 
 @app.get("/")
 async def hello(request: Request):
     request.app.state.events_counter.inc({"path": "/"})
-    return "hello"
+    return "FastAPI Hello"
 
 
 @app.get("/metrics")
-async def handle_metrics(request: Request, accept: List[str] = Header(None)):
-    content, http_headers = render(request.app.state.registry, accept)
+async def handle_metrics(
+    request: Request,  # pylint: disable=unused-argument
+    accept: List[str] = Header(None),
+) -> Response:
+    content, http_headers = render(REGISTRY, accept)
     return Response(content=content, media_type=http_headers["Content-Type"])
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app)

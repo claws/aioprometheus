@@ -1,18 +1,21 @@
 """
 This module holds common formatter type annotations.
 """
-
 from typing import Dict, Tuple, Union
 
-from aioprometheus.collectors import Counter, Gauge, Histogram, Summary
+import quantile
+
+from aioprometheus import histogram
 
 LabelsType = Dict[str, str]
-NumericValueType = Union[int, float]
-# ValueType = Union[str, NumericValueType]
+NumericValueType = Union[int, float, histogram.Histogram, quantile.Estimator]
+ValueType = Union[str, NumericValueType]
+
 SummaryDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
 SummaryDictType = Dict[SummaryDictKeyType, NumericValueType]
+
 HistogramDictKeyType = Union[float, str]  # e.g. sum, 0.25, etc
-HistogramDictType = Dict[HistogramDictKeyType, NumericValueType]
-CollectorsType = Union[Counter, Gauge, Histogram, Summary]
+HistogramDictType = Dict[HistogramDictKeyType, Union[int, float]]
+
 MetricValueType = Union[NumericValueType, SummaryDictType, HistogramDictType]
 MetricTupleType = Tuple[LabelsType, MetricValueType]

@@ -1,11 +1,15 @@
 import re
 import unittest
 
-from aioprometheus import Collector, Counter, Gauge, Histogram, Registry, Summary
+from aioprometheus import REGISTRY
+from aioprometheus.collectors import Collector, Counter, Gauge, Registry, Summary
 from aioprometheus.formats import text
 
 
 class TestTextFormat(unittest.TestCase):
+    def tearDown(self) -> None:
+        REGISTRY.clear()
+
     def test_headers(self):
         f = text.TextFormatter()
         expected_result = {"Content-Type": text.TEXT_CONTENT_TYPE}

@@ -1,8 +1,9 @@
 from typing import Sequence, Tuple
 
-from .formats import IFormatter
+from aioprometheus import Registry
+
+from .formats.base import IFormatter
 from .negotiator import negotiate
-from .registry import Registry
 
 
 def render(registry: Registry, accepts_headers: Sequence[str]) -> Tuple[bytes, dict]:

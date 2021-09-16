@@ -6,7 +6,7 @@ from . import formats
 logger = logging.getLogger(__name__)
 
 # type aliases
-FormatterType = Type[formats.IFormatter]
+FormatterType = Type[formats.base.IFormatter]
 
 
 def negotiate(accepts_headers: Sequence[str]) -> FormatterType:

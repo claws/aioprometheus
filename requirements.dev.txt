@@ -11,4 +11,8 @@ wheel
 # web app frameworks are used in unit tests to verify integration
 aiohttp
 fastapi
+uvicorn
 quart
+
+# psutil is used in example code
+psutil
