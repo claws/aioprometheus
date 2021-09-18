@@ -13,7 +13,7 @@ POS_INF = float("inf")
 NEG_INF = float("-inf")
 
 
-class TestCollectorDict(unittest.TestCase):
+class TestCollectorBase(unittest.TestCase):
     def setUp(self):
         self.default_data = {
             "name": "logged_users_total",
@@ -167,7 +167,7 @@ class TestCollectorDict(unittest.TestCase):
         self.assertEqual(sorted_data, sorted_result)
 
 
-class TestCounter(unittest.TestCase):
+class TestCounterMetric(unittest.TestCase):
     def setUp(self):
         self.default_data = {
             "name": "logged_users_total",
@@ -260,7 +260,7 @@ class TestCounter(unittest.TestCase):
         self.assertEqual("Counters can't decrease", str(context.exception))
 
 
-class TestGauge(unittest.TestCase):
+class TestGaugeMetric(unittest.TestCase):
     def setUp(self):
         self.default_data = {
             "name": "hdd_disk_used",
@@ -386,7 +386,7 @@ class TestGauge(unittest.TestCase):
         self.assertEqual(sum(range(iterations)), g.get(labels))
 
 
-class TestSummary(unittest.TestCase):
+class TestSummaryMetric(unittest.TestCase):
     def setUp(self):
         self.default_data = {
             "name": "http_request_duration_microseconds",
@@ -461,7 +461,7 @@ class TestSummary(unittest.TestCase):
         )
 
 
-class TestHistogram(unittest.TestCase):
+class TestHistogramMetric(unittest.TestCase):
     def setUp(self):
         self.default_data = {
             "name": "h",
@@ -498,6 +498,28 @@ class TestHistogram(unittest.TestCase):
         with self.assertRaises(ValueError) as context:
             h.set_value({"le": 2}, 1)
         self.assertEqual("Invalid label name: le", str(context.exception))
+
+    def test_insufficient_buckets(self):
+        d = self.default_data.copy()
+        d["buckets"] = []
+        h = Histogram(**d)
+        # The underlying histogram object within the Histogram metric is
+        # created when needing so any exception only occurs when an new
+        # observation is performed.
+        with self.assertRaises(Exception) as context:
+            h.observe(None, 3.0)
+        self.assertEqual("Must have at least two buckets", str(context.exception))
+
+    def test_unsorted_buckets(self):
+        d = self.default_data.copy()
+        d["buckets"] = [10.0, 5.0]
+        h = Histogram(**d)
+        # The underlying histogram object within the Histogram metric is
+        # created when needing so any exception only occurs when an new
+        # observation is performed.
+        with self.assertRaises(Exception) as context:
+            h.observe(None, 3.0)
+        self.assertEqual("Buckets not in sorted order", str(context.exception))
 
     def test_expected_values(self):
         h = Histogram(**self.default_data)

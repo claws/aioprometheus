@@ -77,19 +77,19 @@ check-style: check-sort-imports check-format
 # help: format                  - perform code style format
 .PHONY: format
 format:
-	@black src/aioprometheus tests examples
+	@black src/aioprometheus tests examples docs/conf.py
 
 
 # help: check-format            - check code format compliance
 .PHONY: check-format
 check-format:
-	@black --check src/aioprometheus tests examples
+	@black --check src/aioprometheus tests examples docs/conf.py
 
 
 # help: check-lint              - check linting
 .PHONY: check-lint
 check-lint:
-	@pylint --rcfile=.pylintrc aioprometheus setup.py ./examples
+	@pylint --rcfile=.pylintrc aioprometheus setup.py ./examples ./docs/conf.py
 
 # help: check-types             - check type hint annotations
 .PHONY: check-types

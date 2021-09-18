@@ -13,18 +13,6 @@
 aioprometheus
 =============
 
-`aioprometheus` is a Prometheus Python client library for asyncio-based
-applications. It provides metrics collection and serving capabilities for
-use with `Prometheus <https://prometheus.io/>`_ and compatible monitoring and
-alerting systems. It supports multiple data formats and pushing metrics to a
-gateway.
-
-`aioprometheus` can be used in applications built with FastAPI/Starlette,
-Quart, aiohttp as well as networking apps built upon asyncio.
-
-The project source code can be found `here <https://github.com/claws/aioprometheus>`_.
-
-
 .. toctree::
    :maxdepth: 1
    :hidden:
@@ -32,6 +20,15 @@ The project source code can be found `here <https://github.com/claws/aiopromethe
    user/index
    dev/index
    api/index
+
+`aioprometheus` is a Prometheus Python client library for asyncio-based
+applications. It provides metrics collection and serving capabilities for
+use with `Prometheus <https://prometheus.io/>`_ and compatible monitoring
+systems. It supports exporting metrics into text and binary formats and
+pushing metrics to a gateway.
+
+`aioprometheus` can be used in applications built with FastAPI/Starlette,
+Quart, aiohttp as well as networking apps built upon asyncio.
 
 See the :ref:`user-guide-label` for information about how to install and
 use this package.

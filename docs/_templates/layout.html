@@ -1,0 +1,9 @@
+{# Import the theme's layout. #}
+{% extends '!layout.html' %}
+
+{%- block font %}
+{# Add custom Material Icons font to get logo icon to work #}
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+{# Call the parent block #}
+{{ super() }}
+{%- endblock %}

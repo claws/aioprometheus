@@ -49,12 +49,6 @@ class Pusher:
            prometheus but can be optionally specified to work with other
            platforms such as VictoriaMetrics.
         """
-        if aiohttp is None:
-            raise RuntimeError(
-                "`aiohttp` could not be imported. Did you install `aioprometheus` "
-                "with the `aiohttp` extra?"
-            )
-
         self.job_name = job_name
 
         if grouping_key is None:

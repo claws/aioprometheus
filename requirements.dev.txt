@@ -1,6 +1,7 @@
 asynctest
 black
 sphinx
+sphinx-material
 coverage
 isort[requirements_deprecated_finder]
 mypy
