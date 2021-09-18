@@ -5,7 +5,7 @@ expose metrics on a HTTP endpoint.
 
 .. code-block:: console
 
-    (env) $ python simple-example.py
+    (env) $ python simple-service-example.py
     Serving prometheus metrics on: http://127.0.0.1:8000/metrics
 
 You can open the URL in a browser or use the ``curl`` command line tool to

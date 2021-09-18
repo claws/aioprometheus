@@ -13,7 +13,7 @@ except ImportError as exc:
     ) from exc
 # imports only used for type annotations
 from ssl import SSLContext
-from typing import List, Optional, Set
+from typing import Optional
 
 import aiohttp.web
 from aiohttp.hdrs import ACCEPT
@@ -184,18 +184,6 @@ class Service:
             self.registry, request.headers.getall(ACCEPT, [])
         )
         return aiohttp.web.Response(body=content, headers=http_headers)
-
-    def accepts(self, request: "aiohttp.web.Request") -> Set[str]:
-        """Return a sequence of accepts items in the request headers"""
-        accepts = set()  # type: Set[str]
-        accept_headers = request.headers.getall(ACCEPT, [])  # type: List[str]
-        for accept_item in accept_headers:
-            if ";" in accept_item:
-                accept_items = [i.strip() for i in accept_item.split(";")]
-            else:
-                accept_items = [accept_item]
-            accepts.update(accept_items)
-        return accepts
 
     async def handle_root(
         self, request: "aiohttp.web.Request"

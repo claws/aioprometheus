@@ -96,3 +96,6 @@ ENV/
 
 # sublimttext
 /*.sublime-*
+
+# api docs
+docs/api/aioprometheus*

@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 """
-This script implements a fetching function that emulates Prometheus server
+This script implements a fetching function that emulates a Prometheus server
 scraping a metrics service endpoint. The fetching function can randomly
 requests metrics in text or binary formats or you can specify a format to
 use.
 
-This example script requires some optional extras to be installed.
+This script requires some optional extras to be installed.
 
 .. code-block:: console
 

@@ -12,3 +12,7 @@
   and having the accommodate for optional dependencies this update make a user
   explicitly import the modules that depend of optional dependencies. This
   simplifies the package implementation.
+
+- Updated documentation to improve clarity and to use the sphinx_material theme.
+
+- Improved test coverage. Removed unused code.

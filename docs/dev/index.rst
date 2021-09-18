@@ -139,7 +139,7 @@ covered by tests.
 
     (aioprom) $ make coverage
 
-The test code coverage report can be found `here <../_static/coverage/index.html>`_
+The test code coverage report for the current release can be found `here <../_static/coverage/index.html>`__
 
 
 Documentation

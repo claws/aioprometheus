@@ -1,7 +1,9 @@
 import aiohttp
+import aiohttp.web
 import asynctest
 
-from aioprometheus import REGISTRY, Counter, Registry, pusher
+from aioprometheus import REGISTRY, Counter, Registry
+from aioprometheus.pusher import Pusher
 
 
 class TestPusherServer:
@@ -61,7 +63,7 @@ class TestPusher(asynctest.TestCase):
         job_name = "my-job"
 
         # Create a pusher with the path for VictoriaMetrics
-        p = pusher.Pusher(job_name, self.server.url, path="/api/v1/import/prometheus")
+        p = Pusher(job_name, self.server.url, path="/api/v1/import/prometheus")
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {}, registry=registry)
 
@@ -75,7 +77,7 @@ class TestPusher(asynctest.TestCase):
 
     async def test_push_job_ping(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, self.server.url)
+        p = Pusher(job_name, self.server.url)
         registry = Registry()
         c = Counter("total_requests", "Total requests.", {}, registry=registry)
 
@@ -91,7 +93,7 @@ class TestPusher(asynctest.TestCase):
         # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
         # for encoding rules.
         job_name = "my-job"
-        p = pusher.Pusher(
+        p = Pusher(
             job_name,
             self.server.url,
             grouping_key={"instance": "127.0.0.1:1234"},
@@ -114,7 +116,7 @@ class TestPusher(asynctest.TestCase):
         # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
         # for encoding rules.
         job_name = "example"
-        p = pusher.Pusher(
+        p = Pusher(
             job_name,
             self.server.url,
             grouping_key={"first": "", "second": "foo"},
@@ -137,7 +139,7 @@ class TestPusher(asynctest.TestCase):
         # See https://github.com/prometheus/pushgateway/blob/master/README.md#url
         # for encoding rules.
         job_name = "directory_cleaner"
-        p = pusher.Pusher(
+        p = Pusher(
             job_name,
             self.server.url,
             grouping_key={"path": "/var/tmp"},
@@ -159,7 +161,7 @@ class TestPusher(asynctest.TestCase):
 
     async def test_push_add(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, self.server.url)
+        p = Pusher(job_name, self.server.url)
 
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
 
@@ -188,7 +190,7 @@ class TestPusher(asynctest.TestCase):
 
     async def test_push_replace(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, self.server.url)
+        p = Pusher(job_name, self.server.url)
 
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
 
@@ -217,7 +219,7 @@ class TestPusher(asynctest.TestCase):
 
     async def test_push_delete(self):
         job_name = "my-job"
-        p = pusher.Pusher(job_name, self.server.url)
+        p = Pusher(job_name, self.server.url)
 
         counter = Counter("counter_test", "A counter.", {"type": "counter"})
 
