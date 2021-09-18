@@ -1,16 +1,21 @@
-import datetime
-import time
 import unittest
 import unittest.mock
 
-import prometheus_metrics_proto as pmp
-
 from aioprometheus import REGISTRY, Counter, Gauge, Histogram, Summary
-from aioprometheus.formats import binary
+
+try:
+    import prometheus_metrics_proto as pmp
+
+    from aioprometheus.formats import binary
+
+    have_pmp = True
+except ImportError:
+    have_pmp = False
 
 TEST_TIMESTAMP = 1515044377268
 
 
+@unittest.skipUnless(have_pmp, "prometheus_metrics_proto library is not available")
 class TestProtobufFormat(unittest.TestCase):
     def setUp(self):
 

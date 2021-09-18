@@ -2,6 +2,13 @@ import asynctest
 
 from aioprometheus import REGISTRY, formats, render
 
+try:
+    import prometheus_metrics_proto as pmp
+
+    have_pmp = True
+except ImportError:
+    have_pmp = False
+
 
 class TestRenderer(asynctest.TestCase):
     async def test_invalid_registry(self):
@@ -30,6 +37,7 @@ class TestRenderer(asynctest.TestCase):
         content, http_headers = render(REGISTRY, accepts_headers)
         self.assertEqual(http_headers["Content-Type"], formats.text.TEXT_CONTENT_TYPE)
 
+    @asynctest.skipUnless(have_pmp, "prometheus_metrics_proto library is not available")
     async def test_render_binary(self):
         """check metrics can be rendered using binary format"""
         accepts_headers = (formats.binary.BINARY_CONTENT_TYPE,)

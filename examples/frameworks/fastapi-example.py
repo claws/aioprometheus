@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 """
-This example uses adds some simple Prometheus instrumentation to a FastAPI
-application. In this example a counter metric is instantiated and gets
-updated whenever the "/" route is accessed. A '/metrics' route is added to
+This example adds Prometheus metrics to a FastAPI application. In this
+example a counter metric is instantiated and gets updated whenever the "/"
+route is accessed.
+
+A '/metrics' route is implemented using the render function and added to
 the application using the standard web framework method. The metrics route
 renders Prometheus metrics from the default collector registry into the
 appropriate format.
@@ -10,7 +12,7 @@ appropriate format.
 Run:
 
   (venv) $ pip install fastapi uvicorn
-  (venv) $ python fastapi_example.py
+  (venv) $ python fastapi-example.py
 
 """
 

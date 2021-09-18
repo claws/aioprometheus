@@ -1,55 +1,67 @@
-import aiohttp
-import aiohttp.web
 import asynctest
 
 from aioprometheus import REGISTRY, Counter, Registry
-from aioprometheus.pusher import Pusher
+
+try:
+    import aiohttp
+    import aiohttp.web
+
+    from aioprometheus.pusher import Pusher
+
+    have_aiohttp = True
+except ImportError:
+    have_aiohttp = False
 
 
-class TestPusherServer:
-    """This fixture class acts as the Push Gateway.
+if have_aiohttp:
 
-    It handles requests and stores various request attributes in the
-    test_results attribute which is later checked in tests.
-    """
+    class TestPusherServer:
+        """This fixture class acts as the Push Gateway.
 
-    def __init__(self):
-        self.test_results = None
+        It handles requests and stores various request attributes in the
+        test_results attribute which is later checked in tests.
+        """
 
-    async def handler(self, request):
-        data = await request.read()
-        self.test_results = {
-            "path": request.path,
-            "headers": request.raw_headers,
-            "method": request.method,
-            "body": data,
-        }
-        resp = aiohttp.web.Response(status=200)
-        return resp
+        def __init__(self):
+            self.test_results = None
 
-    async def start(self, addr="127.0.0.1", port=None):
-        self._app = aiohttp.web.Application()
-        self._app.router.add_route("*", "/metrics/job/{job}{tail:(/.+)?}", self.handler)
-        self._app.router.add_route("*", "/api/v1/import/prometheus", self.handler)
-        self._runner = aiohttp.web.AppRunner(self._app)
-        await self._runner.setup()
-        self._site = aiohttp.web.TCPSite(self._runner, addr, port)
-        await self._site.start()
-        # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
-        _details = self._site._server.sockets[0].getsockname()
-        _host, _port = _details[0:2]
-        self.port = _port
-        self.url = f"http://{addr}:{_port}"
-        # TODO: replace the above with url = self._site.name when aiohttp
-        # issue #3018 is resolved.
+        async def handler(self, request):
+            data = await request.read()
+            self.test_results = {
+                "path": request.path,
+                "headers": request.raw_headers,
+                "method": request.method,
+                "body": data,
+            }
+            resp = aiohttp.web.Response(status=200)
+            return resp
 
-    async def stop(self):
-        await self._runner.cleanup()
-        self._site = None
-        self._app = None
-        self._runner = None
+        async def start(self, addr="127.0.0.1", port=None):
+            self._app = aiohttp.web.Application()
+            self._app.router.add_route(
+                "*", "/metrics/job/{job}{tail:(/.+)?}", self.handler
+            )
+            self._app.router.add_route("*", "/api/v1/import/prometheus", self.handler)
+            self._runner = aiohttp.web.AppRunner(self._app)
+            await self._runner.setup()
+            self._site = aiohttp.web.TCPSite(self._runner, addr, port)
+            await self._site.start()
+            # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
+            _details = self._site._server.sockets[0].getsockname()
+            _host, _port = _details[0:2]
+            self.port = _port
+            self.url = f"http://{addr}:{_port}"
+            # TODO: replace the above with url = self._site.name when aiohttp
+            # issue #3018 is resolved.
+
+        async def stop(self):
+            await self._runner.cleanup()
+            self._site = None
+            self._app = None
+            self._runner = None
 
 
+@asynctest.skipUnless(have_aiohttp, "aiohttp library is not available")
 class TestPusher(asynctest.TestCase):
     async def setUp(self):
         self.server = TestPusherServer()

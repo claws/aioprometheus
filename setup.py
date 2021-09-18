@@ -6,7 +6,6 @@ from setuptools import find_packages, setup
 
 regexp = re.compile(r'.*__version__ = [\'\"](.*?)[\'\"]', re.S)
 
-
 init_file = os.path.join(
     os.path.dirname(__file__), 'src', 'aioprometheus', '__init__.py')
 with open(init_file, 'rt') as f:  # pylint: disable=unspecified-encoding
@@ -48,15 +47,20 @@ if __name__ == "__main__":
         url="https://github.com/claws/aioprometheus",
         package_dir={'': 'src'},
         packages=find_packages('src'),
+        python_requires=">=3.6.0",
         install_requires=requirements,
         extras_require={
             "aiohttp": ["aiohttp>=3.3.2"],
             "binary": ["prometheus-metrics-proto>=18.1.1"],
+            "starlette": ["starlette>=0.14.2"],
+            "quart": ["quart>=0.15.1"],
         },
         classifiers=[
             "Development Status :: 4 - Beta",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: MIT License",
+            "Programming Language :: Python",
+            "Programming Language :: Python :: 3",
             "Programming Language :: Python :: 3.6",
             "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",

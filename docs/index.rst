@@ -1,17 +1,7 @@
-.. image:: https://github.com/claws/aioprometheus/workflows/Python%20Package%20Workflow/badge.svg?branch=master
-    :target: https://github.com/claws/aioprometheus/actions?query=branch%3Amaster
-
-.. image:: https://img.shields.io/pypi/v/aioprometheus.svg
-    :target: https://pypi.python.org/pypi/aioprometheus
-
-.. image:: https://readthedocs.org/projects/aioprometheus/badge/?version=latest
-    :target: https://aioprometheus.readthedocs.io/en/latest
-
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-  :target: https://github.com/ambv/black
-
 aioprometheus
 =============
+
+|ci status| |pypi| |python| |docs| |license|
 
 .. toctree::
    :maxdepth: 1
@@ -36,23 +26,36 @@ use this package.
 License
 -------
 
-`aioprometheus` is released under the MIT license.
-
-`aioprometheus` originates from the (now deprecated)
-`prometheus python <https://github.com/slok/prometheus-python>`_ package which
-was released under the MIT license. `aioprometheus` continues to use the MIT
-license and contains a copy of the orignal MIT license from the
-`prometheus-python` project as instructed by the original license.
+`aioprometheus` is released under the MIT license. It is based upon the (now
+deprecated) `prometheus python <https://github.com/slok/prometheus-python>`_
+package which was released under the MIT license. A copy of the original MIT
+license from the `prometheus-python` project is included as instructed by the
+original license.
 
 
 Origins
 -------
 
-`aioprometheus` originates from the (now deprecated)
-`prometheus python <https://github.com/slok/prometheus-python>`_ package.
-Many thanks to `slok <https://github.com/slok>`_ for developing
-prometheus-python. I have taken the original work and modified it to meet
-the needs of my asyncio-based applications, added the histogram metric,
-integrated support for binary format, updated and extended tests, added docs,
-decorators, etc.
+`aioprometheus` originates from the (now deprecated) `prometheus python`
+package. Many thanks to `slok <https://github.com/slok>`_ for developing
+`prometheus-python`.
 
+The original work has been modified and updated it to meet the needs of asyncio
+applications by adding the histogram metric, binary format support, docs,
+decorators, ASGI middleware, etc.
+
+
+.. |ci status| image:: https://github.com/claws/aioprometheus/workflows/CI%20Pipeline/badge.svg?branch=master
+    :target: https://github.com/claws/aioprometheus/actions?query=branch%3Amaster
+
+.. |pypi| image:: https://img.shields.io/pypi/v/aioprometheus.svg
+    :target: https://pypi.python.org/pypi/aioprometheus
+
+.. |python| image:: https://img.shields.io/pypi/pyversions/aioprometheus.svg
+   :target: https://pypi.python.org/pypi/aioprometheus/
+
+.. |docs| image:: https://readthedocs.org/projects/aioprometheus/badge/?version=latest
+    :target: https://aioprometheus.readthedocs.io/en/latest
+
+.. |license| image:: https://img.shields.io/badge/license-MIT-blue.svg
+   :target: https://github.com/claws/aioprometheus/License/LICENSE
