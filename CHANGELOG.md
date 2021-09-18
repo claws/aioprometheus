@@ -16,3 +16,6 @@
 - Updated documentation to improve clarity and to use the sphinx_material theme.
 
 - Improved test coverage. Removed unused code.
+
+- Updated unit tests to gracefully handle when optional extras are not installed.
+  This specifically helps run tests on Python 3.6 where Quart is not supported.

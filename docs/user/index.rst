@@ -13,6 +13,26 @@ to install it.
 
     $ pip install aioprometheus
 
+
+The ASGI middleware does not have any external dependencies but the Starlette
+and Quart convenience functions that handle metrics requests do.
+
+If you plan on using the ASGI middleware in a Starlette / FastAPI application
+then you can install the extra dependencies alongside `aioprometheus` by adding
+extras to the install.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[starlette]
+
+If you plan on using the ASGI middleware in a Quart application then you can
+install the extra dependencies alongside `aioprometheus` by adding extras
+to the install.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[quart]
+
 A Prometheus Push Gateway client and a HTTP service are included, but their
 dependencies are not installed by default. You can install them alongside
 `aioprometheus` by adding optional extras to the install.
@@ -34,7 +54,7 @@ Multiple optional dependencies can be listed at once, such as:
 
 .. code-block:: console
 
-    $ pip install aioprometheus[aiohttp,binary]
+    $ pip install aioprometheus[aiohttp,binary,starlette,quart]
 
 
 .. _usage-label:
@@ -298,10 +318,45 @@ Web Frameworks
 The aioprometheus package can be used within web application frameworks
 such as ``Starlette``, ``FastAPI``, ``aiohttp`` and ``Quart``.
 
-An example showing how aioprometheus can be used with FastAPI is shown
-below.
+The easiest option for adding Prometheus metrics to a Starlette, FastAPI
+or Quart application is to use the ASGI Middleware provided by `aioprometheus`.
 
-.. literalinclude:: ../../examples/frameworks/fastapi_example.py
+The ASGI middleware provides a default set of metrics that include counters
+for total requests received, total responses sent, exceptions raised and
+response status codes for route handlers.
+
+The middleware excludes a set of common paths such as '/favicon.ico',
+'/metrics' and some others from triggering updates to the default metrics.
+The complete set is defined in ``aioprometheus.agsi.middleware.EXCLUDE_PATHS``.
+
+Any custom application metrics are automatically included in the exposed
+metrics.
+
+The example below shows how to use the aioprometheus ASGI middleware in a
+FastAPI application. FastAPI is built upon Starlette so using the middleware
+in Starlette would be the same.
+
+.. literalinclude:: ../../examples/frameworks/fastapi-middleware.py
+    :language: python3
+
+The example imports a Starlette specific metrics rendering function from the
+``aioprometheus.asgi.starlette`` module and attaches it to the '/metrics'
+route. The rendering function requires Starlette so remember to install
+aioprometheus with the 'starlette' extras.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[starlette]
+
+Alternatively, if you don't want the default metrics provided by the ASGI
+middleware or want finer control over the metrics export function then you
+can use the aioprometheus render function to help implement your own
+metrics handler.
+
+The example below shows how this approach can be implemented with a FastAPI
+application.
+
+.. literalinclude:: ../../examples/frameworks/fastapi-example.py
     :language: python3
 
 There are more examples in the ``examples/frameworks`` directory showing

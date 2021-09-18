@@ -1,4 +1,4 @@
-name: Python Package Workflow
+name: CI Pipeline
 
 on:
   push:
@@ -39,9 +39,17 @@ jobs:
     - name: Check code style
       run: |
         make check-style
-    - name: Install package
+    - name: Install package on Python 3.6
+      # Quart is not supported on Python 3.6
+      if: ${{ matrix.python-version == '3.6' }}
       run: |
-        pip install .[aiohttp,binary] --use-feature=in-tree-build
+        echo "Python version is: ${{ matrix.python-version }}"
+        pip install .[aiohttp,binary,starlette] --use-feature=in-tree-build
+    - name: Install package
+      if: ${{ matrix.python-version != '3.6' }}
+      run: |
+        echo "Python version is: ${{ matrix.python-version }}"
+        pip install .[aiohttp,binary,starlette,quart] --use-feature=in-tree-build
     - name: Run unit tests
       run: |
         make test

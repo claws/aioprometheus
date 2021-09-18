@@ -25,7 +25,7 @@ echo "Install test dependencies and extras to check integrations"
 pip install asynctest requests aiohttp fastapi quart
 
 echo "Installing $RELEASE_ARCHIVE"
-pip install $RELEASE_ARCHIVE[aiohttp,binary]
+pip install $RELEASE_ARCHIVE[aiohttp,binary,starlette,quart]
 
 echo "Running tests"
 cd ..

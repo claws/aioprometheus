@@ -9,11 +9,11 @@ pylint
 twine
 wheel
 
-# web app frameworks are used in unit tests to verify integration
+# web app frameworks are used in ASGI middleware and unit tests to verify integration
 aiohttp
 fastapi
 uvicorn
-quart
+quart; python_version > '3.7'
 
 # psutil is used in example code
 psutil
