@@ -1,7 +1,7 @@
 aioprometheus
 =============
 
-|ci status| |pypi| |python| |docs| |license|
+|ci status| |pypi| |python| |cov| |docs| |license|
 
 .. toctree::
    :maxdepth: 1
@@ -52,10 +52,13 @@ decorators, ASGI middleware, etc.
     :target: https://pypi.python.org/pypi/aioprometheus
 
 .. |python| image:: https://img.shields.io/pypi/pyversions/aioprometheus.svg
-   :target: https://pypi.python.org/pypi/aioprometheus/
+    :target: https://pypi.python.org/pypi/aioprometheus/
+
+.. |cov| image:: https://codecov.io/github/claws/aioprometheus/branch/master/graph/badge.svg?token=oPPBg8hBgc
+    :target: https://codecov.io/github/claws/aioprometheus
 
 .. |docs| image:: https://readthedocs.org/projects/aioprometheus/badge/?version=latest
     :target: https://aioprometheus.readthedocs.io/en/latest
 
 .. |license| image:: https://img.shields.io/badge/license-MIT-blue.svg
-   :target: https://github.com/claws/aioprometheus/License/LICENSE
+    :target: https://github.com/claws/aioprometheus/License/LICENSE

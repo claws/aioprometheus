@@ -1,5 +1,10 @@
 # Change Log
 
+## 21.9.X
+
+- Updated CI to support uploading code coverage results to CodeCov.
+  Updated documentation to display codecov status badge.
+
 ## 21.9.0
 
 - Streamline the aioprometheus API so that metrics are automatically registered

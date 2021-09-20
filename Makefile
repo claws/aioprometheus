@@ -60,6 +60,7 @@ coverage:
 	@coverage combine
 	@coverage html
 	@coverage report
+	@coverage xml
 
 
 # help: style                   - perform code style format
