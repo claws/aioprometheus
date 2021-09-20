@@ -54,9 +54,16 @@ jobs:
       run: |
         make test
     - name: Check code coverage
+      if: ${{ matrix.python-version == '3.9' }}
       run: |
         make coverage
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v2
+      if: ${{ matrix.python-version == '3.9' }}
+      with:
+        fail_ci_if_error: false
     - name: Generate docs
+      if: ${{ matrix.python-version == '3.9' }}
       run: |
         make docs
     - name: Generate package
