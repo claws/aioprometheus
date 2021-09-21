@@ -2,6 +2,7 @@ import unittest
 from typing import List
 
 from aioprometheus import REGISTRY, Counter, MetricsMiddleware, formats, render
+from aioprometheus.asgi.middleware import EXCLUDE_PATHS
 from aioprometheus.asgi.starlette import metrics
 
 try:
@@ -328,3 +329,158 @@ class TestFastAPIUsage(unittest.TestCase):
         self.assertIn(
             'responses_total_counter{method="GET",path="/users/alice"} 1', response.text
         )
+
+    def test_asgi_middleware_group_status_codes_enabled(self):
+        """check ASGI middleware group status codes usage in FastAPI app"""
+
+        app = FastAPI()
+
+        app.add_middleware(MetricsMiddleware, group_status_codes=True)
+        app.add_route("/metrics", metrics)
+
+        @app.get("/users/{user_id}")
+        async def get_user(user_id: str):
+            return f"{user_id}"
+
+        # Add a route that always generates an exception
+        @app.get("/boom")
+        async def hello():
+            raise Exception("Boom")
+
+        # The test client also starts the web service
+        test_client = TestClient(app)
+
+        # Access root to increment metric counter
+        response = test_client.get("/users/bob")
+        self.assertEqual(response.status_code, 200)
+
+        # Get default format
+        response = test_client.get("/metrics", headers={"accept": "*/*"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            formats.text.TEXT_CONTENT_TYPE,
+            response.headers.get("content-type"),
+        )
+
+        # Check content
+        self.assertIn(
+            'requests_total_counter{method="GET",path="/users/bob"} 1', response.text
+        )
+        self.assertIn(
+            'status_codes_counter{method="GET",path="/users/bob",status_code="2xx"} 1',
+            response.text,
+        )
+        self.assertIn(
+            'responses_total_counter{method="GET",path="/users/bob"} 1', response.text
+        )
+
+        # Access it again to confirm default metrics get incremented
+        response = test_client.get("/users/alice")
+        self.assertEqual(response.status_code, 200)
+
+        # Get text format
+        response = test_client.get("/metrics", headers={"accept": "*/*"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            formats.text.TEXT_CONTENT_TYPE,
+            response.headers.get("content-type"),
+        )
+
+        # Check content
+        self.assertIn(
+            'requests_total_counter{method="GET",path="/users/bob"} 1', response.text
+        )
+        self.assertIn(
+            'requests_total_counter{method="GET",path="/users/alice"} 1', response.text
+        )
+        self.assertIn(
+            'status_codes_counter{method="GET",path="/users/bob",status_code="2xx"} 1',
+            response.text,
+        )
+        self.assertIn(
+            'status_codes_counter{method="GET",path="/users/alice",status_code="2xx"} 1',
+            response.text,
+        )
+        self.assertIn(
+            'responses_total_counter{method="GET",path="/users/bob"} 1', response.text
+        )
+        self.assertIn(
+            'responses_total_counter{method="GET",path="/users/alice"} 1', response.text
+        )
+
+        # Access boom route to trigger exception metric update
+        with self.assertRaises(Exception):
+            response = test_client.get("/boom")
+            self.assertEqual(response.status_code, 500)
+
+        response = test_client.get("/metrics", headers={"accept": "*/*"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            formats.text.TEXT_CONTENT_TYPE,
+            response.headers.get("content-type"),
+        )
+
+        # Check exception counter was incremented
+        self.assertIn(
+            'exceptions_total_counter{method="GET",path="/boom"} 1', response.text
+        )
+        self.assertIn(
+            'status_codes_counter{method="GET",path="/boom",status_code="5xx"} 1',
+            response.text,
+        )
+
+    def test_asgi_middleware_default_exclude_paths(self):
+        """check ASGI middleware default exclude paths usage in FastAPI app"""
+
+        app = FastAPI()
+
+        app.add_middleware(MetricsMiddleware)
+        app.add_route("/metrics", metrics)
+
+        # The test client also starts the web service
+        test_client = TestClient(app)
+
+        # Access each of the paths that are ignored by the default metrics
+        for path in EXCLUDE_PATHS:
+            response = test_client.get("/metrics", headers={"accept": "*/*"})
+            self.assertEqual(response.status_code, 200)
+
+        # Check that ignored content is not present
+        response = test_client.get("/metrics", headers={"accept": "*/*"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            formats.text.TEXT_CONTENT_TYPE,
+            response.headers.get("content-type"),
+        )
+
+        for path in EXCLUDE_PATHS:
+            self.assertNotIn(f'path="{path}"', response.text)
+
+    def test_asgi_middleware_disable_exclude_paths(self):
+        """check ASGI middleware with exclude paths disabled in FastAPI app"""
+
+        app = FastAPI()
+
+        app.add_middleware(MetricsMiddleware, exclude_paths=None)
+        app.add_route("/metrics", metrics)
+
+        # The test client also starts the web service
+        test_client = TestClient(app)
+
+        # Access each of the paths that are ignored by the default metrics
+        for path in EXCLUDE_PATHS:
+            print(path)
+            response = test_client.get(path, headers={"accept": "*/*"})
+            # items such as favicon.ico are not present so will return a 404
+            self.assertIn(response.status_code, [200, 404])
+
+        # Check that ignored content is not present
+        response = test_client.get("/metrics", headers={"accept": "*/*"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(
+            formats.text.TEXT_CONTENT_TYPE,
+            response.headers.get("content-type"),
+        )
+
+        for path in EXCLUDE_PATHS:
+            self.assertIn(f'path="{path}"', response.text)

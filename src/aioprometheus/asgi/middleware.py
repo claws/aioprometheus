@@ -11,6 +11,7 @@ ASGICallable = Callable[[Scope, Receive, Send], Awaitable[None]]
 
 EXCLUDE_PATHS = (
     "/metrics",
+    "/metrics/",
     "/docs",
     "/openapi.json",
     "/docs/oauth2-redirect",
@@ -44,6 +45,11 @@ class MetricsMiddleware:
       actual route url as they allow the route handler to be easily
       identified. This feature is only supported with Starlette / FastAPI
       currently.
+
+    :param group_status_codes: A boolean that defines whether status codes
+      should be grouped under a value representing that code kind. For
+      example, 200, 201, etc will all be grouped under 2xx. The default value
+      is False which means that status codes are not grouped.
     """
 
     def __init__(
@@ -52,6 +58,7 @@ class MetricsMiddleware:
         registry: Registry = REGISTRY,
         exclude_paths: Sequence[str] = EXCLUDE_PATHS,
         use_template_urls: bool = True,
+        group_status_codes: bool = False,
     ) -> None:
         # The 'app' argument really represents an ASGI framework callable.
         self.asgi_callable = app
@@ -64,6 +71,7 @@ class MetricsMiddleware:
 
         self.exclude_paths = exclude_paths if exclude_paths else []
         self.use_template_urls = use_template_urls
+        self.group_status_codes = group_status_codes
 
         if registry is not None and not isinstance(registry, Registry):
             raise Exception(f"registry must be a Registry, got: {type(registry)}")
@@ -72,20 +80,21 @@ class MetricsMiddleware:
         # Create default metrics
 
         self.requests_counter = Counter(
-            "requests_total_counter", "Total requests by method and path"
+            "requests_total_counter", "Total number of requests received"
         )
 
         self.responses_counter = Counter(
-            "responses_total_counter", "Total responses by method and path"
+            "responses_total_counter", "Total number of responses sent"
         )
 
         self.exceptions_counter = Counter(
-            "exceptions_total_counter", "Total exceptions by method and path"
+            "exceptions_total_counter",
+            "Total number of requested which generated an exception",
         )
 
         self.status_codes_counter = Counter(
             "status_codes_counter",
-            "Total count of response status codes by method and path",
+            "Total number of response status codes",
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
@@ -108,7 +117,10 @@ class MetricsMiddleware:
 
             if response["type"] == "http.response.start":
                 status_code_labels = labels.copy()
-                status_code_labels["status_code"] = response["status"]
+                status_code = str(response["status"])
+                status_code_labels["status_code"] = (
+                    f"{status_code[0]}xx" if self.group_status_codes else status_code
+                )
                 self.status_codes_counter.inc(status_code_labels)
                 self.responses_counter.inc(labels)
 
@@ -133,7 +145,9 @@ class MetricsMiddleware:
             self.exceptions_counter.inc(labels)
 
             status_code_labels = labels.copy()
-            status_code_labels["status_code"] = 500
+            status_code_labels["status_code"] = (
+                "5xx" if self.group_status_codes else "500"
+            )
             self.status_codes_counter.inc(status_code_labels)
             self.responses_counter.inc(labels)
 
