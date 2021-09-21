@@ -325,6 +325,11 @@ The ASGI middleware provides a default set of metrics that include counters
 for total requests received, total responses sent, exceptions raised and
 response status codes for route handlers.
 
+.. note::
+
+    Exceptions are not propagated to the ASGI layer by the Quart framework
+    so the default metric tracking exceptions does not work for Quart.
+
 The middleware excludes a set of common paths such as '/favicon.ico',
 '/metrics' and some others from triggering updates to the default metrics.
 The complete set is defined in ``aioprometheus.agsi.middleware.EXCLUDE_PATHS``.
@@ -525,3 +530,16 @@ Run Prometheus and pass it the configuration file.
 
 Once Prometheus is running you can access at `localhost:9090 <http://localhost:9090/>`_
 and can observe the metrics from the example.
+
+
+Testing
+-------
+
+When producing unit tests for software that uses `aioprometheus` it will
+likely be necessary to clear the default registry between test runs to get
+it back to a clean state. Failing to do this will likely result in an error
+being raised reporting that a metric by the same name already exists.
+
+Reseting the deafult registry is easily achieved by calling
+``REGISTRY.clear()``. See the unit tests of this project for examples of
+where this is done.

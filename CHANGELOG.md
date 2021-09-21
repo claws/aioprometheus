@@ -5,6 +5,19 @@
 - Updated CI to support uploading code coverage results to CodeCov.
   Updated documentation to display codecov status badge.
 
+- Added option to ASGI middleware that allows response status codes to
+  be grouped. For example, status codes 200, 201, etc will all be reported
+  under the group 2xx. Similar situation for 3xx, 4xx, 5xx.
+
+- Added test that confirms the default ASGI metrics tracking exceptions
+  raised by user handler functions does not work for Quart. Added information
+  to user guide stating this.
+
+- Added information to user guide for developers writing unit tests to be
+  familiar with ``REGISTRY.clear()`` that will reset the default metrics
+  registry to an empty state to avoid errors related to identical metrics
+  attempting to be registered with the default registry.
+
 ## 21.9.0
 
 - Streamline the aioprometheus API so that metrics are automatically registered
