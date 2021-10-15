@@ -47,6 +47,9 @@ if __name__ == "__main__":
         url="https://github.com/claws/aioprometheus",
         package_dir={'': 'src'},
         packages=find_packages('src'),
+        package_data = {
+            'aioprometheus': ['py.typed'],
+        },
         python_requires=">=3.6.0",
         install_requires=requirements,
         extras_require={
