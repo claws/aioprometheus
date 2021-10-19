@@ -1,6 +1,12 @@
 # Change Log
 
-## 21.9.X
+## XX.Y.Z
+
+## 21.9.1
+
+- Add Python 3.10 to CI testing.
+
+- Updated package to support PEP561.
 
 - Updated CI to support uploading code coverage results to CodeCov.
   Updated documentation to display codecov status badge.
