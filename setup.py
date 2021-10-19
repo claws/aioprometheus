@@ -69,4 +69,6 @@ if __name__ == "__main__":
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Topic :: Software Development :: Libraries :: Python Modules",
-            "Topic :: System :: Monitoring"])
+            "Topic :: System :: Monitoring",
+            "Typing :: Typed",
+        ])
