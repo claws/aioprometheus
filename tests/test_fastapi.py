@@ -469,7 +469,6 @@ class TestFastAPIUsage(unittest.TestCase):
 
         # Access each of the paths that are ignored by the default metrics
         for path in EXCLUDE_PATHS:
-            print(path)
             response = test_client.get(path, headers={"accept": "*/*"})
             # items such as favicon.ico are not present so will return a 404
             self.assertIn(response.status_code, [200, 404])
