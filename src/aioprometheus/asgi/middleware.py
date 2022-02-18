@@ -80,21 +80,27 @@ class MetricsMiddleware:
         # Create default metrics
 
         self.requests_counter = Counter(
-            "requests_total_counter", "Total number of requests received"
+            "requests_total_counter",
+            "Total number of requests received",
+            registry=registry,
         )
 
         self.responses_counter = Counter(
-            "responses_total_counter", "Total number of responses sent"
+            "responses_total_counter",
+            "Total number of responses sent",
+            registry=registry,
         )
 
         self.exceptions_counter = Counter(
             "exceptions_total_counter",
             "Total number of requested which generated an exception",
+            registry=registry,
         )
 
         self.status_codes_counter = Counter(
             "status_codes_counter",
             "Total number of response status codes",
+            registry=registry,
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
