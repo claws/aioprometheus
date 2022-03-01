@@ -59,6 +59,7 @@ class MetricsMiddleware:
         exclude_paths: Sequence[str] = EXCLUDE_PATHS,
         use_template_urls: bool = True,
         group_status_codes: bool = False,
+        const_labels: LabelsType = None,
     ) -> None:
         # The 'app' argument really represents an ASGI framework callable.
         self.asgi_callable = app
@@ -80,21 +81,27 @@ class MetricsMiddleware:
         # Create default metrics
 
         self.requests_counter = Counter(
-            "requests_total_counter", "Total number of requests received"
+            "requests_total_counter",
+            "Total number of requests received",
+            const_labels=const_labels,
         )
 
         self.responses_counter = Counter(
-            "responses_total_counter", "Total number of responses sent"
+            "responses_total_counter",
+            "Total number of responses sent",
+            const_labels=const_labels,
         )
 
         self.exceptions_counter = Counter(
             "exceptions_total_counter",
             "Total number of requested which generated an exception",
+            const_labels=const_labels,
         )
 
         self.status_codes_counter = Counter(
             "status_codes_counter",
             "Total number of response status codes",
+            const_labels=const_labels,
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
