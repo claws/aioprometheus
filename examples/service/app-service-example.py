@@ -118,7 +118,7 @@ class ExampleApp:
         self.requests_metric.inc({"path": "/"})
 
         # Monitor request payload data to emulate webserver app
-        self.payload_metric.add({"path": "/data"}, random.random() * 2 ** 10)
+        self.payload_metric.add({"path": "/data"}, random.random() * 2**10)
 
         # Monitor request latency to emulate webserver app
         self.latency_metric.add({"path": "/data"}, random.random() * 5)
