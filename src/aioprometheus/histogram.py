@@ -45,7 +45,7 @@ def exponentialBuckets(
         raise Exception("Invalid start, must be positive")
     if factor < 1:
         raise Exception("Invalid factor, must be greater than one")
-    return [start * (factor ** i) for i in range(count)]
+    return [start * (factor**i) for i in range(count)]
 
 
 class Histogram:
