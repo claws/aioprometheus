@@ -106,7 +106,6 @@ class MetricsMiddleware:
             "Total number of response status codes",
             const_labels=const_labels,
             registry=registry,
-
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
