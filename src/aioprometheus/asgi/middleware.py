@@ -1,6 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict, Sequence
 
 from aioprometheus import REGISTRY, Counter, Registry
+from aioprometheus.mypy_types import LabelsType
 
 Scope = Dict[str, Any]
 Message = Dict[str, Any]
