@@ -84,24 +84,29 @@ class MetricsMiddleware:
             "requests_total_counter",
             "Total number of requests received",
             const_labels=const_labels,
+            registry=registry,
         )
 
         self.responses_counter = Counter(
             "responses_total_counter",
             "Total number of responses sent",
             const_labels=const_labels,
+            registry=registry,
         )
 
         self.exceptions_counter = Counter(
             "exceptions_total_counter",
             "Total number of requested which generated an exception",
             const_labels=const_labels,
+            registry=registry,
         )
 
         self.status_codes_counter = Counter(
             "status_codes_counter",
             "Total number of response status codes",
             const_labels=const_labels,
+            registry=registry,
+
         )
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
