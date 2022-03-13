@@ -79,37 +79,61 @@ class MetricsMiddleware:
             raise Exception(f"registry must be a Registry, got: {type(registry)}")
         self.registry = registry
 
-        # Create default metrics
+        self.const_labels = const_labels
 
-        self.requests_counter = Counter(
-            "requests_total_counter",
-            "Total number of requests received",
-            const_labels=const_labels,
-            registry=registry,
+        # The creation of the middleware metrics is delayed until the first
+        # call to update one of the metrics. This ensures that the metrics
+        # are only created once - even in situations such as Starlette's
+        # occasionally middleware rebuilding that creates new instances of
+        # middleware. This avoids exceptions being raised by the registry
+        # when identical metrics collectors are created.
+        self.metrics_created = False
+
+    def create_metrics(self):
+        """Create middleware metrics"""
+
+        self.requests_counter = (  # pylint: disable=attribute-defined-outside-init
+            Counter(
+                "requests_total_counter",
+                "Total number of requests received",
+                const_labels=self.const_labels,
+                registry=self.registry,
+            )
         )
 
-        self.responses_counter = Counter(
-            "responses_total_counter",
-            "Total number of responses sent",
-            const_labels=const_labels,
-            registry=registry,
+        self.responses_counter = (  # pylint: disable=attribute-defined-outside-init
+            Counter(
+                "responses_total_counter",
+                "Total number of responses sent",
+                const_labels=self.const_labels,
+                registry=self.registry,
+            )
         )
 
-        self.exceptions_counter = Counter(
-            "exceptions_total_counter",
-            "Total number of requested which generated an exception",
-            const_labels=const_labels,
-            registry=registry,
+        self.exceptions_counter = (  # pylint: disable=attribute-defined-outside-init
+            Counter(
+                "exceptions_total_counter",
+                "Total number of requested which generated an exception",
+                const_labels=self.const_labels,
+                registry=self.registry,
+            )
         )
 
-        self.status_codes_counter = Counter(
-            "status_codes_counter",
-            "Total number of response status codes",
-            const_labels=const_labels,
-            registry=registry,
+        self.status_codes_counter = (  # pylint: disable=attribute-defined-outside-init
+            Counter(
+                "status_codes_counter",
+                "Total number of response status codes",
+                const_labels=self.const_labels,
+                registry=self.registry,
+            )
         )
+
+        self.metrics_created = True
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
+
+        if not self.metrics_created:
+            self.create_metrics()
 
         if scope["type"] == "lifespan":
             # Starlette adds a reference to the app in the lifespan start

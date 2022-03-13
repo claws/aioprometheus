@@ -540,6 +540,6 @@ likely be necessary to clear the default registry between test runs to get
 it back to a clean state. Failing to do this will likely result in an error
 being raised reporting that a metric by the same name already exists.
 
-Reseting the deafult registry is easily achieved by calling
+Resetting the default registry is easily achieved by calling
 ``REGISTRY.clear()``. See the unit tests of this project for examples of
 where this is done.

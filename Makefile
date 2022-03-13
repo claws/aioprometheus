@@ -9,6 +9,7 @@
 # help: aioprometheus Makefile help
 # help:
 
+PYTHON_VERSION := python3.9
 VENV_DIR := venv
 
 # help: help                    - display this makefile's help information
@@ -21,7 +22,7 @@ help:
 .PHONY: venv
 venv:
 	@rm -Rf "$(VENV_DIR)"
-	@python3 -m venv "$(VENV_DIR)"
+	@$(PYTHON_VERSION) -m venv "$(VENV_DIR)"
 	@/bin/bash -c "source $(VENV_DIR)/bin/activate && pip install pip --upgrade && pip install -r requirements.dev.txt"
 	@/bin/bash -c "source $(VENV_DIR)/bin/activate && pip install -e .[aiohttp,binary,starlette,quart]"
 	@echo "Enter virtual environment using:\n\n\t$ source $(VENV_DIR)/bin/activate\n"
@@ -33,10 +34,11 @@ clean:
 	@git clean -X -f -d
 
 
-# help: clean.scrub             - clean all files, even untracked files
-.PHONY: clean.scrub
-clean.scrub:
-	git clean -x -f -d
+# help: style                   - perform code style format
+.PHONY: style
+style:
+	@isort . --profile black
+	@black src/aioprometheus tests setup.py examples docs/conf.py
 
 
 # help: test                    - run tests
@@ -45,9 +47,9 @@ test:
 	@python -m unittest discover -s tests
 
 
-# help: test.verbose            - run tests [verbosely]
-.PHONY: test.verbose
-test.verbose:
+# help: test-verbose            - run tests [verbosely]
+.PHONY: test-verbose
+test-verbose:
 	@python -m unittest discover -s tests -v
 
 
@@ -63,26 +65,11 @@ coverage:
 	@coverage xml
 
 
-# help: style                   - perform code style format
-.PHONY: style
-style: sort-imports format
-
-
 # help: check-style             - check code style compliance
 .PHONY: check-style
-check-style: check-sort-imports check-format
-
-
-# help: format                  - perform code style format
-.PHONY: format
-format:
-	@black src/aioprometheus tests examples docs/conf.py
-
-
-# help: check-format            - check code format compliance
-.PHONY: check-format
-check-format:
-	@black --check src/aioprometheus tests examples docs/conf.py
+check-style:
+	@isort . --check-only --profile black
+	@black --check src/aioprometheus tests setup.py examples docs/conf.py
 
 
 # help: check-lint              - check linting
@@ -90,22 +77,16 @@ check-format:
 check-lint:
 	@pylint --rcfile=.pylintrc aioprometheus setup.py ./examples ./docs/conf.py
 
+
 # help: check-types             - check type hint annotations
 .PHONY: check-types
 check-types:
 	@cd src; mypy -p aioprometheus --ignore-missing-imports
 
 
-# help: sort-imports            - apply import sort ordering
-.PHONY: sort-imports
-sort-imports:
-	@isort . --profile black
-
-
-# help: check-sort-imports      - check imports are sorted
-.PHONY: check-sort-imports
-check-sort-imports:
-	@isort . --check-only --profile black
+# help: checks                  - perform all checks
+.PHONY: checks
+checks: check-style check-lint check-types test
 
 
 # help: docs                    - generate HTML documentation
