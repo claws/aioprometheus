@@ -1,28 +1,28 @@
-
 import os
 import re
 
 from setuptools import find_packages, setup
 
-regexp = re.compile(r'.*__version__ = [\'\"](.*?)[\'\"]', re.S)
+regexp = re.compile(r".*__version__ = [\'\"](.*?)[\'\"]", re.S)
 
 init_file = os.path.join(
-    os.path.dirname(__file__), 'src', 'aioprometheus', '__init__.py')
-with open(init_file, 'rt') as f:  # pylint: disable=unspecified-encoding
+    os.path.dirname(__file__), "src", "aioprometheus", "__init__.py"
+)
+with open(init_file, "rt") as f:  # pylint: disable=unspecified-encoding
     module_content = f.read()
     match = regexp.match(module_content)
     if match:
         version = match.group(1)
     else:
-        raise RuntimeError(
-            f"Cannot find __version__ in {init_file}")
+        raise RuntimeError(f"Cannot find __version__ in {init_file}")
 
-with open('README.rst', 'rt') as f:  # pylint: disable=unspecified-encoding
+with open("README.rst", "rt") as f:  # pylint: disable=unspecified-encoding
     readme = f.read()
 
+
 def parse_requirements(filename):
-    ''' Load requirements from a pip requirements file '''
-    with open(filename, 'rt') as fd:  # pylint: disable=unspecified-encoding
+    """Load requirements from a pip requirements file"""
+    with open(filename, "rt") as fd:  # pylint: disable=unspecified-encoding
         lines = []
         for line in fd:
             line = line.strip()
@@ -30,7 +30,8 @@ def parse_requirements(filename):
                 lines.append(line)
     return lines
 
-requirements = parse_requirements('requirements.txt')
+
+requirements = parse_requirements("requirements.txt")
 
 
 if __name__ == "__main__":
@@ -45,10 +46,10 @@ if __name__ == "__main__":
         license="MIT",
         keywords=["prometheus", "monitoring", "metrics"],
         url="https://github.com/claws/aioprometheus",
-        package_dir={'': 'src'},
-        packages=find_packages('src'),
-        package_data = {
-            'aioprometheus': ['py.typed'],
+        package_dir={"": "src"},
+        packages=find_packages("src"),
+        package_data={
+            "aioprometheus": ["py.typed"],
         },
         python_requires=">=3.6.0",
         install_requires=requirements,
@@ -72,4 +73,5 @@ if __name__ == "__main__":
             "Topic :: Software Development :: Libraries :: Python Modules",
             "Topic :: System :: Monitoring",
             "Typing :: Typed",
-        ])
+        ],
+    )

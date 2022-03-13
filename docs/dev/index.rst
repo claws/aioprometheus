@@ -114,19 +114,19 @@ tool which discovers all the unit tests and runs them.
 
     (aioprom) $ make test
 
-Or, you can call the standard library unittest module directly.
+To see more verbose test output run the verbose test rule.
 
 .. code-block:: console
 
-    (aioprom) $ python -m unittest discover -s tests -v
+    (aioprom) $ make test-verbose
 
-Individual unit tests can be run using the standard library ``unittest``
-package too.
+Individual unit tests can be run by calling them using the standard
+library ``unittest`` package.
 
 .. code-block:: console
 
     (aioprom) $ cd aioprometheus/tests
-    (aioprom) $ python -m unittest test_negotiate
+    (aioprom) $ python -m unittest test_negotiate.TestNegotiate.test_text_default
 
 
 Coverage
@@ -160,8 +160,7 @@ directory to start a simple Python web server.
 
     (aioprom) $ make serve-docs
 
-Then open a browser to the `docs <http://localhost:8000/_build/html/index.html>`_
-content.
+Then open a browser to the `docs <http://localhost:8000/>`_ content.
 
 
 .. _version-label:
@@ -180,13 +179,16 @@ will be incremented.
 Release Process
 ---------------
 
-Assuming that the tests are passing, the docs build without warnings and the
-type annotations check passes without warnings then a release can be made.
+The following steps are performed when making a new software release:
 
-The following steps are used to make a new software release:
+- Check that style, linting and type annotations checks pass without warnings.
 
-- Ensure that the version label in ``__init__.py`` is correct. It must comply
-  with the :ref:`version-label` scheme.
+- Check that docs build passes without errors or warnings.
+
+- Check that the version label in ``__init__.py`` has been updated for the
+  new release. It must comply with the  :ref:`version-label` scheme.
+
+- Update the CHANGELOG.md to describe the changes in this release.
 
 - Create the distribution. This project produces an artefact called a pure
   Python wheel. Only Python3 is supported by this package.

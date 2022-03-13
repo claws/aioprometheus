@@ -2,6 +2,21 @@
 
 ## XX.Y.Z
 
+## 22.3.0
+
+- Minor tweaks to project files such as setup.py formatting, Makefile rule
+  streamlining, docs updates.
+
+- Improve ASGI middleware integration with Starlette. Due to a implementation
+  limitation the aioprometheus ASGI middleware needed to be added as the last
+  middleware to avoid triggering an exception when Starlette rebuilds the
+  middleware stack. To avoid this issue the middleware metrics are now all
+  created upon the first call to update a metric.
+
+- Fix ASGI middleware to allow a custom registry to be passed in.
+
+- Fix ASGI middleware to allow custom const_labels to be passed in.
+
 ## 21.9.1
 
 - Add Python 3.10 to CI testing.

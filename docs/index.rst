@@ -10,6 +10,7 @@ aioprometheus
    user/index
    dev/index
    api/index
+   changes/index
 
 `aioprometheus` is a Prometheus Python client library for asyncio-based
 applications. It provides metrics collection and serving capabilities for
