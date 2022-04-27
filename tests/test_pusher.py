@@ -1,5 +1,7 @@
-import asynctest
 import asyncio
+
+import asynctest
+
 from aioprometheus import REGISTRY, Counter, Registry
 
 try:
