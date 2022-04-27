@@ -257,3 +257,13 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
         self.assertEqual("DELETE", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
+
+    async def test_push_delete(self):
+        job_name = "my-job"
+        p = Pusher(job_name, "http://localhost:2022")
+
+        counter = Counter("counter_test", "A counter.")
+        counter.inc({})
+
+        with self.assertRaises(aiohttp.client_exceptions.ClientConnectorError):
+            await p.replace(REGISTRY, timeout=aiohttp.ClientTimeout(total=60))
