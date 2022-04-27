@@ -1,4 +1,5 @@
 import asyncio
+import sys
 
 import asynctest
 
@@ -273,6 +274,7 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual("DELETE", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
 
+    @asynctest.skipUnless(sys.version_info > (3, 6, 0), "requires 3.7+")
     async def test_push_timeout(self):
         job_name = "my-job"
         p = Pusher(job_name, self.server.url, path="/slow")
