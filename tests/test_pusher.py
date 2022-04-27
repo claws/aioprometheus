@@ -282,6 +282,12 @@ class TestPusher(asynctest.TestCase):
         counter = Counter("counter_test", "A counter.")
         counter.inc({})
 
+        try:
+            import asyncio.exceptions
+        except:
+            self.skipTest("requires python 3.8+")
+            return
+
         with self.assertRaises(asyncio.exceptions.TimeoutError):
             await p.delete(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
 
