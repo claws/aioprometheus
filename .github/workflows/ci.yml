@@ -44,12 +44,12 @@ jobs:
       if: ${{ matrix.python-version == '3.6' }}
       run: |
         echo "Python version is: ${{ matrix.python-version }}"
-        pip install .[aiohttp,binary,starlette] --use-feature=in-tree-build
+        pip install .[aiohttp,binary,starlette]
     - name: Install package
       if: ${{ matrix.python-version != '3.6' }}
       run: |
         echo "Python version is: ${{ matrix.python-version }}"
-        pip install .[aiohttp,binary,starlette,quart] --use-feature=in-tree-build
+        pip install .[aiohttp,binary,starlette,quart]
     - name: Run unit tests
       run: |
         make test
