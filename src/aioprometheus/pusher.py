@@ -67,19 +67,23 @@ class Pusher:
 
         self.path = urljoin(self.addr, path)
 
-    async def add(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
+    async def add(
+        self, registry: Registry = REGISTRY, **kwargs
+    ) -> "aiohttp.ClientResponse":
         """
         ``add`` works like replace, but only metrics with the same name as the
         newly pushed metrics are replaced.
         """
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(**kwargs) as session:
             payload = self.formatter.marshall(registry)
             async with session.post(
                 self.path, data=payload, headers=self.headers
             ) as resp:
                 return resp
 
-    async def replace(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
+    async def replace(
+        self, registry: Registry = REGISTRY, **kwargs
+    ) -> "aiohttp.ClientResponse":
         """
         ``replace`` pushes new values for a group of metrics to the push
         gateway.
@@ -90,19 +94,21 @@ class Pusher:
             URL will be replaced with the new metrics value.
 
         """
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(**kwargs) as session:
             payload = self.formatter.marshall(registry)
             async with session.put(
                 self.path, data=payload, headers=self.headers
             ) as resp:
                 return resp
 
-    async def delete(self, registry: Registry = REGISTRY) -> "aiohttp.ClientResponse":
+    async def delete(
+        self, registry: Registry = REGISTRY, **kwargs
+    ) -> "aiohttp.ClientResponse":
         """
         ``delete`` deletes metrics from the push gateway. All metrics with
         the grouping key specified in the URL are deleted.
         """
-        async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession(**kwargs) as session:
             payload = self.formatter.marshall(registry)
             async with session.delete(
                 self.path, data=payload, headers=self.headers

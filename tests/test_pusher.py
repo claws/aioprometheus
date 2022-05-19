@@ -1,3 +1,6 @@
+import asyncio
+import sys
+
 import asynctest
 
 from aioprometheus import REGISTRY, Counter, Registry
@@ -36,12 +39,25 @@ if have_aiohttp:
             resp = aiohttp.web.Response(status=200)
             return resp
 
+        async def slow_handler(self, request):
+            await asyncio.sleep(5)
+            data = await request.read()
+            self.test_results = {
+                "path": request.path,
+                "headers": request.raw_headers,
+                "method": request.method,
+                "body": data,
+            }
+            resp = aiohttp.web.Response(status=200)
+            return resp
+
         async def start(self, addr="127.0.0.1", port=None):
             self._app = aiohttp.web.Application()
             self._app.router.add_route(
                 "*", "/metrics/job/{job}{tail:(/.+)?}", self.handler
             )
             self._app.router.add_route("*", "/api/v1/import/prometheus", self.handler)
+            self._app.router.add_route("*", "/slow", self.slow_handler)
             self._runner = aiohttp.web.AppRunner(self._app)
             await self._runner.setup()
             self._site = aiohttp.web.TCPSite(self._runner, addr, port)
@@ -257,3 +273,29 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
         self.assertEqual("DELETE", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
+
+    @asynctest.skipUnless(sys.version_info > (3, 8, 0), "requires 3.8+")
+    async def test_push_timeout(self):
+        job_name = "my-job"
+        p = Pusher(job_name, self.server.url, path="/slow")
+
+        counter = Counter("counter_test", "A counter.")
+        counter.inc({})
+
+        try:
+            import asyncio.exceptions
+        except:
+            self.skipTest("requires python 3.8+")
+            return
+
+        with self.assertRaises(asyncio.exceptions.TimeoutError):
+            await p.delete(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+
+        with self.assertRaises(asyncio.exceptions.TimeoutError):
+            await p.replace(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+
+        with self.assertRaises(asyncio.exceptions.TimeoutError):
+            await p.add(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+
+        with self.assertRaises(asyncio.exceptions.TimeoutError):
+            await p.replace(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
