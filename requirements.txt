@@ -1,1 +1,2 @@
+orjson
 quantile-python >= 1.1

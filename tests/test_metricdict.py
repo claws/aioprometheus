@@ -68,8 +68,8 @@ class TestMetricDict(unittest.TestCase):
 
     def test_access_by_str(self):
         label = {"b": 2, "c": 3, "a": 1}
-        access_key = '{"a": 1, "b": 2, "c": 3}'
-        bad_access_key = '{"b": 2, "c": 3, "a": 1}'
+        access_key = b'{"a":1,"b":2,"c":3}'
+        bad_access_key = b'{"b":2,"c":3,"a":1}'
         value = 100
 
         metrics = MetricDict()
@@ -86,7 +86,7 @@ class TestMetricDict(unittest.TestCase):
         # Access ok but wrong key by order
         with self.assertRaises(KeyError) as context:
             metrics[bad_access_key]
-        self.assertEqual(f"'{bad_access_key}'", str(context.exception))
+        self.assertEqual(f"{bad_access_key}", str(context.exception))
 
     def test_empty_key(self):
         metrics = MetricDict()
