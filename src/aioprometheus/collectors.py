@@ -1,20 +1,15 @@
 import enum
-import json
 import re
 from collections import OrderedDict
 from typing import Dict, List, Sequence, Tuple, Union, cast
 
+import orjson
 import quantile
 
 from aioprometheus.mypy_types import LabelsType, NumericValueType
 
 from . import histogram
 from .metricdict import MetricDict
-
-# Used to return the ordered pairs (which is not necessary but is useful
-# for consistency).
-decoder = json.JSONDecoder(object_pairs_hook=OrderedDict)
-
 
 METRIC_NAME_RE = re.compile(r"^[a-zA-Z_:][a-zA-Z0-9_:]*$")
 RESTRICTED_LABELS_NAMES = ("job",)
@@ -166,16 +161,10 @@ class Collector:
         a dict of labels and the second element is the value of the metric
         itself.
         """
-        items = self.values.items()
-
         result = []
-        for k, _v in items:
-            key = {}  # type: LabelsType
+        for k in self.values:
             # Check if is a single value dict (custom empty key)
-            if not k or k == MetricDict.EMPTY_KEY:
-                pass
-            else:
-                key = decoder.decode(k)
+            key = {} if k == MetricDict.EMPTY_KEY else orjson.loads(k)
             result.append((key, self.get(k)))
 
         return result
