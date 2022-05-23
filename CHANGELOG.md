@@ -1,6 +1,11 @@
 # Change Log
 
-## XX.Y.Z
+## 22.4.0
+
+- Fix package install issue related to pip when running ci jobs (#78)
+- Use orjson instead of the standard python JSON library to speed up
+  MetricDict (#77)
+- Add support for aiohttp client args for various Pusher methods (#75)
 
 ## 22.3.0
 
