@@ -15,6 +15,13 @@ try:
 except ImportError:
     have_quart = False
 
+try:
+    import prometheus_metrics_proto as pmp
+
+    have_pmp = True
+except ImportError:
+    have_pmp = False
+
 
 @unittest.skipUnless(have_quart, "Quart library is not available")
 class TestQuartRender(asynctest.TestCase):
@@ -23,8 +30,8 @@ class TestQuartRender(asynctest.TestCase):
     def tearDown(self):
         REGISTRY.clear()
 
-    async def test_render_in_quart_app(self):
-        """check render usage in Quart app"""
+    async def test_render_text(self):
+        """check render text usage in Quart app"""
 
         app = Quart(__name__)
         app.events_counter = Counter("events", "Number of events.")
@@ -53,7 +60,6 @@ class TestQuartRender(asynctest.TestCase):
             formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
-        # payload = await response.get_data()
 
         # Get text format
         response = await test_client.get("/metrics", headers={"accept": "text/plain;"})
@@ -62,6 +68,35 @@ class TestQuartRender(asynctest.TestCase):
             formats.text.TEXT_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
+
+        payload = await response.get_data()
+
+        # Check content
+        self.assertIn(b'events{path="/"} 1', payload)
+
+    @unittest.skipUnless(have_pmp, "prometheus_metrics_proto library is not available")
+    async def test_render_binary(self):
+        """check render binary usage in Quart app"""
+
+        app = Quart(__name__)
+        app.events_counter = Counter("events", "Number of events.")
+
+        @app.route("/")
+        async def index():
+            app.events_counter.inc({"path": "/"})
+            return "hello"
+
+        @app.route("/metrics")
+        async def handle_metrics():
+            content, http_headers = render(REGISTRY, request.headers.getlist("accept"))
+            return content, http_headers
+
+        # The test client also starts the web service
+        test_client = app.test_client()
+
+        # Access root to increment metric counter
+        response = await test_client.get("/")
+        self.assertEqual(response.status_code, 200)
 
         # Get binary format
         response = await test_client.get(
@@ -73,6 +108,17 @@ class TestQuartRender(asynctest.TestCase):
             formats.binary.BINARY_CONTENT_TYPE,
             response.headers.get("content-type"),
         )
+
+        payload = await response.get_data()
+        metrics = pmp.decode(payload)
+        self.assertEqual(len(metrics), 1)
+        mf = metrics[0]
+        self.assertIsInstance(mf, pmp.MetricFamily)
+        self.assertEqual(mf.type, pmp.COUNTER)
+        self.assertEqual(len(mf.metric), 1)
+        self.assertEqual(mf.metric[0].counter.value, 1)
+        self.assertEqual(mf.metric[0].label[0].name, "path")
+        self.assertEqual(mf.metric[0].label[0].value, "/")
 
     async def test_asgi_middleware(self):
         """check ASGI middleware usage in Quart app"""

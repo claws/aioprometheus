@@ -40,7 +40,7 @@ if have_aiohttp:
             return resp
 
         async def slow_handler(self, request):
-            await asyncio.sleep(5)
+            await asyncio.sleep(3)
             data = await request.read()
             self.test_results = {
                 "path": request.path,
@@ -288,14 +288,15 @@ class TestPusher(asynctest.TestCase):
             self.skipTest("requires python 3.8+")
             return
 
+        timeout = aiohttp.ClientTimeout(total=0.5)
         with self.assertRaises(asyncio.exceptions.TimeoutError):
-            await p.delete(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+            await p.delete(REGISTRY, timeout=timeout)
 
         with self.assertRaises(asyncio.exceptions.TimeoutError):
-            await p.replace(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+            await p.replace(REGISTRY, timeout=timeout)
 
         with self.assertRaises(asyncio.exceptions.TimeoutError):
-            await p.add(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+            await p.add(REGISTRY, timeout=timeout)
 
         with self.assertRaises(asyncio.exceptions.TimeoutError):
-            await p.replace(REGISTRY, timeout=aiohttp.ClientTimeout(total=1))
+            await p.replace(REGISTRY, timeout=timeout)
