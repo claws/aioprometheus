@@ -2,6 +2,24 @@
 
 ## XX.Y.Z
 
+## 22.5.0
+
+- Fix CI package install issue related to pip (#78)
+
+- Update Pusher to accept 'kwargs' to provide custom configuration to aiohttp
+  client (#75)
+
+- Use orjson instead of standard json to improve performance by speeding up
+  MetricDict (#77) when rendering.
+
+- Add a scheduled CI job to periodically verify unpinned dependencies (e.g. pip)
+  continue to work as expected.
+
+- Updated Quart unit test to fix issue which would result in a test failing if the
+  optional 'binary' package was not installed.
+
+- Update package version to 22.5.0
+
 ## 22.3.0
 
 - Minor tweaks to project files such as setup.py formatting, Makefile rule

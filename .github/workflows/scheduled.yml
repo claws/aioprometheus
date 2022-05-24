@@ -1,0 +1,45 @@
+name: Scheduled Job
+
+on:
+  schedule:
+    # Run a job every month to verify dependencies continue to work as expected.
+    # This periodic pipeline catches things that change infrequently like API
+    # changes in pip and unpinned package dependencies.
+    #
+    # This job runs at 09:05 on the second day of each month
+    - cron: "5 9 2 * *"
+
+jobs:
+  scheduled-job:
+    name: "Scheduled job for Python ${{ matrix.python-version }}"
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install wheel
+          pip install -r requirements.dev.txt
+      - name: Check code style
+        run: |
+          make check-style
+      - name: Install package
+        run: |
+          echo "Python version is: ${{ matrix.python-version }}"
+          pip install .[aiohttp,starlette,quart]
+      - name: Run unit tests
+        run: |
+          make test
+      - name: Generate docs
+        run: |
+          make docs
+      - name: Generate package
+        run: |
+          make dist
