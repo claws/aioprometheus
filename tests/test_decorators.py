@@ -1,4 +1,5 @@
 import asyncio
+from typing import Union
 
 import asynctest
 
@@ -21,75 +22,82 @@ class TestDecorators(asynctest.TestCase):
     async def test_timer(self):
         """check timer decorator behaviour"""
 
-        m = Summary("metric_label", "metric help")
-
-        # decorator should work with async functions
-        @timer(m, {"kind": "async_function"})
-        async def async_f(should_raise: bool):
-            if should_raise:
-                raise Exception("Boom")
-
-        # decorator should work with regular functions too
-        @timer(m, {"kind": "regular_function"})
-        def regular_f(should_raise: bool):
-            if should_raise:
-                raise Exception("Boom")
-
-        # decorator should work with methods too
-        class B:
-            @timer(m, {"kind": "async_method"})
-            async def b(self, should_raise: bool, arg_1, kwarg_1=None):
+        def setup_helpers(m: Union[Histogram, Summary]):
+            # decorator should work with async functions
+            @timer(m, {"kind": "async_function"})
+            async def async_f(should_raise: bool):
                 if should_raise:
                     raise Exception("Boom")
-                return arg_1 == "b_arg", kwarg_1 == "kwarg_1"
 
-        b = B()
+            # decorator should work with regular functions too
+            @timer(m, {"kind": "regular_function"})
+            def regular_f(should_raise: bool):
+                if should_raise:
+                    raise Exception("Boom")
 
-        SUB_TESTS = (
-            ("Normal test", False, 1),
-            ("Exception test", True, 2),
-        )
-        for test_msg, raises, count in SUB_TESTS:
-            with self.subTest(test_msg, raises=raises):
+            # decorator should work with methods too
+            class B:
+                @timer(m, {"kind": "async_method"})
+                async def b(self, should_raise: bool, arg_1, kwarg_1=None):
+                    if should_raise:
+                        raise Exception("Boom")
+                    return arg_1 == "b_arg", kwarg_1 == "kwarg_1"
 
-                if raises:
-                    # check decorator with async function
-                    with self.assertRaises(Exception) as cm:
+            return async_f, regular_f, B
+
+        m1 = Summary("metric_label_1", "metric help")
+        m2 = Histogram("metric_label_2", "metric help")
+
+        for metric in (m1, m2):
+            async_f, regular_f, B = setup_helpers(metric)
+
+            b = B()
+
+            SUB_TESTS = (
+                ("Normal test", False, 1),
+                ("Exception test", True, 2),
+            )
+            for test_msg, raises, count in SUB_TESTS:
+                with self.subTest(test_msg, raises=raises):
+
+                    if raises:
+                        # check decorator with async function
+                        with self.assertRaises(Exception) as cm:
+                            await async_f(raises)
+
+                        # check decorator with regular function
+                        with self.assertRaises(Exception) as cm:
+                            regular_f(raises)
+
+                        # check decorator with methods too
+                        with self.assertRaises(Exception) as cm:
+                            await b.b(raises, "b_arg", kwarg_1="kwarg_1")
+
+                    else:
+                        # check decorator with async function
                         await async_f(raises)
 
-                    # check decorator with regular function
-                    with self.assertRaises(Exception) as cm:
+                        # check decorator with regular function
                         regular_f(raises)
 
-                    # check decorator with methods too
-                    with self.assertRaises(Exception) as cm:
-                        await b.b(raises, "b_arg", kwarg_1="kwarg_1")
+                        # check decorator with methods too
+                        results = await b.b(raises, "b_arg", kwarg_1="kwarg_1")
+                        self.assertTrue(all(results))
 
-                else:
-                    # check decorator with async function
-                    await async_f(raises)
+                    # check async function updated metric
+                    m_async_function_value = metric.get({"kind": "async_function"})
+                    self.assertEqual(m_async_function_value["count"], count)
 
-                    # check decorator with regular function
-                    regular_f(raises)
+                    # check regular function updated metric
+                    m_regular_function_value = metric.get({"kind": "regular_function"})
+                    self.assertEqual(m_regular_function_value["count"], count)
 
-                    # check decorator with methods too
-                    results = await b.b(raises, "b_arg", kwarg_1="kwarg_1")
-                    self.assertTrue(all(results))
+                    # check async method updated metric
+                    m_method_value = metric.get({"kind": "async_method"})
+                    self.assertEqual(m_method_value["count"], count)
 
-                # check async function updated metric
-                m_async_function_value = m.get({"kind": "async_function"})
-                self.assertEqual(m_async_function_value["count"], count)
-
-                # check regular function updated metric
-                m_regular_function_value = m.get({"kind": "regular_function"})
-                self.assertEqual(m_regular_function_value["count"], count)
-
-                # check async method updated metric
-                m_method_value = m.get({"kind": "async_method"})
-                self.assertEqual(m_method_value["count"], count)
-
-    async def test_timer_with_non_summary_metric(self):
-        """check only summary metric can be used with timer decorator"""
+    async def test_timer_with_non_histogram_or_summary_metric(self):
+        """check only histogram or summary metrics can be used with timer decorator"""
         with self.assertRaises(Exception) as cm:
             m = Counter("metric_label", "metric help")
 
@@ -98,7 +106,8 @@ class TestDecorators(asynctest.TestCase):
                 return
 
         self.assertIn(
-            "timer decorator expects a Summary metric but got:", str(cm.exception)
+            "timer decorator expects a Histogram or Summary metric but got:",
+            str(cm.exception),
         )
 
     async def test_inprogress(self):

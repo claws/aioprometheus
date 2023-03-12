@@ -5,26 +5,30 @@ This module provides some convenience decorators for metrics
 import asyncio
 import time
 from functools import wraps
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Union
 
-from .collectors import Counter, Gauge, Summary
+from .collectors import Counter, Gauge, Histogram, Summary
 
 
-def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
+def timer(
+    metric: Union[Histogram, Summary], labels: Dict[str, str] = None
+) -> Callable[..., Any]:
     """
     This decorator wraps a callable with code to calculate how long the
     callable takes to execute and updates the metric with the duration.
 
     :param metric: a metric to update with the calculated function duration.
-      The metric object must be a Summary metric object.
+      The metric object must be a Histogram or Summary metric object.
 
     :param labels: a dict of extra labels to associate with the metric.
 
     :return: a callable wrapping the decorated function. The callable will
       be awaitable if the wrapped function was a coroutine function.
     """
-    if not isinstance(metric, Summary):
-        raise Exception(f"timer decorator expects a Summary metric but got: {metric}")
+    if not isinstance(metric, (Histogram, Summary)):
+        raise Exception(
+            f"timer decorator expects a Histogram or Summary metric but got: {metric}"
+        )
 
     def measure(func):
         """
@@ -43,7 +47,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
                 try:
                     rv = await rv
                 finally:
-                    metric.add(labels, time.monotonic() - start_time)
+                    metric.observe(labels, time.monotonic() - start_time)
             return rv
 
         @wraps(func)
@@ -52,7 +56,7 @@ def timer(metric: Summary, labels: Dict[str, str] = None) -> Callable[..., Any]:
             try:
                 rv = func(*args, **kwds)
             finally:
-                metric.add(labels, time.monotonic() - start_time)
+                metric.observe(labels, time.monotonic() - start_time)
             return rv
 
         if asyncio.iscoroutinefunction(func):
