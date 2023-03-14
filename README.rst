@@ -6,7 +6,7 @@ aioprometheus
 `aioprometheus` is a Prometheus Python client library for asyncio-based
 applications. It provides metrics collection and serving capabilities for
 use with Prometheus and compatible monitoring systems. It supports exporting
-metrics into text and binary formats and pushing metrics to a gateway.
+metrics into text and pushing metrics to a gateway.
 
 The ASGI middleware in `aioprometheus` can be used in FastAPI/Starlette and
 Quart applications. `aioprometheus` can also be used in other kinds of asyncio
@@ -50,20 +50,11 @@ dependencies are not installed by default. You can install them alongside
 
     $ pip install aioprometheus[aiohttp]
 
-Prometheus 2.0 removed support for the binary protocol, so in version 20.0.0 the
-dependency on `prometheus-metrics-proto`, which provides binary support, is now
-optional. If you need binary response support, for use with an older Prometheus,
-you will need to specify the 'binary' optional extra:
-
-.. code-block:: console
-
-    $ pip install aioprometheus[binary]
-
 Multiple optional dependencies can be listed at once, such as:
 
 .. code-block:: console
 
-    $ pip install aioprometheus[aiohttp,binary,starlette,quart]
+    $ pip install aioprometheus[aiohttp,starlette,quart]
 
 
 Usage
@@ -159,9 +150,15 @@ The next example shows how to use the Service HTTP endpoint to provide a
 dedicated metrics endpoint for other applications such as long running
 distributed system processes.
 
+The Service object requires optional extras to be installed so make sure you
+install aioprometheus with the 'aiohttp' extras.
+
+.. code-block:: console
+
+    $ pip install aioprometheus[aiohttp]
+
 .. code-block:: python
 
-    #!/usr/bin/env python
     """
     This example demonstrates how the ``aioprometheus.Service`` can be used to
     expose metrics on a HTTP endpoint.
@@ -225,13 +222,6 @@ rendering the contents of its registry into the appropriate format. By default
 the Service uses the default collector registry, which is
 ``aioprometheus.REGISTRY``. The Service can be configured to use a different
 registry by passing one in as an argument to the Service constructor.
-
-The Service object requires optional extras to be installed so make sure you
-install aioprometheus with the 'aiohttp' extras.
-
-.. code-block:: console
-
-    $ pip install aioprometheus[aiohttp]
 
 
 License

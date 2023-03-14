@@ -15,12 +15,12 @@ suggestion-mode=yes
 
 disable=invalid-name,
         broad-except,
+        broad-exception-raised,
         duplicate-code,
         logging-fstring-interpolation,
         missing-class-docstring,
         missing-module-docstring,
         missing-function-docstring,
-        no-self-use,
         too-many-instance-attributes,
         too-many-arguments,
         too-few-public-methods,

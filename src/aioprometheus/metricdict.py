@@ -37,7 +37,6 @@ class MetricDict(MutableMapping):
         return len(self.store)
 
     def __keytransform__(self, key):
-
         # Sometimes we need empty keys
         if not key or key == MetricDict.EMPTY_KEY:
             return MetricDict.EMPTY_KEY
@@ -50,6 +49,10 @@ class MetricDict(MutableMapping):
         if not isinstance(key, dict):
             raise TypeError("Only accepts dicts as keys")
 
-        return orjson.dumps(
-            key, option=(orjson.OPT_NON_STR_KEYS | orjson.OPT_SORT_KEYS)
+        return orjson.dumps(  # pylint: disable=no-member
+            key,
+            option=(
+                orjson.OPT_NON_STR_KEYS  # pylint: disable=no-member
+                | orjson.OPT_SORT_KEYS  # pylint: disable=no-member
+            ),
         )

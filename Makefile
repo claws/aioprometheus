@@ -1,6 +1,6 @@
 # This makefile has been created to help developers perform common actions.
 # It assumes it is operating in an environment, such as a virtual env,
-# where the python command links to the Python3.7 executable.
+# where the python command links to the Python3.11 executable.
 
 
 # Do not remove this block. It is used by the 'help' rule when
@@ -9,7 +9,7 @@
 # help: aioprometheus Makefile help
 # help:
 
-PYTHON_VERSION := python3.9
+PYTHON_VERSION := python3.11
 VENV_DIR := venv
 
 # help: help                    - display this makefile's help information
@@ -22,9 +22,9 @@ help:
 .PHONY: venv
 venv:
 	@rm -Rf "$(VENV_DIR)"
-	@$(PYTHON_VERSION) -m venv "$(VENV_DIR)"
+	@$(PYTHON_VERSION) -m venv "$(VENV_DIR)" --prompt aioprom
 	@/bin/bash -c "source $(VENV_DIR)/bin/activate && pip install pip --upgrade && pip install -r requirements.dev.txt"
-	@/bin/bash -c "source $(VENV_DIR)/bin/activate && pip install -e .[aiohttp,binary,starlette,quart]"
+	@/bin/bash -c "source $(VENV_DIR)/bin/activate && pip install -e .[aiohttp,starlette,quart]"
 	@echo "Enter virtual environment using:\n\n\t$ source $(VENV_DIR)/bin/activate\n"
 
 

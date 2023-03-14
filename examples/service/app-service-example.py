@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This example implements an application that exposes application metrics
 obtained from the psutil package.
@@ -35,7 +34,6 @@ class ExampleApp:
         metrics_host="127.0.0.1",
         metrics_port: int = 8000,
     ):
-
         self.metrics_host = metrics_host
         self.metrics_port = metrics_port
         self.timer = None  # type: asyncio.Handle
@@ -128,7 +126,6 @@ class ExampleApp:
 
 
 if __name__ == "__main__":
-
     logging.basicConfig(level=logging.DEBUG)
     # Silence asyncio and aiohttp loggers
     logging.getLogger("asyncio").setLevel(logging.ERROR)

@@ -13,13 +13,6 @@ try:
 except ImportError:
     have_fastapi = False
 
-try:
-    import prometheus_metrics_proto as pmp
-
-    have_pmp = True
-except ImportError:
-    have_pmp = False
-
 
 @unittest.skipUnless(have_fastapi, "FastAPI library is not available")
 class TestFastAPIUsage(unittest.TestCase):
@@ -70,51 +63,6 @@ class TestFastAPIUsage(unittest.TestCase):
         # Check content
         self.assertIn('events{path="/"} 1', response.text)
 
-    @unittest.skipUnless(have_pmp, "prometheus_metrics_proto library is not available")
-    def test_render_binary(self):
-        """check render binary usage in FastAPI app"""
-
-        app = FastAPI()
-        app.events_counter = Counter("events", "Number of events.")
-
-        @app.get("/")
-        async def hello():
-            app.events_counter.inc({"path": "/"})
-            return "hello"
-
-        @app.get("/metrics")
-        async def handle_metrics(response: Response, accept: List[str] = Header(None)):
-            content, http_headers = render(REGISTRY, accept)
-            return Response(content=content, media_type=http_headers["Content-Type"])
-
-        # The test client also starts the web service
-        test_client = TestClient(app)
-
-        # Access root to increment metric counter
-        response = test_client.get("/")
-        self.assertEqual(response.status_code, 200)
-
-        # Get binary format
-        response = test_client.get(
-            "/metrics",
-            headers={"accept": formats.binary.BINARY_CONTENT_TYPE},
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertIn(
-            formats.binary.BINARY_CONTENT_TYPE,
-            response.headers.get("content-type"),
-        )
-
-        metrics = pmp.decode(response.content)
-        self.assertEqual(len(metrics), 1)
-        mf = metrics[0]
-        self.assertIsInstance(mf, pmp.MetricFamily)
-        self.assertEqual(mf.type, pmp.COUNTER)
-        self.assertEqual(len(mf.metric), 1)
-        self.assertEqual(mf.metric[0].counter.value, 1)
-        self.assertEqual(mf.metric[0].label[0].name, "path")
-        self.assertEqual(mf.metric[0].label[0].value, "/")
-
     def test_asgi_middleware(self):
         """check ASGI middleware usage in FastAPI app"""
 
@@ -143,16 +91,6 @@ class TestFastAPIUsage(unittest.TestCase):
 
         # The test client also starts the web service
         test_client = TestClient(app)
-
-        # The test client does not call the ASGI lifespan scope on the app
-        # so we need to manual set the starlette_app attribute on the middleware.
-        # The only way I can think of doing this is to walk over the middlewares.
-        # However the structure is difficult to walk over.
-        # 'sem' represents the ServerErrorMiddleware that Starlette always adds
-        # as the first Middlware, before any user middleware.
-        sem = app.middleware_stack
-        self.assertIsInstance(sem.app, MetricsMiddleware)
-        sem.app.starlette_app = app
 
         # Access root to update default metrics and trigger custom metric update
         response = test_client.get("/")
@@ -364,14 +302,16 @@ class TestFastAPIUsage(unittest.TestCase):
 
         # Check content
         self.assertIn(
-            'requests_total_counter{method="GET",path="/users/bob"} 1', response.text
-        )
-        self.assertIn(
-            'status_codes_counter{method="GET",path="/users/bob",status_code="2xx"} 1',
+            'requests_total_counter{method="GET",path="/users/{user_id}"} 1',
             response.text,
         )
         self.assertIn(
-            'responses_total_counter{method="GET",path="/users/bob"} 1', response.text
+            'status_codes_counter{method="GET",path="/users/{user_id}",status_code="2xx"} 1',
+            response.text,
+        )
+        self.assertIn(
+            'responses_total_counter{method="GET",path="/users/{user_id}"} 1',
+            response.text,
         )
 
         # Access it again to confirm default metrics get incremented
@@ -388,24 +328,16 @@ class TestFastAPIUsage(unittest.TestCase):
 
         # Check content
         self.assertIn(
-            'requests_total_counter{method="GET",path="/users/bob"} 1', response.text
-        )
-        self.assertIn(
-            'requests_total_counter{method="GET",path="/users/alice"} 1', response.text
-        )
-        self.assertIn(
-            'status_codes_counter{method="GET",path="/users/bob",status_code="2xx"} 1',
+            'requests_total_counter{method="GET",path="/users/{user_id}"} 2',
             response.text,
         )
         self.assertIn(
-            'status_codes_counter{method="GET",path="/users/alice",status_code="2xx"} 1',
+            'status_codes_counter{method="GET",path="/users/{user_id}",status_code="2xx"} 2',
             response.text,
         )
         self.assertIn(
-            'responses_total_counter{method="GET",path="/users/bob"} 1', response.text
-        )
-        self.assertIn(
-            'responses_total_counter{method="GET",path="/users/alice"} 1', response.text
+            'responses_total_counter{method="GET",path="/users/{user_id}"} 2',
+            response.text,
         )
 
         # Access boom route to trigger exception metric update

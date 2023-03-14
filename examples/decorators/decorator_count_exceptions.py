@@ -1,5 +1,6 @@
-#!/usr/bin/env python
 """
+
+Usage:
 
 .. code-block:: python
 
@@ -30,6 +31,7 @@ REQUEST_EXCEPTIONS = Counter(
 )
 REQUESTS = Counter("request_total", "Total number of requests")
 
+
 # Decorate function with metric.
 @count_exceptions(REQUEST_EXCEPTIONS, {"route": "/"})
 async def handle_request(duration):
@@ -52,7 +54,6 @@ async def handle_requests():
 
 
 if __name__ == "__main__":
-
     loop = asyncio.get_event_loop()
 
     svr = Service()

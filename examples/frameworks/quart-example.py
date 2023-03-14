@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Sometimes you may not want to expose Prometheus metrics from a dedicated
 Prometheus metrics server but instead want to use an existing web framework.
@@ -10,10 +9,19 @@ is accessed. A '/metrics' route is added to the application using the standard
 web framework method. The metrics route renders Prometheus  metrics into the
 appropriate format.
 
+Setup:
+
+  (venv) $ pip install quart aioprometheus[quart]
+
 Run:
 
-  (venv) $ pip install quart
   (venv) $ python quart-example.py
+
+Test:
+
+  (venv) $ curl http://127.0.0.1:8000/metrics
+  (venv) $ curl http://127.0.0.1:8000/
+  (venv) $ curl http://127.0.0.1:8000/metrics
 
 """
 

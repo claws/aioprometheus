@@ -41,20 +41,11 @@ dependencies are not installed by default. You can install them alongside
 
     $ pip install aioprometheus[aiohttp]
 
-Prometheus 2.0 removed support for the binary protocol, so in version 20.0.0 the
-dependency on `prometheus-metrics-proto`, which provides binary support, is now
-optional. If you need binary response support, for use with an older Prometheus,
-you will need to specify the 'binary' optional extra:
-
-.. code-block:: console
-
-    $ pip install aioprometheus[binary]
-
 Multiple optional dependencies can be listed at once, such as:
 
 .. code-block:: console
 
-    $ pip install aioprometheus[aiohttp,binary,starlette,quart]
+    $ pip install aioprometheus[aiohttp,starlette,quart]
 
 
 .. _usage-label:
@@ -484,13 +475,38 @@ install aioprometheus with the 'aiohttp' extras.
     from aioprometheus.pusher import Pusher
 
     PUSH_GATEWAY_ADDR = "http://127.0.0.1:61423"
-    pusher = Pusher("my-job", PUSH_GATEWAY_ADDR, grouping_key={"instance": "127.0.0.1:1234"})
-    c = Counter("total_requests", "Total requests.", {})
 
-    c.inc({'url': "/p/user"})
+    async def main():
+        pusher = Pusher("my-job", PUSH_GATEWAY_ADDR, grouping_key={"instance": "127.0.0.1:1234"})
+        c = Counter("total_requests", "Total requests.", {})
+        c.inc({'url': "/p/user"})
+        resp = await pusher.replace(REGISTRY)
 
-    # Push to the push gateway
-    resp = await pusher.replace(REGISTRY)
+    if __name__ == "__main__":
+        asyncio.run(main())
+
+The Pusher API supports passing 'kwargs' on to the underlying client session
+used to push updates to the Gateway. This feature provides the ability to
+supply configuration information such as authentication parameters. The example
+code below shows how you can use basic authentication with the Pusher.
+
+.. code-block:: python
+
+    import aiohttp
+    from aioprometheus import REGISTRY, Counter
+    from aioprometheus.pusher import Pusher
+
+    PUSH_GATEWAY_ADDR = "http://127.0.0.1:61423"
+    AUTH = aiohttp.BasicAuth("Joe", password="4321")
+
+    async def main():
+        pusher = Pusher("my-job", PUSH_GATEWAY_ADDR)
+        c = Counter("total_requests", "Total requests.", {})
+        c.inc({'url': "/p/user"})
+        resp = await pusher.replace(REGISTRY, auth=AUTH)
+
+    if __name__ == "__main__":
+        asyncio.run(main())
 
 
 Using Prometheus To Check Examples

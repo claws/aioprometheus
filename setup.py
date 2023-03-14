@@ -35,7 +35,6 @@ requirements = parse_requirements("requirements.txt")
 
 
 if __name__ == "__main__":
-
     setup(
         name="aioprometheus",
         version=version,
@@ -51,25 +50,23 @@ if __name__ == "__main__":
         package_data={
             "aioprometheus": ["py.typed"],
         },
-        python_requires=">=3.6.0",
+        python_requires=">=3.8.0",
         install_requires=requirements,
         extras_require={
             "aiohttp": ["aiohttp>=3.3.2"],
-            "binary": ["prometheus-metrics-proto>=18.1.1"],
             "starlette": ["starlette>=0.14.2"],
             "quart": ["quart>=0.15.1"],
         },
         classifiers=[
-            "Development Status :: 4 - Beta",
+            "Development Status :: 5 - Production/Stable",
             "Intended Audience :: Developers",
             "License :: OSI Approved :: MIT License",
             "Programming Language :: Python",
             "Programming Language :: Python :: 3",
-            "Programming Language :: Python :: 3.6",
-            "Programming Language :: Python :: 3.7",
             "Programming Language :: Python :: 3.8",
             "Programming Language :: Python :: 3.9",
             "Programming Language :: Python :: 3.10",
+            "Programming Language :: Python :: 3.11",
             "Topic :: Software Development :: Libraries :: Python Modules",
             "Topic :: System :: Monitoring",
             "Typing :: Typed",

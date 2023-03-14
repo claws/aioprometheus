@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Sometimes you may not want to expose Prometheus metrics from a dedicated
 Prometheus metrics server but instead want to use an existing web framework.

@@ -13,12 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11"]
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -39,17 +39,10 @@ jobs:
     - name: Check code style
       run: |
         make check-style
-    - name: Install package on Python 3.6
-      # Quart is not supported on Python 3.6
-      if: ${{ matrix.python-version == '3.6' }}
-      run: |
-        echo "Python version is: ${{ matrix.python-version }}"
-        pip install .[aiohttp,binary,starlette]
     - name: Install package
-      if: ${{ matrix.python-version != '3.6' }}
       run: |
         echo "Python version is: ${{ matrix.python-version }}"
-        pip install .[aiohttp,binary,starlette,quart]
+        pip install .[aiohttp,starlette,quart]
     - name: Run unit tests
       run: |
         make test

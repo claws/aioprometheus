@@ -1,4 +1,4 @@
-from typing import Any, Awaitable, Callable, Dict, Sequence
+from typing import Any, Awaitable, Callable, Dict, Optional, Sequence
 
 from aioprometheus import REGISTRY, Counter, Registry
 from aioprometheus.mypy_types import LabelsType
@@ -45,7 +45,7 @@ class MetricsMiddleware:
       '/users/alice', etc. The template URLS can be more useful than the
       actual route url as they allow the route handler to be easily
       identified. This feature is only supported with Starlette / FastAPI
-      currently.
+      currently. Default value is True.
 
     :param group_status_codes: A boolean that defines whether status codes
       should be grouped under a value representing that code kind. For
@@ -60,15 +60,15 @@ class MetricsMiddleware:
         exclude_paths: Sequence[str] = EXCLUDE_PATHS,
         use_template_urls: bool = True,
         group_status_codes: bool = False,
-        const_labels: LabelsType = None,
+        const_labels: Optional[LabelsType] = None,
     ) -> None:
         # The 'app' argument really represents an ASGI framework callable.
         self.asgi_callable = app
 
-        # Starlette applications add a reference to the ASGI app in the
-        # lifespan start scope. Save a reference to the ASGI app to assist
-        # later when extracting route templates. Only Starlette/FastAPI
-        # apps provide this feature.
+        # A reference to the ASGI app is used to assist when extracting
+        # route template patterns. Only Starlette/FastAPI apps currently
+        # provide this feature. In normal operations the app reference is
+        # obtained from the 'lifespan' scope.
         self.starlette_app = None
 
         self.exclude_paths = exclude_paths if exclude_paths else []
@@ -84,7 +84,7 @@ class MetricsMiddleware:
         # The creation of the middleware metrics is delayed until the first
         # call to update one of the metrics. This ensures that the metrics
         # are only created once - even in situations such as Starlette's
-        # occasionally middleware rebuilding that creates new instances of
+        # occasional middleware rebuilding that creates new instances of
         # middleware. This avoids exceptions being raised by the registry
         # when identical metrics collectors are created.
         self.metrics_created = False
@@ -131,63 +131,68 @@ class MetricsMiddleware:
         self.metrics_created = True
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
-
         if not self.metrics_created:
             self.create_metrics()
 
-        if scope["type"] == "lifespan":
-            # Starlette adds a reference to the app in the lifespan start
-            # scope. Store a reference to the app to assist later when
-            # extracting route templates.
-            self.starlette_app = scope.get("app")
+        if self.starlette_app is None:
+            # To assist with extracting route templates later the middleware
+            # needs a reference to the starlette app. Fetch it from the scope.
+            # In normal operations this can be found in the 'lifespan' scope.
+            # However, in unit tests that use the starlette httpx test client
+            # it appears that the ASGI 'lifespan' call is not made. In this
+            # scenario obtain the app reference from the 'http' scope.
+            if scope["type"] in ("lifespan", "http"):
+                self.starlette_app = scope.get("app")
 
-        if scope["type"] != "http":
+        if scope["type"] == "lifespan":
             await self.asgi_callable(scope, receive, send)
             return
 
-        def wrapped_send(response):
-            """
-            Wrap the ASGI send function so that metrics collection can be finished.
-            """
-            # This function makes use of labels defined in the calling context.
+        if scope["type"] == "http":
 
-            if response["type"] == "http.response.start":
+            def wrapped_send(response):
+                """
+                Wrap the ASGI send function so that metrics collection can be finished.
+                """
+                # This function makes use of labels defined in the calling context.
+
+                if response["type"] == "http.response.start":
+                    status_code_labels = labels.copy()
+                    status_code = str(response["status"])
+                    status_code_labels["status_code"] = (
+                        f"{status_code[0]}xx"
+                        if self.group_status_codes
+                        else status_code
+                    )
+                    self.status_codes_counter.inc(status_code_labels)
+                    self.responses_counter.inc(labels)
+
+                return send(response)
+
+            # Store HTTP path and method so they can be used later in the send
+            # method to complete metrics updates.
+            method = scope["method"]
+            path = self.get_full_or_template_path(scope)
+            labels = {"method": method, "path": path}
+
+            if path in self.exclude_paths:
+                await self.asgi_callable(scope, receive, send)
+                return
+
+            self.requests_counter.inc(labels)
+            try:
+                await self.asgi_callable(scope, receive, wrapped_send)
+            except Exception:
+                self.exceptions_counter.inc(labels)
+
                 status_code_labels = labels.copy()
-                status_code = str(response["status"])
                 status_code_labels["status_code"] = (
-                    f"{status_code[0]}xx" if self.group_status_codes else status_code
+                    "5xx" if self.group_status_codes else "500"
                 )
                 self.status_codes_counter.inc(status_code_labels)
                 self.responses_counter.inc(labels)
 
-            return send(response)
-
-        # Store HTTP path and method attributes in a variable that can be used
-        # later in the send method to complete metrics updates.
-
-        method = scope["method"]
-        path = self.get_full_or_template_path(scope)
-
-        if path in self.exclude_paths:
-            await self.asgi_callable(scope, receive, send)
-            return
-
-        labels = dict(method=method, path=path)
-
-        self.requests_counter.inc(labels)
-        try:
-            await self.asgi_callable(scope, receive, wrapped_send)
-        except Exception:
-            self.exceptions_counter.inc(labels)
-
-            status_code_labels = labels.copy()
-            status_code_labels["status_code"] = (
-                "5xx" if self.group_status_codes else "500"
-            )
-            self.status_codes_counter.inc(status_code_labels)
-            self.responses_counter.inc(labels)
-
-            raise
+                raise
 
     def get_full_or_template_path(self, scope) -> str:
         """

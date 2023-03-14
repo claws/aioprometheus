@@ -47,12 +47,12 @@ class Service:
         if not isinstance(registry, Registry):
             raise Exception(f"registry must be a Registry, got: {registry}")
         self.registry = registry
-        self._site = None  # type: Optional[aiohttp.web.TCPSite]
-        self._app = None  # type: Optional[aiohttp.web.Application]
-        self._runner = None  # type: Optional[aiohttp.web.AppRunner]
+        self._site: Optional[aiohttp.web.TCPSite] = None
+        self._app: Optional[aiohttp.web.Application] = None
+        self._runner: Optional[aiohttp.web.AppRunner] = None
         self._https = False
         self._root_url = "/"
-        self._metrics_url = None  # type: Optional[str]
+        self._metrics_url: Optional[str] = None
 
     @property
     def base_url(self) -> str:
@@ -104,7 +104,7 @@ class Service:
         self,
         addr: str = "",
         port: int = 0,
-        ssl: SSLContext = None,
+        ssl: Optional[SSLContext] = None,
         metrics_url: str = DEFAULT_METRICS_PATH,
     ) -> None:
         """Start the prometheus metrics HTTP(S) server.

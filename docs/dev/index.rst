@@ -9,7 +9,7 @@ If you have found a bug or have an idea for an enhancement that would
 improve the library, use the
 `bug tracker <https://github.com/claws/aioprometheus/issues>`_.
 
-To develop `aioprometheus` you'll need Python 3.6+, some dependencies and
+To develop `aioprometheus` you'll need Python 3.8+, some dependencies and
 the source code.
 
 
@@ -41,6 +41,7 @@ commands are pointing at the correct tools.
     $ source venv/bin/activate
     (aioprom) $
     (aioprom) $ pip install pip --upgrade
+    (aioprom) $ pip install wheel
 
 .. note::
 
@@ -56,13 +57,13 @@ Rules in the convenience Makefile depend on the development dependencies
 being installed. The development dependencies also include various web
 application frameworks to assist verifying integration methods. Install the
 developmental dependencies using ``pip``. Then install the `aioprometheus`
-package (and its optional dependencies). in a way that allows you to edit the
+package (and its optional dependencies) in a way that allows you to edit the
 code after it is installed so that any changes take effect immediately.
 
 .. code-block:: console
 
     (aioprom) $ pip install -r requirements.dev.txt
-    (aioprom) $ pip install -e .[aiohttp,binary]
+    (aioprom) $ pip install -e .[aiohttp,starlette,quart]
 
 
 Code Style
