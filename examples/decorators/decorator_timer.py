@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 Usage:
 
@@ -31,6 +30,7 @@ from aioprometheus.service import Service
 REQUEST_TIME = Summary("request_processing_seconds", "Time spent processing request")
 REQUESTS = Counter("request_total", "Total number of requests")
 
+
 # Decorate function with metric.
 @timer(REQUEST_TIME)
 async def handle_request(duration):
@@ -48,7 +48,6 @@ async def handle_requests():
 
 
 if __name__ == "__main__":
-
     loop = asyncio.get_event_loop()
 
     svr = Service()

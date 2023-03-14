@@ -12,7 +12,6 @@ class TestHistogram(unittest.TestCase):
     """Test histogram module"""
 
     def test_histogram(self):
-
         with self.assertRaises(Exception) as context:
             h = Histogram()
         self.assertEqual("Must have at least two buckets", str(context.exception))
@@ -40,7 +39,6 @@ class TestHistogram(unittest.TestCase):
             self.assertEqual(tuple(h.buckets.values()), expected_values)
 
     def test_linear_bucket_helper_functions(self):
-
         buckets = linearBuckets(1, 2, 5)
         self.assertEqual(buckets, [1, 3, 5, 7, 9])
 
@@ -53,7 +51,6 @@ class TestHistogram(unittest.TestCase):
         )
 
     def test_exponential_bucket_helper_functions(self):
-
         buckets = exponentialBuckets(1, 10, 5)
         self.assertEqual(buckets, [1, 10, 100, 1000, 10000])
         h = Histogram(*buckets)

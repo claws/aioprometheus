@@ -5,13 +5,13 @@ This module provides some convenience decorators for metrics
 import asyncio
 import time
 from functools import wraps
-from typing import Any, Callable, Dict, Union
+from typing import Any, Callable, Dict, Optional, Union
 
 from .collectors import Counter, Gauge, Histogram, Summary
 
 
 def timer(
-    metric: Union[Histogram, Summary], labels: Dict[str, str] = None
+    metric: Union[Histogram, Summary], labels: Optional[Dict[str, str]] = None
 ) -> Callable[..., Any]:
     """
     This decorator wraps a callable with code to calculate how long the
@@ -66,7 +66,9 @@ def timer(
     return measure
 
 
-def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., Any]:
+def inprogress(
+    metric: Gauge, labels: Optional[Dict[str, str]] = None
+) -> Callable[..., Any]:
     """
     This decorator wraps a callables with code to track whether it is currently
     in progress. The metric is incremented before calling the callable and is
@@ -121,7 +123,7 @@ def inprogress(metric: Gauge, labels: Dict[str, str] = None) -> Callable[..., An
 
 
 def count_exceptions(
-    metric: Counter, labels: Dict[str, str] = None
+    metric: Counter, labels: Optional[Dict[str, str]] = None
 ) -> Callable[..., Any]:
     """
     This decorator wraps a callable with code to count how many times the

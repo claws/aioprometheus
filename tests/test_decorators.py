@@ -1,7 +1,6 @@
 import asyncio
+import unittest
 from typing import Union
-
-import asynctest
 
 from aioprometheus import (
     REGISTRY,
@@ -15,7 +14,7 @@ from aioprometheus import (
 )
 
 
-class TestDecorators(asynctest.TestCase):
+class TestDecorators(unittest.IsolatedAsyncioTestCase):
     def tearDown(self):
         REGISTRY.clear()
 
@@ -59,7 +58,6 @@ class TestDecorators(asynctest.TestCase):
             )
             for test_msg, raises, count in SUB_TESTS:
                 with self.subTest(test_msg, raises=raises):
-
                     if raises:
                         # check decorator with async function
                         with self.assertRaises(Exception) as cm:
@@ -144,7 +142,6 @@ class TestDecorators(asynctest.TestCase):
         )
         for test_msg, raises in SUB_TESTS:
             with self.subTest(test_msg, raises=raises):
-
                 if raises:
                     # check decorator with async function
                     with self.assertRaises(Exception) as cm:
@@ -159,7 +156,6 @@ class TestDecorators(asynctest.TestCase):
                         await b.b(raises, "b_arg", kwarg_1="kwarg_1")
 
                 else:
-
                     # check decorator with async function.
                     # Set a non-zero wait duration so we can check that the
                     # metric actually increases while it is in-progress
@@ -237,7 +233,6 @@ class TestDecorators(asynctest.TestCase):
         )
         for test_msg, raises in SUB_TESTS:
             with self.subTest(test_msg, raises=raises):
-
                 if raises:
                     # check decorator with async function
                     with self.assertRaises(Exception) as cm:

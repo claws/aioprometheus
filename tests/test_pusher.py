@@ -1,7 +1,8 @@
 import asyncio
 import sys
+import unittest
 
-import asynctest
+from aiohttp_basicauth import BasicAuthMiddleware
 
 from aioprometheus import REGISTRY, Counter, Registry
 
@@ -51,22 +52,24 @@ if have_aiohttp:
             resp = aiohttp.web.Response(status=200)
             return resp
 
-        async def start(self, addr="127.0.0.1", port=None):
+        async def start(self, addr="127.0.0.1", port=None, middleware=None):
             self._app = aiohttp.web.Application()
             self._app.router.add_route(
                 "*", "/metrics/job/{job}{tail:(/.+)?}", self.handler
             )
             self._app.router.add_route("*", "/api/v1/import/prometheus", self.handler)
             self._app.router.add_route("*", "/slow", self.slow_handler)
+            if middleware:
+                self._app.middlewares.append(middleware)
             self._runner = aiohttp.web.AppRunner(self._app)
             await self._runner.setup()
             self._site = aiohttp.web.TCPSite(self._runner, addr, port)
             await self._site.start()
             # IPV4 returns a 2-Tuple, IPV6 returns a 4-Tuple
             _details = self._site._server.sockets[0].getsockname()
-            _host, _port = _details[0:2]
-            self.port = _port
-            self.url = f"http://{addr}:{_port}"
+            _host, port = _details[0:2]
+            self.port = port
+            self.url = f"http://{addr}:{port}"
             # TODO: replace the above with url = self._site.name when aiohttp
             # issue #3018 is resolved.
 
@@ -77,13 +80,13 @@ if have_aiohttp:
             self._runner = None
 
 
-@asynctest.skipUnless(have_aiohttp, "aiohttp library is not available")
-class TestPusher(asynctest.TestCase):
-    async def setUp(self):
+@unittest.skipUnless(have_aiohttp, "aiohttp library is not available")
+class TestPusher(unittest.IsolatedAsyncioTestCase):
+    async def asyncSetUp(self):
         self.server = TestPusherServer()
         await self.server.start()
 
-    async def tearDown(self):
+    async def asyncTearDown(self):
         await self.server.stop()
         REGISTRY.clear()
 
@@ -92,13 +95,12 @@ class TestPusher(asynctest.TestCase):
 
         # Create a pusher with the path for VictoriaMetrics
         p = Pusher(job_name, self.server.url, path="/api/v1/import/prometheus")
-        registry = Registry()
-        c = Counter("total_requests", "Total requests.", {}, registry=registry)
+        c = Counter("total_requests", "Total requests.", {})
 
         c.inc({"url": "/p/user"})
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/api/v1/import/prometheus", self.server.test_results["path"])
@@ -106,13 +108,12 @@ class TestPusher(asynctest.TestCase):
     async def test_push_job_ping(self):
         job_name = "my-job"
         p = Pusher(job_name, self.server.url)
-        registry = Registry()
-        c = Counter("total_requests", "Total requests.", {}, registry=registry)
+        c = Counter("total_requests", "Total requests.", {})
 
         c.inc({"url": "/p/user"})
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])
@@ -126,13 +127,12 @@ class TestPusher(asynctest.TestCase):
             self.server.url,
             grouping_key={"instance": "127.0.0.1:1234"},
         )
-        registry = Registry()
-        c = Counter("total_requests", "Total requests.", {}, registry=registry)
+        c = Counter("total_requests", "Total requests.", {})
 
         c.inc({})
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual(
@@ -149,13 +149,12 @@ class TestPusher(asynctest.TestCase):
             self.server.url,
             grouping_key={"first": "", "second": "foo"},
         )
-        registry = Registry()
-        c = Counter("example_total", "Total examples", {}, registry=registry)
+        c = Counter("example_total", "Total examples", {})
 
         c.inc({})
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         self.assertEqual(
@@ -172,13 +171,12 @@ class TestPusher(asynctest.TestCase):
             self.server.url,
             grouping_key={"path": "/var/tmp"},
         )
-        registry = Registry()
-        c = Counter("exec_total", "Total executions", {}, registry=registry)
+        c = Counter("exec_total", "Total executions", {})
 
         c.inc({})
 
         # Push to the pushgateway
-        resp = await p.replace(registry)
+        resp = await p.replace(REGISTRY)
         self.assertEqual(resp.status, 200)
 
         # Generated base64 content include '=' as padding.
@@ -202,11 +200,6 @@ class TestPusher(asynctest.TestCase):
             b"# TYPE counter_test counter\n"
             b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
         )
-        # BinaryFormatter expected result
-        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
-        #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
-        #                 b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
-        #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.add(REGISTRY)
@@ -231,11 +224,6 @@ class TestPusher(asynctest.TestCase):
             b"# TYPE counter_test counter\n"
             b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
         )
-        # BinaryFormatter expected result
-        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n\r'
-        #                 b'\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample\x12'
-        #                 b'\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t\x00'
-        #                 b'\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.replace(REGISTRY)
@@ -260,11 +248,6 @@ class TestPusher(asynctest.TestCase):
             b"# TYPE counter_test counter\n"
             b'counter_test{c_sample="1",c_subsample="b",type="counter"} 400\n'
         )
-        # BinaryFormatter expected result
-        # valid_result = (b'[\n\x0ccounter_test\x12\nA counter.\x18\x00"=\n'
-        #                 b'\r\n\x08c_sample\x12\x011\n\x10\n\x0bc_subsample'
-        #                 b'\x12\x01b\n\x0f\n\x04type\x12\x07counter\x1a\t\t'
-        #                 b'\x00\x00\x00\x00\x00\x00y@')
 
         # Push to the pushgateway
         resp = await p.delete(REGISTRY)
@@ -274,7 +257,7 @@ class TestPusher(asynctest.TestCase):
         self.assertEqual("DELETE", self.server.test_results["method"])
         self.assertEqual(valid_result, self.server.test_results["body"])
 
-    @asynctest.skipUnless(sys.version_info > (3, 8, 0), "requires 3.8+")
+    @unittest.skipUnless(sys.version_info > (3, 8, 0), "requires 3.8+")
     async def test_push_timeout(self):
         job_name = "my-job"
         p = Pusher(job_name, self.server.url, path="/slow")
@@ -300,3 +283,34 @@ class TestPusher(asynctest.TestCase):
 
         with self.assertRaises(asyncio.exceptions.TimeoutError):
             await p.replace(REGISTRY, timeout=timeout)
+
+
+@unittest.skipUnless(have_aiohttp, "aiohttp library is not available")
+class TestPusherBasicAuth(unittest.IsolatedAsyncioTestCase):
+    """A minimal duplicate of the test suite above that demonstrates auth used with Pusher"""
+
+    async def asyncSetUp(self):
+        self.username = "Joe"
+        self.password = "4321"
+        self.server = TestPusherServer()
+        bam = BasicAuthMiddleware(username=self.username, password=self.password)
+        await self.server.start(middleware=bam)
+
+    async def asyncTearDown(self):
+        await self.server.stop()
+        REGISTRY.clear()
+
+    async def test_push_job_ping_with_auth(self):
+        job_name = "my-job"
+        p = Pusher(job_name, self.server.url)
+        c = Counter("total_requests", "Total requests.", {})
+
+        c.inc({"url": "/p/user"})
+
+        self.auth = aiohttp.BasicAuth(self.username, password=self.password)
+
+        # Push to the pushgateway
+        resp = await p.replace(REGISTRY, auth=self.auth)
+        self.assertEqual(resp.status, 200)
+
+        self.assertEqual("/metrics/job/my-job", self.server.test_results["path"])

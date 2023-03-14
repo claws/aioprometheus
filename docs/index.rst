@@ -15,8 +15,8 @@ aioprometheus
 `aioprometheus` is a Prometheus Python client library for asyncio-based
 applications. It provides metrics collection and serving capabilities for
 use with `Prometheus <https://prometheus.io/>`_ and compatible monitoring
-systems. It supports exporting metrics into text and binary formats and
-pushing metrics to a gateway.
+systems. It supports exporting metrics into text format and pushing metrics
+to a gateway.
 
 `aioprometheus` can be used in applications built with FastAPI/Starlette,
 Quart, aiohttp as well as networking apps built upon asyncio.
@@ -41,9 +41,9 @@ Origins
 package. Many thanks to `slok <https://github.com/slok>`_ for developing
 `prometheus-python`.
 
-The original work has been modified and updated it to meet the needs of asyncio
-applications by adding the histogram metric, binary format support, docs,
-decorators, ASGI middleware, etc.
+The original work has been modified and updated to support the needs of
+asyncio applications by adding the histogram metric, docs, decorators, ASGI
+middleware, etc.
 
 
 .. |ci status| image:: https://github.com/claws/aioprometheus/workflows/CI%20Pipeline/badge.svg?branch=master

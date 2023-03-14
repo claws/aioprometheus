@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 """
 This example demonstrates how the ``aioprometheus.Service`` can be used to
 expose metrics on a HTTP endpoint.
@@ -21,7 +20,6 @@ from aioprometheus.service import Service
 
 
 async def main():
-
     service = Service()
     events_counter = Counter(
         "events", "Number of events.", const_labels={"host": socket.gethostname()}
@@ -44,7 +42,6 @@ async def main():
 
 
 if __name__ == "__main__":
-
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

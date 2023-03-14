@@ -1,9 +1,8 @@
-asynctest
 black
 sphinx
 sphinx-material
 coverage
-isort[requirements_deprecated_finder]
+isort
 mypy
 pylint
 twine
@@ -11,6 +10,8 @@ wheel
 
 # web app frameworks are used in ASGI middleware and unit tests to verify integration
 aiohttp
+aiohttp_basicauth
+httpx  # provides fastapi with test client
 fastapi
 uvicorn
 quart; python_version > '3.7'

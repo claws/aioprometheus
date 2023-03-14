@@ -32,7 +32,6 @@ class TestTextFormat(unittest.TestCase):
         self.assertEqual("Not a valid object format", str(context.exception))
 
     def test_counter_format(self):
-
         self.data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
@@ -86,7 +85,6 @@ class TestTextFormat(unittest.TestCase):
         self.assertEqual(valid_result, result)
 
     def test_counter_format_with_const_labels(self):
-
         self.data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
@@ -140,7 +138,6 @@ class TestTextFormat(unittest.TestCase):
         self.assertEqual(valid_result, result)
 
     def test_counter_format_text(self):
-
         name = "container_cpu_usage_seconds_total"
         doc = "Total seconds of cpu time consumed."
 
@@ -257,7 +254,6 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
         self.assertTrue(re.match(result_regex, result))
 
     def test_single_counter_format_text(self):
-
         name = "prometheus_dns_sd_lookups_total"
         doc = "The number of DNS-SD lookups."
 
@@ -281,7 +277,6 @@ prometheus_dns_sd_lookups_total 10"""
         self.assertEqual(valid_result, result)
 
     def test_gauge_format(self):
-
         self.data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
@@ -335,7 +330,6 @@ prometheus_dns_sd_lookups_total 10"""
         self.assertEqual(valid_result, result)
 
     def test_gauge_format_with_const_labels(self):
-
         self.data = {
             "name": "logged_users_total",
             "doc": "Logged users in the application",
@@ -389,7 +383,6 @@ prometheus_dns_sd_lookups_total 10"""
         self.assertEqual(valid_result, result)
 
     def test_gauge_format_text(self):
-
         name = "container_memory_max_usage_bytes"
         doc = "Maximum memory usage ever recorded in bytes."
 
@@ -482,7 +475,6 @@ logged_users_total{country="ch",device="mobile"} 654 \d*(?:.\d*)?$"""
         self.assertTrue(re.match(result_regex, result))
 
     def test_single_gauge_format_text(self):
-
         name = "prometheus_local_storage_indexing_queue_capacity"
         doc = "The capacity of the indexing queue."
 
@@ -672,7 +664,6 @@ prometheus_target_interval_length_seconds_sum{interval="5s"} 25.2 \d*(?:.\d*)?$"
         self.assertTrue(re.match(result_regex, result))
 
     def test_registry_marshall(self):
-
         format_times = 3
 
         counter_data = (

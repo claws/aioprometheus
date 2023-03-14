@@ -11,6 +11,8 @@ except ImportError as exc:
         "with the `aiohttp` extra?"
     ) from exc
 
+from typing import Optional
+
 from aioprometheus import REGISTRY, Registry
 from aioprometheus.formats import text
 
@@ -28,7 +30,7 @@ class Pusher:
         self,
         job_name: str,
         addr: str,
-        grouping_key: dict = None,
+        grouping_key: Optional[dict] = None,
         path: str = "/metrics",
     ) -> None:
         """

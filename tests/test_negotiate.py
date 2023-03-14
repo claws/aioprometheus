@@ -3,15 +3,6 @@ import unittest
 from aioprometheus.formats import text
 from aioprometheus.negotiator import negotiate
 
-try:
-    import prometheus_metrics_proto as pmp
-
-    from aioprometheus.formats import binary
-
-    have_pmp = True
-except ImportError:
-    have_pmp = False
-
 
 class TestNegotiate(unittest.TestCase):
     def test_text_default(self):
@@ -43,15 +34,3 @@ class TestNegotiate(unittest.TestCase):
         """check request with no accept header works"""
         self.assertEqual(text.TextFormatter, negotiate(set()))
         self.assertEqual(text.TextFormatter, negotiate(set([""])))
-
-    @unittest.skipUnless(have_pmp, "prometheus_metrics_proto library is not available")
-    def test_protobuffer(self):
-        """check that a protobuf formatter is returned"""
-        headers = (
-            "proto=io.prometheus.client.MetricFamily;application/vnd.google.protobuf;encoding=delimited",
-            "application/vnd.google.protobuf;proto=io.prometheus.client.MetricFamily;encoding=delimited",
-            "encoding=delimited;application/vnd.google.protobuf;proto=io.prometheus.client.MetricFamily",
-        )
-
-        for accept in headers:
-            self.assertEqual(binary.BinaryFormatter, negotiate(set(accept.split(";"))))

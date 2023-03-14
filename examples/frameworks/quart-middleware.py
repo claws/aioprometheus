@@ -1,12 +1,22 @@
-#!/usr/bin/env python
 """
 This example shows how to use the aioprometheus ASGI middleware in a Quart
 application.
 
+Setup:
+
+  (venv) $ pip install quart aioprometheus[quart]
+
 Run:
 
-  (venv) $ pip install quart
   (venv) $ python quart_middleware.py
+
+Test:
+
+  (venv) $ curl http://127.0.0.1:8000/metrics
+  (venv) $ curl http://127.0.0.1:8000/
+  (venv) $ curl http://127.0.0.1:8000/metrics
+  (venv) $ curl http://127.0.0.1:8000/users/bob
+  (venv) $ curl http://127.0.0.1:8000/metrics
 
 """
 

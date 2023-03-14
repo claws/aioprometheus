@@ -1,13 +1,23 @@
-#!/usr/bin/env python
 """
 This example shows how to use the aioprometheus ASGI middleware in a FastAPI
 application. FastAPI is built upon Starlette so using the middleware in
 Starlette would be the same.
 
+Setup:
+
+  (venv) $ pip install fastapi uvicorn aioprometheus[starlette]
+
 Run:
 
-  (venv) $ pip install fastapi uvicorn
   (venv) $ python fastapi-middleware.py
+
+Test:
+
+  (venv) $ curl http://127.0.0.1:8000/metrics
+  (venv) $ curl http://127.0.0.1:8000/
+  (venv) $ curl http://127.0.0.1:8000/metrics
+  (venv) $ curl http://127.0.0.1:8000/users/bob
+  (venv) $ curl http://127.0.0.1:8000/metrics
 
 """
 

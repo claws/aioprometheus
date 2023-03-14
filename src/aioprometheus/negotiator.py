@@ -13,6 +13,9 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
     """Negotiate a response format by scanning through a list of ACCEPTS
     headers and selecting the most efficient format.
 
+    Prometheus used to support text and binary format data but binary was
+    removed some time ago. This function now only returns the text formatter.
+
     The formatter returned by this function is used to render a response.
 
     :param accepts_headers: a list of ACCEPT headers fields extracted from a request.
@@ -23,10 +26,6 @@ def negotiate(accepts_headers: Sequence[str]) -> FormatterType:
     accepts = parse_accepts(accepts_headers)
 
     formatter = formats.text.TextFormatter  # type: FormatterType
-
-    if formats.binary is not None:
-        if formats.binary.BINARY_ACCEPTS.issubset(accepts):
-            formatter = formats.binary.BinaryFormatter  # type: ignore
 
     logger.debug(f"negotiating {accepts} resulted in choosing {formatter.__name__}")
 

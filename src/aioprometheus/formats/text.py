@@ -78,7 +78,6 @@ class TextFormatter(IFormatter):
         value: NumericValueType,
         const_labels: LabelsType,
     ) -> str:
-
         labels = self._unify_labels(labels, const_labels, True)
 
         labels_str = ""  # type: str

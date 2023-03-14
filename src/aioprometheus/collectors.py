@@ -1,7 +1,7 @@
 import enum
 import re
 from collections import OrderedDict
-from typing import Dict, List, Sequence, Tuple, Union, cast
+from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
 
 import orjson
 import quantile
@@ -79,8 +79,8 @@ class Collector:
         self,
         name: str,
         doc: str,
-        const_labels: LabelsType = None,
-        registry: "Registry" = None,
+        const_labels: Optional[LabelsType] = None,
+        registry: Optional["Registry"] = None,
     ) -> None:
         """
         :param name: The name of the metric.
@@ -164,7 +164,11 @@ class Collector:
         result = []
         for k in self.values:
             # Check if is a single value dict (custom empty key)
-            key = {} if k == MetricDict.EMPTY_KEY else orjson.loads(k)
+            key = (
+                {}
+                if k == MetricDict.EMPTY_KEY
+                else orjson.loads(k)  # pylint: disable=no-member
+            )
             result.append((key, self.get(k)))
 
         return result
@@ -318,8 +322,8 @@ class Summary(Collector):
         self,
         name: str,
         doc: str,
-        const_labels: LabelsType = None,
-        registry: "Registry" = None,
+        const_labels: Optional[LabelsType] = None,
+        registry: Optional["Registry"] = None,
         invariants: Sequence[Tuple[float, float]] = DEFAULT_INVARIANTS,
     ) -> None:
         super().__init__(name, doc, const_labels=const_labels, registry=registry)
@@ -414,8 +418,8 @@ class Histogram(Collector):
         self,
         name: str,
         doc: str,
-        const_labels: LabelsType = None,
-        registry: "Registry" = None,
+        const_labels: Optional[LabelsType] = None,
+        registry: Optional["Registry"] = None,
         buckets: Sequence[float] = DEFAULT_BUCKETS,
     ) -> None:
         super().__init__(name, doc, const_labels=const_labels, registry=registry)

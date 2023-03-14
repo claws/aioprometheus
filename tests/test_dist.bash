@@ -22,10 +22,10 @@ echo "Upgrading pip"
 pip install pip --upgrade
 
 echo "Install test dependencies and extras to check integrations"
-pip install asynctest requests aiohttp fastapi quart
+pip install asynctest requests aiohttp fastapi quart httpx
 
 echo "Installing $RELEASE_ARCHIVE"
-pip install $RELEASE_ARCHIVE[aiohttp,binary,starlette,quart]
+pip install $RELEASE_ARCHIVE[aiohttp,starlette,quart]
 
 echo "Running tests"
 cd ..

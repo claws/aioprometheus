@@ -2,6 +2,33 @@
 
 ## XX.Y.Z
 
+## 23.3.0
+
+- Added support for Histogram metric in timer decorator
+- Update docs to demonstrate how to use basic authentication with Pusher.
+- Developer updates
+  - Removed isort optional extra 'deprecated_imports_finder' as it isn't supported anymore.
+  - Minor type annotations updates to keep mypy happy
+  - Updated '.pylintrc' to fix warnings about options that are no longer supported.
+  - Updated Sphinx config to specify language to avoid warning being reported.
+  - Minor updates to address pylint warnings
+    - Silence orjson no-members warnings (See: https://github.com/ijl/orjson/issues/248)
+  - Added httpx as developmental dependency so that the Starlette test client can be used.
+    - Update ASGI middleware to obtain starlette app reference from 'http' ASGI scope when run from Starlette test client.
+  - Updated Pusher unit test to check basic authentication.
+    - Added aiohttp_basicauth to dev dependencies.
+  - Fix CI
+    - Removed support for Python3.6 as it isn't supported by Github actions anymore.
+      - Updated repo to indicate minimum supported Python is 3.8+
+    - Removed dependency on asynctest package which is no longer maintained and causes errors in Python3.11.
+      - Using 'unittest.IsolatedAsyncioTestCase' instead, but this is only supported for 3.8+.
+    - Updated CI workflow 'uses' items to use later versions
+- Prometheus 2.0 removed support for the binary protocol. Removed support for Prometheus binary protocol (fixes #57).
+  - Updated unit tests
+  - Updated CI
+  - Updated docs
+  - Updated examples
+
 ## 22.5.0
 
 - Fix CI package install issue related to pip (#78)
