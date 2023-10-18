@@ -148,7 +148,7 @@ class MetricsMiddleware:
             await self.asgi_callable(scope, receive, send)
             return
 
-        if scope["type"] == "http":
+        if scope["type"] in ("http", "websocket"):
 
             def wrapped_send(response):
                 """
