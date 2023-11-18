@@ -9,7 +9,6 @@ Receive = Callable[[], Awaitable[Message]]
 Send = Callable[[Message], Awaitable[None]]
 ASGICallable = Callable[[Scope, Receive, Send], Awaitable[None]]
 
-
 EXCLUDE_PATHS = (
     "/metrics",
     "/metrics/",
@@ -54,13 +53,13 @@ class MetricsMiddleware:
     """
 
     def __init__(
-        self,
-        app: ASGICallable,
-        registry: Registry = REGISTRY,
-        exclude_paths: Sequence[str] = EXCLUDE_PATHS,
-        use_template_urls: bool = True,
-        group_status_codes: bool = False,
-        const_labels: Optional[LabelsType] = None,
+            self,
+            app: ASGICallable,
+            registry: Registry = REGISTRY,
+            exclude_paths: Sequence[str] = EXCLUDE_PATHS,
+            use_template_urls: bool = True,
+            group_status_codes: bool = False,
+            const_labels: Optional[LabelsType] = None,
     ) -> None:
         # The 'app' argument really represents an ASGI framework callable.
         self.asgi_callable = app
@@ -171,7 +170,12 @@ class MetricsMiddleware:
 
             # Store HTTP path and method so they can be used later in the send
             # method to complete metrics updates.
-            method = scope["method"]
+            if scope["type"] == "http":
+                method = scope["method"]
+            else:
+                # Websocket requests do not have a method so use a constant
+                method = "websocket"
+
             path = self.get_full_or_template_path(scope)
             labels = {"method": method, "path": path}
 
