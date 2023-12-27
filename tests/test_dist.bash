@@ -13,7 +13,7 @@ echo "Removing any old artefacts"
 rm -rf test_venv
 
 echo "Creating test virtual environment"
-python -m venv test_venv
+python3.11 -m venv test_venv
 
 echo "Entering test virtual environment"
 source test_venv/bin/activate
@@ -22,7 +22,7 @@ echo "Upgrading pip"
 pip install pip --upgrade
 
 echo "Install test dependencies and extras to check integrations"
-pip install asynctest requests aiohttp fastapi quart httpx
+pip install asynctest requests aiohttp fastapi quart httpx aiohttp_basicauth
 
 echo "Installing $RELEASE_ARCHIVE"
 pip install $RELEASE_ARCHIVE[aiohttp,starlette,quart]

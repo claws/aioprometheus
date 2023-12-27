@@ -6,10 +6,9 @@ from typing import Dict, List, Optional, Sequence, Tuple, Union, cast
 import orjson
 import quantile
 
-from aioprometheus.mypy_types import LabelsType, NumericValueType
-
 from . import histogram
 from .metricdict import MetricDict
+from .mypy_types import LabelsType, NumericValueType
 
 METRIC_NAME_RE = re.compile(r"^[a-zA-Z_:][a-zA-Z0-9_:]*$")
 RESTRICTED_LABELS_NAMES = ("job",)

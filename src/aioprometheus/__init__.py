@@ -9,4 +9,4 @@ from .asgi.middleware import MetricsMiddleware  # isort:skip
 # The 'pusher' and 'service'  modules must be explicitly imported by package
 # users as they depend on optional extras.
 
-__version__ = "23.3.0"
+__version__ = "23.12.0"

@@ -1,7 +1,7 @@
 from typing import Any, Awaitable, Callable, Dict, Optional, Sequence
 
-from aioprometheus import REGISTRY, Counter, Registry
-from aioprometheus.mypy_types import LabelsType
+from ..collectors import REGISTRY, Counter, Registry
+from ..mypy_types import LabelsType
 
 Scope = Dict[str, Any]
 Message = Dict[str, Any]
@@ -148,7 +148,7 @@ class MetricsMiddleware:
             await self.asgi_callable(scope, receive, send)
             return
 
-        if scope["type"] == "http":
+        if scope["type"] in ("http", "websocket"):
 
             def wrapped_send(response):
                 """
@@ -171,7 +171,7 @@ class MetricsMiddleware:
 
             # Store HTTP path and method so they can be used later in the send
             # method to complete metrics updates.
-            method = scope["method"]
+            method = scope.get("method")
             path = self.get_full_or_template_path(scope)
             labels = {"method": method, "path": path}
 

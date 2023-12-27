@@ -43,10 +43,10 @@ class TestAiohttpRender(unittest.IsolatedAsyncioTestCase):
             [aiohttp.web.get("/", index), aiohttp.web.get("/metrics", handle_metrics)]
         )
 
-        runner = aiohttp.web.AppRunner(app)
+        runner = aiohttp.web.AppRunner(app, shutdown_timeout=1.0)
         await runner.setup()
 
-        site = aiohttp.web.TCPSite(runner, "127.0.0.1", 0, shutdown_timeout=1.0)
+        site = aiohttp.web.TCPSite(runner, "127.0.0.1", 0)
         await site.start()
 
         # Fetch ephemeral port that was bound.

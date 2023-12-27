@@ -9,7 +9,7 @@ The example script can be tested using ``curl``.
 
 .. code-block:: console
 
-    $ curl :8000/metrics
+    $ curl localhost:8000/metrics
     # HELP request_processing_seconds Time spent processing request
     # TYPE request_processing_seconds summary
     request_processing_seconds_count 77
@@ -40,8 +40,6 @@ async def handle_request(duration):
 
 
 async def handle_requests():
-    # Start up the server to expose the metrics.
-    await svr.start(port=8000)
     # Generate some requests.
     while True:
         await handle_request(random.random())
@@ -50,13 +48,16 @@ async def handle_requests():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
 
-    svr = Service()
+    svc = Service()
+
+    # Start up the server to expose the metrics.
+    loop.run_until_complete(svc.start(port=8000))
 
     try:
         loop.run_until_complete(handle_requests())
     except KeyboardInterrupt:
         pass
     finally:
-        loop.run_until_complete(svr.stop())
+        loop.run_until_complete(svc.stop())
     loop.stop()
     loop.close()

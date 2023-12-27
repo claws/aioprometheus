@@ -16,5 +16,5 @@ fastapi
 uvicorn
 quart; python_version > '3.7'
 
-# psutil is used in example code
+# psutil is used by examples
 psutil

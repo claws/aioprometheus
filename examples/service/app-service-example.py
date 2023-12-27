@@ -16,6 +16,8 @@ import psutil
 from aioprometheus import Counter, Gauge, Histogram, Summary
 from aioprometheus.service import Service
 
+logger = logging.getLogger(__name__)
+
 
 class ExampleApp:
     """
