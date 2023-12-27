@@ -5,7 +5,7 @@ from typing import Dict, Tuple, Union
 
 import quantile
 
-from aioprometheus import histogram
+from . import histogram
 
 LabelsType = Dict[str, str]
 NumericValueType = Union[int, float, histogram.Histogram, quantile.Estimator]

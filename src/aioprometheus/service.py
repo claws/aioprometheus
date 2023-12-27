@@ -25,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_METRICS_PATH = "/metrics"
 
+METRICS_URL_KEY: aiohttp.web.AppKey = aiohttp.web.AppKey("metrics_url")
+
 
 class Service:
     """
@@ -135,18 +137,16 @@ class Service:
 
         self._app = aiohttp.web.Application()
         self._metrics_url = metrics_url
-        self._app["metrics_url"] = metrics_url
+        self._app[METRICS_URL_KEY] = metrics_url
         self._app.router.add_route(GET, metrics_url, self.handle_metrics)
         self._app.router.add_route(GET, self._root_url, self.handle_root)
         self._app.router.add_route(GET, "/robots.txt", self.handle_robots)
-        self._runner = aiohttp.web.AppRunner(self._app)
+        self._runner = aiohttp.web.AppRunner(self._app, shutdown_timeout=2.0)
         await self._runner.setup()
 
         self._https = ssl is not None
         try:
-            self._site = aiohttp.web.TCPSite(
-                self._runner, addr, port, ssl_context=ssl, shutdown_timeout=2.0
-            )
+            self._site = aiohttp.web.TCPSite(self._runner, addr, port, ssl_context=ssl)
             await self._site.start()
         except Exception:
             logger.exception("error creating metrics server")
@@ -193,7 +193,7 @@ class Service:
         Serves a trivial page with a link to the metrics.  Use this if ever
         you need to point a health check at your the service.
         """
-        metrics_url = request.app["metrics_url"]
+        metrics_url = request.app[METRICS_URL_KEY]
         return aiohttp.web.Response(
             content_type="text/html",
             text=f"<html><body><a href='{metrics_url}'>metrics</a></body></html>",

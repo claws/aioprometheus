@@ -1,7 +1,6 @@
 from typing import Sequence, Tuple
 
-from aioprometheus import Registry
-
+from .collectors import Registry
 from .formats.base import IFormatter
 from .negotiator import negotiate
 
