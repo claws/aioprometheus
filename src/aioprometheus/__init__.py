@@ -1,4 +1,5 @@
 from .collectors import REGISTRY, Counter, Gauge, Histogram, Registry, Summary
+from .collector import COLLECTOR_PLATFORM
 from .decorators import count_exceptions, inprogress, timer
 from .negotiator import negotiate
 from .renderer import render
