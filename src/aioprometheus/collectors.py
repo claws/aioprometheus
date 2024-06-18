@@ -161,7 +161,7 @@ class Collector:
         itself.
         """
         result = []
-        for k in self.values:
+        for k in list(self.values):
             # Check if is a single value dict (custom empty key)
             key = (
                 {}

@@ -1,4 +1,5 @@
 import unittest
+from threading import Thread
 
 from aioprometheus.collectors import (
     REGISTRY,
@@ -165,6 +166,31 @@ class TestCollectorBase(unittest.TestCase):
         sorted_data = sorted(data, key=country_fetcher)
         sorted_result = sorted(c.get_all(), key=country_fetcher)
         self.assertEqual(sorted_data, sorted_result)
+
+    def test_get_all_change_iter(self) -> None:
+        """
+        test iterating over get_all when the underlying dict changes
+
+        For https://github.com/claws/aioprometheus/issues/85
+        """
+        c = Collector(**self.default_data)
+
+        # Create a large collection of values to increase the chance of a race
+        for i in range(100000):
+            c.set_value({f"b-{i}": "a"}, i)
+
+        # Now create a thread that will add a huge amount more values
+        def set_more_values():
+            for j in range(10000):
+                c.set_value({f"a-{j}": "a"}, j)
+
+        t = Thread(daemon=True, target=set_more_values)
+        t.start()
+
+        # Hope that due to the large amount of labels involved, we will smack
+        # head-first into the race of iterating over the dict whilst adding more
+        # unique labels to it.
+        list(c.get_all())
 
 
 class TestCounterMetric(unittest.TestCase):
