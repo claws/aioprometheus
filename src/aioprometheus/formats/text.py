@@ -71,6 +71,16 @@ class TextFormatter(IFormatter):
         """Returns a dict of HTTP headers for this response format"""
         return {"Content-Type": TEXT_CONTENT_TYPE}
 
+    @staticmethod
+    def _escape_label_value(value: object) -> str:
+        """Escape a label value for Prometheus text format output."""
+        return (
+            str(value)
+            .replace("\\", "\\\\")
+            .replace("\n", "\\n")
+            .replace('"', '\\"')
+        )
+
     def _format_line(
         self,
         name: str,
@@ -82,7 +92,9 @@ class TextFormatter(IFormatter):
 
         labels_str = ""  # type: str
         if labels:
-            _labels = [f'{k}="{v}"' for k, v in labels.items()]
+            _labels = [
+                f'{k}="{self._escape_label_value(v)}"' for k, v in labels.items()
+            ]
             labels_str = LABEL_SEPARATOR_FMT.join(_labels)
             labels_str = f"{{{labels_str}}}"
 

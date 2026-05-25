@@ -137,6 +137,27 @@ class TestTextFormat(unittest.TestCase):
 
         self.assertEqual(valid_result, result)
 
+    def test_counter_format_escapes_label_values(self):
+        c = Counter(name="escaped_total", doc="Escaped labels")
+        c.set_value(
+            {
+                "line": "first\nsecond",
+                "pv": r"CALC\{(A%2)}(BL05J-VA-IOC-02:HEARTBEAT)",
+                "quote": 'a"b',
+            },
+            1,
+        )
+
+        f = text.TextFormatter()
+        result = f.marshall_lines(c)
+
+        self.assertIn(
+            'escaped_total{line="first\\nsecond",'
+            'pv="CALC\\\\{(A%2)}(BL05J-VA-IOC-02:HEARTBEAT)",'
+            'quote="a\\"b"} 1',
+            result,
+        )
+
     def test_counter_format_text(self):
         name = "container_cpu_usage_seconds_total"
         doc = "Total seconds of cpu time consumed."
