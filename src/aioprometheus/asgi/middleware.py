@@ -211,9 +211,10 @@ class MetricsMiddleware:
         full_path = f"{root_path}{path}"
 
         if self.use_template_urls:
-            if self.starlette_app:
+            routes = getattr(self.starlette_app, "routes", None)
+            if routes:
                 # Extract the route template from Starlette / FastAPI apps
-                for route in self.starlette_app.routes:
+                for route in routes:
                     match, _child_scope = route.matches(scope)
                     # Enum value 2 represents the route template Match.FULL
                     if match.value == 2:
