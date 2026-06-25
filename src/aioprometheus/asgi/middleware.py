@@ -212,11 +212,37 @@ class MetricsMiddleware:
 
         if self.use_template_urls:
             if self.starlette_app:
-                # Extract the route template from Starlette / FastAPI apps
-                for route in self.starlette_app.routes:
-                    match, _child_scope = route.matches(scope)
-                    # Enum value 2 represents the route template Match.FULL
-                    if match.value == 2:
-                        return route.path
+                result = self._match_route_template(
+                    self.starlette_app.routes, scope
+                )
+                if result is not None:
+                    return result
 
         return full_path
+
+    def _match_route_template(self, routes, scope) -> Optional[str]:
+        """
+        Recursively walk a route list to find the template path matching
+        the current scope.
+
+        FastAPI >= 0.137.0 refactored include_router() to insert
+        _IncludedRouter nodes into app.routes. These nodes have no .path
+        attribute but expose their children via
+        original_router.routes. Skipping them without recursing would
+        cause all routes registered via include_router() — including
+        nested routers — to fall back to the raw URL, creating unbounded
+        label cardinality in Prometheus.
+        """
+        for route in routes:
+            if not hasattr(route, "path"):
+                sub_routes = getattr(
+                    getattr(route, "original_router", None), "routes", []
+                )
+                result = self._match_route_template(sub_routes, scope)
+                if result is not None:
+                    return result
+                continue
+            match, _child_scope = route.matches(scope)
+            if match.value == 2:
+                return route.path
+        return None
